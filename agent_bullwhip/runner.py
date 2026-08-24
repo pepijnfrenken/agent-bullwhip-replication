@@ -52,33 +52,41 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
     t0 = time.time()
     total_prompt_tokens = total_completion_tokens = 0
     for i in range(runs):
-        agents = make_agents(cfg, model, tag=tag)
-        log = run_game(agents, demand, sim_cfg)
-        log.agents = agents  # attach for failure metrics
-        run_logs.append(log)
-        prompt_tok = sum(getattr(a, "prompt_tokens", 0) for a in agents.values())
-        comp_tok = sum(getattr(a, "completion_tokens", 0) for a in agents.values())
-        total_prompt_tokens += prompt_tok
-        total_completion_tokens += comp_tok
-        results.append({
-            "run": i,
-            "config": name,
-            "model": model,
-            "tag": tag,
-            "total_cost": log.total_cost(),
-            "orders": {r: log.orders(r) for r in ROLES},
-            "backlogs": {r: log.backlogs(r) for r in ROLES},
-            "failures": {r: agents[r].failures for r in ROLES},
-            "calls": {r: agents[r].calls for r in ROLES},
-            "tokens": {"prompt": prompt_tok, "completion": comp_tok},
-        })
+        try:
+            agents = make_agents(cfg, model, tag=tag)
+            log = run_game(agents, demand, sim_cfg)
+            log.agents = agents  # attach for failure metrics
+            run_logs.append(log)
+            prompt_tok = sum(getattr(a, "prompt_tokens", 0) for a in agents.values())
+            comp_tok = sum(getattr(a, "completion_tokens", 0) for a in agents.values())
+            total_prompt_tokens += prompt_tok
+            total_completion_tokens += comp_tok
+            results.append({
+                "run": i,
+                "config": name,
+                "model": model,
+                "tag": tag,
+                "total_cost": log.total_cost(),
+                "orders": {r: log.orders(r) for r in ROLES},
+                "backlogs": {r: log.backlogs(r) for r in ROLES},
+                "failures": {r: agents[r].failures for r in ROLES},
+                "calls": {r: agents[r].calls for r in ROLES},
+                "tokens": {"prompt": prompt_tok, "completion": comp_tok},
+            })
+        except Exception as e:  # noqa: BLE001 - a failed run must not kill the matrix
+            results.append({"run": i, "config": name, "model": model, "tag": tag,
+                            "total_cost": None, "error": str(e)})
         outdir.mkdir(parents=True, exist_ok=True)
         with open(outdir / f"{tag}.jsonl", "a") as f:
             f.write(json.dumps(results[-1]) + "\n")
 
-    metrics = compute_metrics(run_logs)
+    if run_logs:
+        metrics = compute_metrics(run_logs)
+    else:
+        metrics = {"n_runs": 0, "mean_cost": None, "cv_cost": None, "error": "all runs failed"}
     metrics.update({
         "config": name, "model": model, "tag": tag, "runs": runs,
+        "completed": len(run_logs), "failed": len(results) - len(run_logs),
         "wall_sec": time.time() - t0,
         "tokens": {"prompt": total_prompt_tokens, "completion": total_completion_tokens,
                    "total": total_prompt_tokens + total_completion_tokens},

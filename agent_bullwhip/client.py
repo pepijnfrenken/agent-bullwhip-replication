@@ -34,8 +34,8 @@ def chat(
     temperature: float = 0.7,
     max_tokens: int = 64,
     n: int = 1,
-    timeout: int = 60,
-    retries: int = 3,
+    timeout: int = 90,
+    retries: int = 6,
 ) -> list[str]:
     """Return n sampled completions. Retries with backoff on 429/5xx/network errors.
 
@@ -57,7 +57,7 @@ def chat(
         try:
             resp = requests.post(f"{BASE}/chat/completions", headers=headers, json=body, timeout=timeout)
             if resp.status_code == 429:
-                time.sleep(4 * (attempt + 1))
+                time.sleep(3 + 3 * attempt)
                 continue
             resp.raise_for_status()
             data = resp.json()
@@ -65,9 +65,12 @@ def chat(
             last_usage = {"prompt": usage.get("prompt_tokens", 0),
                           "completion": usage.get("completion_tokens", 0)}
             return [ch["message"]["content"] for ch in data.get("choices", [])]
+        except requests.exceptions.Timeout:
+            last_err = TimeoutError("LLM call timed out")
+            time.sleep(2 + 2 * attempt)
         except Exception as e:  # noqa: BLE001 - any transport/HTTP error -> retry
             last_err = e
-            time.sleep(2 * (attempt + 1))
+            time.sleep(2 + 2 * attempt)
     raise RuntimeError(f"LLM call failed after {retries} attempts: {last_err}")
 
 
