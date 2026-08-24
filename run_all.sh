@@ -1,16 +1,23 @@
-# run everything with default model
-# baseline first (replication anchor)
-python -m agent_bullwhip.runner --config baseline --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config mirror --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config order_up_to --runs 30 --horizon 36
+#!/usr/bin/env bash
+# Agent Bullwhip — full experimental matrix
+# Wave 1: the paper's own levers (model selection x2, policy/guardrail, prompt, voting negative-check)
+# Wave 2: our extensions (anchor, combined)
+# Deterministic baselines: mirror, order_up_to
+set -euo pipefail
+cd "$(dirname "$0")"
 
-# inference-time reliability fixes (our extension)
-python -m agent_bullwhip.runner --config voting5 --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config voting10 --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config guardrail --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config anchor --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config prompt_weighted --runs 30 --horizon 36
-python -m agent_bullwhip.runner --config combined --runs 30 --horizon 36
+PY=.venv/bin/python
+RUNNER="agent_bullwhip.runner"
+MODELS=("deepseek-v4-flash" "qwen3.6-35b")
+CONFIGS=(baseline budget prompt_weighted voting5 anchor combined mirror order_up_to)
+RUNS=30
+HORIZON=36
 
-# model ladder (optional)
-# python -m agent_bullwhip.runner --config baseline --runs 30 --model glm-5.2
+for model in "${MODELS[@]}"; do
+  for config in "${CONFIGS[@]}"; do
+    echo "=== $model / $config ==="
+    $PY -m "$RUNNER" --config "$config" --runs "$RUNS" --horizon "$HORIZON" --model "$model"
+  done
+done
+
+echo "=== ALL DONE ==="

@@ -18,56 +18,72 @@ from .engine import ROLES, SimConfig, make_demand, run_game
 from .metrics import compute_metrics
 
 CONFIGS: dict[str, dict] = {
-    "baseline": {},  # default decentralized LLM
-    "voting5": {"voting": 5},
-    "voting10": {"voting": 10},
-    "guardrail": {"guardrail_ratio": 2.0},
+    # ---- the paper's own levers (Wave 1) ----
+    "baseline": {},  # default decentralized LLM (replication anchor)
+    "budget": {"guardrail_ratio": 2.0},  # paper Table 1 "budget" policy (order cap)
+    "prompt_weighted": {"prompt_variant": "weighted"},  # paper §3.4 reframe
+    "voting5": {"voting": 5},  # paper §4.3 repeated sampling (negative result check)
+    # ---- our extension (Wave 2) ----
     "anchor": {"anchor_margin": 6},
-    "prompt_weighted": {"prompt_variant": "weighted"},
     "combined": {"guardrail_ratio": 2.0, "anchor_margin": 6, "prompt_variant": "weighted"},
+    # ---- deterministic baselines ----
     "mirror": {"_baseline": "mirror"},
     "order_up_to": {"_baseline": "order_up_to"},
 }
 
 
-def make_agents(config: dict, model: str) -> dict:
+def make_agents(config: dict, model: str, tag: str | None = None) -> dict:
     if config.get("_baseline") == "mirror":
         return {r: MirrorAgent() for r in ROLES}
     if config.get("_baseline") == "order_up_to":
         return {r: OrderUpToAgent() for r in ROLES}
     lcfg = {k: v for k, v in config.items() if not k.startswith("_")}
+    lcfg["tag"] = tag or model
     return {r: LLMAgent(r, LLMAgentConfig(**lcfg, model=model)) for r in ROLES}
 
 
 def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, outdir: Path) -> dict:
     cfg = CONFIGS[name]
+    tag = f"{model}-{name}"
     demand = make_demand(horizon, pattern)
     sim_cfg = SimConfig(horizon=horizon)
     results: list[dict] = []
     run_logs = []
     t0 = time.time()
+    total_prompt_tokens = total_completion_tokens = 0
     for i in range(runs):
-        agents = make_agents(cfg, model)
+        agents = make_agents(cfg, model, tag=tag)
         log = run_game(agents, demand, sim_cfg)
         log.agents = agents  # attach for failure metrics
         run_logs.append(log)
+        prompt_tok = sum(getattr(a, "prompt_tokens", 0) for a in agents.values())
+        comp_tok = sum(getattr(a, "completion_tokens", 0) for a in agents.values())
+        total_prompt_tokens += prompt_tok
+        total_completion_tokens += comp_tok
         results.append({
             "run": i,
             "config": name,
             "model": model,
+            "tag": tag,
             "total_cost": log.total_cost(),
             "orders": {r: log.orders(r) for r in ROLES},
             "backlogs": {r: log.backlogs(r) for r in ROLES},
             "failures": {r: agents[r].failures for r in ROLES},
             "calls": {r: agents[r].calls for r in ROLES},
+            "tokens": {"prompt": prompt_tok, "completion": comp_tok},
         })
         outdir.mkdir(parents=True, exist_ok=True)
-        with open(outdir / f"{name}.jsonl", "a") as f:
+        with open(outdir / f"{tag}.jsonl", "a") as f:
             f.write(json.dumps(results[-1]) + "\n")
 
     metrics = compute_metrics(run_logs)
-    metrics.update({"config": name, "model": model, "runs": runs, "wall_sec": time.time() - t0})
-    summary_path = outdir / f"{name}.summary.json"
+    metrics.update({
+        "config": name, "model": model, "tag": tag, "runs": runs,
+        "wall_sec": time.time() - t0,
+        "tokens": {"prompt": total_prompt_tokens, "completion": total_completion_tokens,
+                   "total": total_prompt_tokens + total_completion_tokens},
+    })
+    summary_path = outdir / f"{tag}.summary.json"
     summary_path.write_text(json.dumps(metrics, indent=2, default=float))
     return metrics
 

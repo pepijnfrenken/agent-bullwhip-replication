@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from statistics import median
 
 from .client import chat, parse_order
+from . import client as client_mod
 
 
 # --------------------------------------------------------------------------- #
@@ -49,6 +50,7 @@ class LLMAgentConfig:
     prompt_variant: str = "default"        # "default" | "weighted" (paper reframe)
     model: str | None = None
     fallback: str = "mirror"               # what to do on parse failure: mirror | anchor | zero
+    tag: str | None = None                 # result-file tag (e.g. per model)
 
 
 class LLMAgent:
@@ -58,6 +60,8 @@ class LLMAgent:
         self.anchor = OrderUpToAgent() if self.cfg.anchor_margin is not None else None
         self.failures = 0
         self.calls = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
 
     def decide(self, ctx: dict) -> int | None:
         prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant)
@@ -68,6 +72,10 @@ class LLMAgent:
             temperature=self.cfg.temperature,
             n=self.cfg.voting,
         )
+        # token accounting: add this call's usage to agent-level accumulators
+        usage = getattr(client_mod, "last_usage", {}) if client_mod else {}
+        self.prompt_tokens += usage.get("prompt", 0)
+        self.completion_tokens += usage.get("completion", 0)
         orders = [parse_order(s) for s in samples]
         parsed = [o for o in orders if o is not None]
         if not parsed:

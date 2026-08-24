@@ -38,12 +38,16 @@ Results: `results/<config>.jsonl` (per-run) + `<config>.summary.json` (metrics).
 | Config | What it tests | Paper link |
 |---|---|---|
 | `baseline` | default decentralized LLM agents | replication anchor |
-| `mirror` / `order_up_to` | deterministic baselines | sanity + benchmarks |
-| `voting5` / `voting10` | self-consistency voting (median of N samples) | their negative result |
-| `guardrail` | order cap = 2× recent incoming | their Table 1 (GPT-4o mini CV 0.126→0.056) |
-| `anchor` | ES-forecast target anchoring (±6) | our extension (§5: kill the decision-shock channel) |
+| `budget` | order cap = 2× recent incoming (paper's "budget" policy) | their Table 1 (GPT-4o mini CV 0.126→0.056) |
 | `prompt_weighted` | "minimize weighted avg of backlog+holding" | their §3.4 |
-| `combined` | guardrail + anchor + weighted prompt | best config |
+| `voting5` | self-consistency voting (median of 5 samples) | their §4.3 negative result |
+| `anchor` | ES-forecast target anchoring (±6) | our extension (§5: kill the decision-shock channel) |
+| `combined` | budget + anchor + weighted prompt | our best-config |
+| `mirror` / `order_up_to` | deterministic baselines | sanity + benchmarks |
+
+**Wave 1** (paper's own levers): baseline, budget, prompt_weighted, voting5.
+**Wave 2** (our extensions): anchor, combined.
+Both waves run on both models (deepseek-v4-flash, qwen3.6-35b) → cost-vs-reliability frontier.
 
 ## Metrics
 
