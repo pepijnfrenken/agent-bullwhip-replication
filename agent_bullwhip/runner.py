@@ -32,6 +32,13 @@ CONFIGS: dict[str, dict] = {
     "kb_introspect": {"kb": True, "introspect": True},     # both (the full upgrade)
     "kb_introspect_gated": {"kb": True, "introspect": True, "conf_threshold": 0.5,
                             "anchor_margin": 6},           # self-gate: low conf -> anchor
+    # ---- Wave 2b: KB placement A/B (system message vs inline user message) ----
+    "kb_system": {"kb": True, "kb_placement": "system"},                 # KB in system msg
+    "kb_system_introspect": {"kb": True, "kb_placement": "system",
+                             "introspect": True},                        # system + trace
+    "kb_system_gated": {"kb": True, "kb_placement": "system",
+                        "introspect": True, "conf_threshold": 0.5,
+                        "anchor_margin": 6},              # system + self-gate
     # ---- deterministic baselines ----
     "mirror": {"_baseline": "mirror"},
     "order_up_to": {"_baseline": "order_up_to"},

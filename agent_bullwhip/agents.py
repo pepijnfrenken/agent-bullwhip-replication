@@ -70,6 +70,7 @@ class LLMAgentConfig:
     # --- Wave 2: introspection + knowledge base ---
     introspect: bool = False               # emit ORDER/CONFIDENCE/REASONING, log traces
     kb: bool = False                       # inject the decision playbook into the prompt
+    kb_placement: str = "inline"           # "inline" (user msg) | "system" (system msg)
     conf_threshold: float | None = None    # below this, fall back to anchor (self-gate)
 
 
@@ -85,11 +86,23 @@ class LLMAgent:
         self.traces: list[dict] = []   # Wave 2: per-decision {order, confidence, reasoning}
 
     def decide(self, ctx: dict) -> int | None:
-        prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant,
-                              introspect=self.cfg.introspect, kb=self.cfg.kb)
+        use_system = self.cfg.kb and self.cfg.kb_placement == "system"
+        if use_system:
+            # KB + role live in the system message; state + question in the user message.
+            system = build_system_prompt(self.role, self.cfg.prompt_variant,
+                                         kb=True, introspect=self.cfg.introspect)
+            user = build_user_prompt(self.role, ctx, self.cfg.prompt_variant,
+                                     introspect=self.cfg.introspect)
+            messages = [{"role": "system", "content": system},
+                        {"role": "user", "content": user}]
+        else:
+            prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant,
+                                  introspect=self.cfg.introspect,
+                                  kb=self.cfg.kb)
+            messages = [{"role": "user", "content": prompt}]
         self.calls += 1
         samples = chat(
-            [{"role": "user", "content": prompt}],
+            messages,
             model=self.cfg.model,
             temperature=self.cfg.temperature,
             n=self.cfg.voting,
@@ -163,6 +176,7 @@ class LLMAgent:
 
 def build_prompt(role: str, ctx: dict, variant: str = "default",
                  introspect: bool = False, kb: bool = False) -> str:
+    """Inline (user-message) prompt: role + state + (optional KB) + question."""
     goal = (
         "minimize the weighted average of backlog and holding costs"
         if variant == "weighted"
@@ -199,4 +213,61 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
         )
     else:
         p += "Reply with ONLY an integer: the number of units to order this week (0 or more)."
+    return p
+
+
+def build_system_prompt(role: str, variant: str = "default", kb: bool = False,
+                        introspect: bool = False) -> str:
+    """System-message prompt: identity + goal + (KB) — the persistent instruction layer.
+
+    Kept separate from the per-week state (which goes in the user message) so we
+    can test whether separating rules-from-data changes how the model handles them.
+    """
+    goal = (
+        "minimize the weighted average of backlog and holding costs"
+        if variant == "weighted"
+        else "minimize total supply chain cost"
+    )
+    p = (
+        f"You are the {role.upper()} in a four-stage beer supply chain:\n"
+        "Retailer -> Wholesaler -> Distributor -> Factory.\n"
+        "You manage inventory at your stage. Each week you decide how many units to order "
+        f"from your supplier (upstream). Goal: {goal}.\n"
+        "Holding cost is $1 per unit per week; backlog cost is $2 per unit per week.\n"
+        "Shipments from your supplier take 2 weeks to arrive.\n\n"
+    )
+    if kb:
+        kb = _kb_text()
+        if kb:
+            p += "=== DECISION PLAYBOOK (knowledge base) ===\n"
+            p += "These rules are ground truth for this game. Apply them when they match "
+            p += "your state each week:\n\n"
+            p += kb + "\n\n=== END PLAYBOOK ===\n"
+    if introspect:
+        p += (
+            "\nAnswer in EXACTLY this 3-line format (nothing else):\n"
+            "ORDER: <integer, the number of units to order this week, 0 or more>\n"
+            "CONFIDENCE: <0.0 to 1.0, how sure you are>\n"
+            "REASONING: <one short sentence: the key fact + which playbook rule you applied>\n"
+        )
+    return p
+
+
+def build_user_prompt(role: str, ctx: dict, variant: str = "default",
+                      introspect: bool = False) -> str:
+    """User-message prompt for the system-placement variant: just the state + question."""
+    p = (
+        f"Current week: {ctx['t']}\n"
+        f"Your state at the start of the week:\n"
+        f"- On-hand inventory: {ctx['on_hand']}\n"
+        f"- Backlog (unfilled orders owed to your customer): {ctx['backlog']}\n"
+        f"- Outstanding orders (ordered but not yet received): {ctx['outstanding']}\n"
+        f"- Incoming order from your customer last week: {ctx['incoming_last']}\n"
+        f"- Incoming order from your customer this week: {ctx['incoming_now']}\n"
+        f"- Your recent orders: {ctx['last_orders']}\n\n"
+    )
+    if introspect:
+        p += "What is your ORDER, CONFIDENCE, and REASONING this week?"
+    else:
+        p += "How many units do you order this week? Reply with ONLY an integer."
     return p
