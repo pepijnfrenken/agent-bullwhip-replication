@@ -26,6 +26,12 @@ CONFIGS: dict[str, dict] = {
     # ---- our extension (Wave 2) ----
     "anchor": {"anchor_margin": 6},
     "combined": {"guardrail_ratio": 2.0, "anchor_margin": 6, "prompt_variant": "weighted"},
+    # ---- Wave 2: knowledge base + introspection (the iteration loop) ----
+    "kb": {"kb": True},                                    # playbook injected, no trace
+    "introspect": {"introspect": True},                    # reason + confidence, logged
+    "kb_introspect": {"kb": True, "introspect": True},     # both (the full upgrade)
+    "kb_introspect_gated": {"kb": True, "introspect": True, "conf_threshold": 0.5,
+                            "anchor_margin": 6},           # self-gate: low conf -> anchor
     # ---- deterministic baselines ----
     "mirror": {"_baseline": "mirror"},
     "order_up_to": {"_baseline": "order_up_to"},
@@ -72,6 +78,8 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
                 "failures": {r: agents[r].failures for r in ROLES},
                 "calls": {r: agents[r].calls for r in ROLES},
                 "tokens": {"prompt": prompt_tok, "completion": comp_tok},
+                # Wave 2: per-decision traces (order/confidence/reasoning/gated) for gap mining
+                "traces": {r: getattr(agents[r], "traces", []) for r in ROLES},
             })
         except Exception as e:  # noqa: BLE001 - a failed run must not kill the matrix
             results.append({"run": i, "config": name, "model": model, "tag": tag,
