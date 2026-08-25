@@ -64,6 +64,15 @@ def chat(
             usage = data.get("usage", {})
             last_usage = {"prompt": usage.get("prompt_tokens", 0),
                           "completion": usage.get("completion_tokens", 0)}
+            # capture any model-level reasoning trace (DeepSeek-style reasoning_content,
+            # or a generic `reasoning` field) if the endpoint provides it
+            reasons = []
+            for ch in data.get("choices", []):
+                msg = ch.get("message", {})
+                r = msg.get("reasoning_content") or msg.get("reasoning") or None
+                reasons.append(r if r else None)
+            global last_reasoning
+            last_reasoning = reasons
             return [ch["message"]["content"] for ch in data.get("choices", [])]
         except requests.exceptions.Timeout:
             last_err = TimeoutError("LLM call timed out")
@@ -76,6 +85,8 @@ def chat(
 
 # module-level usage sink (agent layer reads it after each call)
 last_usage: dict = {"prompt": 0, "completion": 0}
+# module-level reasoning sink (agent layer reads it after each call)
+last_reasoning: list | None = None
 
 
 def parse_order(text: str) -> int | None:

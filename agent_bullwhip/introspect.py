@@ -19,11 +19,12 @@ _CONF_RE = re.compile(
     r"^\s*CONFIDENCE\s*:\s*(0?\.\d+|1\.0|1|0)", re.IGNORECASE | re.MULTILINE
 )
 _REASON_RE = re.compile(r"^\s*REASONING\s*:\s*(.+)$", re.IGNORECASE | re.MULTILINE)
+_THINK_RE = re.compile(r"^\s*THINKING\s*:\s*(.+)$", re.IGNORECASE | re.MULTILINE)
 _INT_RE = re.compile(r"-?\d+")
 
 
 def parse_introspection(text: str) -> dict | None:
-    """Parse an introspective response into {order, confidence, reasoning}.
+    """Parse an introspective response into {order, confidence, reasoning, thinking}.
 
     Returns None when no ORDER field is found (caller falls back to classic parse).
     """
@@ -35,7 +36,9 @@ def parse_introspection(text: str) -> dict | None:
     conf = float(m_conf.group(1)) if m_conf else None
     m_reason = _REASON_RE.search(text or "")
     reason = m_reason.group(1).strip() if m_reason else ""
-    return {"order": order, "confidence": conf, "reasoning": reason}
+    m_think = _THINK_RE.search(text or "")
+    think = m_think.group(1).strip() if m_think else ""
+    return {"order": order, "confidence": conf, "reasoning": reason, "thinking": think}
 
 
 def classic_order(text: str) -> int | None:

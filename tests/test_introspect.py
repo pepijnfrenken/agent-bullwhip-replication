@@ -4,9 +4,12 @@ from agent_bullwhip.introspect import parse_introspection, classic_order
 
 def test_parse_full():
     out = parse_introspection(
-        "ORDER: 12\nCONFIDENCE: 0.8\nREASONING: backlog is high, covered it\n"
+        "THINKING: backlog high\nORDER: 12\nCONFIDENCE: 0.8\nREASONING: backlog is high, covered it\n"
     )
-    assert out == {"order": 12, "confidence": 0.8, "reasoning": "backlog is high, covered it"}
+    assert out["order"] == 12
+    assert out["confidence"] == 0.8
+    assert out["reasoning"] == "backlog is high, covered it"
+    assert out["thinking"] == "backlog high"
 
 
 def test_parse_missing_confidence():

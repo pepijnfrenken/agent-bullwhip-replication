@@ -39,6 +39,13 @@ CONFIGS: dict[str, dict] = {
     "kb_system_gated": {"kb": True, "kb_placement": "system",
                         "introspect": True, "conf_threshold": 0.5,
                         "anchor_margin": 6},              # system + self-gate
+    # ---- Wave 2c: pointer-only KB (no contents injected — self-directed) ----
+    "kb_pointer": {"kb": True, "kb_placement": "pointer"},               # guide-only, no contents
+    "kb_pointer_introspect": {"kb": True, "kb_placement": "pointer",
+                              "introspect": True},                       # pointer + trace
+    "kb_pointer_gated": {"kb": True, "kb_placement": "pointer",
+                         "introspect": True, "conf_threshold": 0.5,
+                         "anchor_margin": 6},            # pointer + self-gate
     # ---- deterministic baselines ----
     "mirror": {"_baseline": "mirror"},
     "order_up_to": {"_baseline": "order_up_to"},

@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 PY=.venv/bin/python
 RUNNER="agent_bullwhip.runner"
 MODEL="deepseek-v4-flash"
-CONFIGS=(kb introspect kb_introspect kb_introspect_gated kb_system kb_system_introspect kb_system_gated)
+CONFIGS=(kb introspect kb_introspect kb_introspect_gated kb_system kb_system_introspect kb_system_gated kb_pointer kb_pointer_introspect kb_pointer_gated)
 RUNS=30
 HORIZON=36
 for config in "${CONFIGS[@]}"; do

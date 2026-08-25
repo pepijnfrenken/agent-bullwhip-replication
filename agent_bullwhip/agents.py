@@ -70,7 +70,7 @@ class LLMAgentConfig:
     # --- Wave 2: introspection + knowledge base ---
     introspect: bool = False               # emit ORDER/CONFIDENCE/REASONING, log traces
     kb: bool = False                       # inject the decision playbook into the prompt
-    kb_placement: str = "inline"           # "inline" (user msg) | "system" (system msg)
+    kb_placement: str = "inline"           # "inline" (user msg) | "system" (system msg) | "pointer" (guide only)
     conf_threshold: float | None = None    # below this, fall back to anchor (self-gate)
 
 
@@ -84,9 +84,11 @@ class LLMAgent:
         self.prompt_tokens = 0
         self.completion_tokens = 0
         self.traces: list[dict] = []   # Wave 2: per-decision {order, confidence, reasoning}
+        self.last_api_reasoning: list | None = None   # reasoning_content from the API (if any)
 
     def decide(self, ctx: dict) -> int | None:
         use_system = self.cfg.kb and self.cfg.kb_placement == "system"
+        use_pointer = self.cfg.kb and self.cfg.kb_placement == "pointer"
         if use_system:
             # KB + role live in the system message; state + question in the user message.
             system = build_system_prompt(self.role, self.cfg.prompt_variant,
@@ -98,7 +100,7 @@ class LLMAgent:
         else:
             prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant,
                                   introspect=self.cfg.introspect,
-                                  kb=self.cfg.kb)
+                                  kb=self.cfg.kb, kb_pointer=use_pointer)
             messages = [{"role": "user", "content": prompt}]
         self.calls += 1
         samples = chat(
@@ -107,10 +109,12 @@ class LLMAgent:
             temperature=self.cfg.temperature,
             n=self.cfg.voting,
         )
-        # token accounting: add this call's usage to agent-level accumulators
+        # token accounting + reasoning trace capture
         usage = getattr(client_mod, "last_usage", {}) if client_mod else {}
         self.prompt_tokens += usage.get("prompt", 0)
         self.completion_tokens += usage.get("completion", 0)
+        reasons = getattr(client_mod, "last_reasoning", None) if client_mod else None
+        self.last_api_reasoning = reasons or [None] * len(samples)
         if self.cfg.introspect:
             return self._decide_introspect(ctx, samples)
         orders = [parse_order(s) for s in samples]
@@ -122,7 +126,7 @@ class LLMAgent:
         return self._apply_wrappers(ctx, int(order))
 
     def _decide_introspect(self, ctx: dict, samples: list[str]) -> int | None:
-        """Parse ORDER/CONFIDENCE/REASONING; self-gate on low confidence."""
+        """Parse ORDER/CONFIDENCE/REASONING/THINKING; self-gate on low confidence."""
         parsed = []
         for s in samples:
             p = parse_introspection(s)
@@ -136,15 +140,20 @@ class LLMAgent:
         best = sorted(parsed, key=lambda p: p["order"])[len(parsed) // 2]
         conf = best.get("confidence")
         order = best["order"]
+        api_reason = (self.last_api_reasoning or [None])[0] if self.last_api_reasoning else None
         # self-gate: low confidence -> fall back to the safe deterministic anchor
         if conf is not None and self.cfg.conf_threshold is not None and conf < self.cfg.conf_threshold:
             safe = self.anchor(ctx) if self.anchor is not None else self._fallback(ctx)
             self.traces.append({"ctx": ctx, "order": order, "confidence": conf,
-                                "reasoning": best.get("reasoning", ""), "gated": True,
+                                "reasoning": best.get("reasoning", ""),
+                                "thinking": best.get("thinking", ""),
+                                "api_reasoning": api_reason, "gated": True,
                                 "order_used": int(safe)})
             return self._apply_wrappers(ctx, int(safe))
         self.traces.append({"ctx": ctx, "order": order, "confidence": conf,
-                            "reasoning": best.get("reasoning", ""), "gated": False,
+                            "reasoning": best.get("reasoning", ""),
+                            "thinking": best.get("thinking", ""),
+                            "api_reasoning": api_reason, "gated": False,
                             "order_used": int(order)})
         return self._apply_wrappers(ctx, int(order))
 
@@ -175,8 +184,15 @@ class LLMAgent:
 
 
 def build_prompt(role: str, ctx: dict, variant: str = "default",
-                 introspect: bool = False, kb: bool = False) -> str:
-    """Inline (user-message) prompt: role + state + (optional KB) + question."""
+                 introspect: bool = False, kb: bool = False,
+                 kb_pointer: bool = False) -> str:
+    """Inline (user-message) prompt: role + state + (optional KB) + question.
+
+    kb=True with kb_pointer=False injects the playbook verbatim.
+    kb_pointer=True only *points* to the playbook and asks the model to consult
+    its own internalized knowledge / self-check steps — testing whether
+    self-directed rule application beats injected context.
+    """
     goal = (
         "minimize the weighted average of backlog and holding costs"
         if variant == "weighted"
@@ -198,7 +214,18 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
         "Holding cost is $1 per unit per week; backlog cost is $2 per unit per week.\n"
         "Shipments from your supplier take 2 weeks to arrive.\n\n"
     )
-    if kb:
+    if kb_pointer:
+        p += (
+            "=== DECISION PLAYBOOK (knowledge base) ===\n"
+            "There is a decision playbook of supply-chain rules you should follow.\n"
+            "You do not see its contents here: use your own knowledge of inventory "
+            "management and beer-game best practices, and self-check your reasoning "
+            "against these principles before answering: don't over-react to demand "
+            "steps, cover backlog before adding inventory, account for the pipeline, "
+            "smooth noisy demand, and prefer a conservative order when uncertain.\n"
+            "=== END PLAYBOOK POINTER ===\n\n"
+        )
+    elif kb:
         kb = _kb_text()
         if kb:
             p += "=== DECISION PLAYBOOK (knowledge base) ===\n"
@@ -206,10 +233,13 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
             p += kb + "\n\n=== END PLAYBOOK ===\n\n"
     if introspect:
         p += (
-            "Answer in EXACTLY this 3-line format (nothing else):\n"
+            "Before answering, think step by step about your state and which principle "
+            "applies. Then answer in EXACTLY this 4-line format — you MUST include all "
+            "four lines, in this order, nothing else:\n"
+            "THINKING: <one sentence: the key fact + which principle applies>\n"
             "ORDER: <integer, the number of units to order this week, 0 or more>\n"
             "CONFIDENCE: <0.0 to 1.0, how sure you are>\n"
-            "REASONING: <one short sentence: the key fact + which playbook rule you applied>\n"
+            "REASONING: <one short sentence: the key fact + which principle you applied>\n"
         )
     else:
         p += "Reply with ONLY an integer: the number of units to order this week (0 or more)."
