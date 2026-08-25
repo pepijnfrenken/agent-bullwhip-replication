@@ -30,6 +30,18 @@
 - **Why:** ignoring the pipeline is the "double ordering" failure mode — you order
   again for demand that your outstanding orders already cover, doubling the wave.
 
+### kb-3b: in-transit is NOT available this week (measured gap, 2026-08-25)
+- **Trigger:** you have outstanding orders (in the 2-week pipeline) AND current
+  backlog / this-week demand.
+- **Rule:** outstanding orders arrive in 2 WEEKS — they do NOT cover this week's
+  demand. If your backlog is positive or demand is coming this week, DO NOT zero
+  your order just because the pipeline looks full. Order the gap to cover
+  `backlog + this-week incoming`, treating outstanding as *future* relief only.
+- **Why:** the trace analysis found the #1 failure mode: agents with large
+  outstanding orders order 0 ("already in transit"), the 2-week lag means nothing
+  arrives now, and backlog compounds into a bullwhip. In-transit is future
+  inventory, not current inventory.
+
 ### kb-4: low confidence = fall back to the safe deterministic policy
 - **Trigger:** you are uncertain (confidence < 0.5) or the situation is ambiguous.
 - **Rule:** do not guess. Return the order-up-to / mirror quantity (a smooth,
