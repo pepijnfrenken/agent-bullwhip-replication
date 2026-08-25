@@ -81,7 +81,8 @@ def main() -> None:
             triggers["demand_step"] += 1
         if ctx.get("outstanding", 0) > 0:
             triggers["pipeline_nonempty"] += 1
-        if g.get("confidence", 1.0) < 0.5:
+        conf = g.get("confidence")
+        if conf is not None and conf < 0.5:
             triggers["low_conf"] += 1
     print("Trigger buckets:", dict(triggers))
 
