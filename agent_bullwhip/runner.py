@@ -80,10 +80,13 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
         with open(outdir / f"{tag}.jsonl", "a") as f:
             f.write(json.dumps(results[-1]) + "\n")
 
-    if run_logs:
-        metrics = compute_metrics(run_logs)
-    else:
-        metrics = {"n_runs": 0, "mean_cost": None, "cv_cost": None, "error": "all runs failed"}
+    try:
+        if run_logs:
+            metrics = compute_metrics(run_logs)
+        else:
+            metrics = {"n_runs": 0, "mean_cost": None, "cv_cost": None, "error": "all runs failed"}
+    except Exception as e:  # noqa: BLE001 - metrics failure must not kill the matrix
+        metrics = {"n_runs": len(run_logs), "error": f"metrics failed: {e}"}
     metrics.update({
         "config": name, "model": model, "tag": tag, "runs": runs,
         "completed": len(run_logs), "failed": len(results) - len(run_logs),

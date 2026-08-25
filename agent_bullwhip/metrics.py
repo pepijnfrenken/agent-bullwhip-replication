@@ -57,8 +57,8 @@ def compute_metrics(runs: list[RunLog]) -> dict:
     agents = getattr(runs[0], "agents", None)
     failure_rate = None
     if agents:
-        total_calls = sum(a.calls for a in agents.values())
-        total_fail = sum(a.failures for a in agents.values())
+        total_calls = sum(getattr(a, "calls", 0) for a in agents.values())
+        total_fail = sum(getattr(a, "failures", 0) for a in agents.values())
         failure_rate = total_fail / total_calls if total_calls else 0.0
 
     def pct(xs: list, p: float) -> float:
