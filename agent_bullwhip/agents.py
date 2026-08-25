@@ -10,18 +10,17 @@ from . import client as client_mod
 from .introspect import parse_introspection
 
 _KB_PATH = Path(__file__).parent / "knowledge" / "PROMPT_KB.md"
-_KB_CACHE: str | None = None
+_KB_CACHE: dict[str, str] = {}
 
 
-def _kb_text() -> str:
-    """Load the KB once; returns '' if missing (graceful degradation)."""
-    global _KB_CACHE
-    if _KB_CACHE is None:
+def _kb_text(name: str = "PROMPT_KB.md") -> str:
+    """Load a KB file once (cached by filename); returns '' if missing."""
+    if name not in _KB_CACHE:
         try:
-            _KB_CACHE = _KB_PATH.read_text(encoding="utf-8")
+            _KB_CACHE[name] = (Path(__file__).parent / "knowledge" / name).read_text(encoding="utf-8")
         except FileNotFoundError:
-            _KB_CACHE = ""
-    return _KB_CACHE
+            _KB_CACHE[name] = ""
+    return _KB_CACHE[name]
 
 
 # --------------------------------------------------------------------------- #
@@ -70,6 +69,7 @@ class LLMAgentConfig:
     # --- Wave 2: introspection + knowledge base ---
     introspect: bool = False               # emit ORDER/CONFIDENCE/REASONING, log traces
     kb: bool = False                       # inject the decision playbook into the prompt
+    kb_file: str = "PROMPT_KB.md"          # which KB file to inject (domain | GENERAL_KB.md)
     kb_placement: str = "inline"           # "inline" (user msg) | "system" (system msg) | "pointer" (guide only)
     conf_threshold: float | None = None    # below this, fall back to anchor (self-gate)
 
@@ -92,7 +92,8 @@ class LLMAgent:
         if use_system:
             # KB + role live in the system message; state + question in the user message.
             system = build_system_prompt(self.role, self.cfg.prompt_variant,
-                                         kb=True, introspect=self.cfg.introspect)
+                                         kb=True, introspect=self.cfg.introspect,
+                                         kb_file=self.cfg.kb_file)
             user = build_user_prompt(self.role, ctx, self.cfg.prompt_variant,
                                      introspect=self.cfg.introspect)
             messages = [{"role": "system", "content": system},
@@ -100,7 +101,8 @@ class LLMAgent:
         else:
             prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant,
                                   introspect=self.cfg.introspect,
-                                  kb=self.cfg.kb, kb_pointer=use_pointer)
+                                  kb=self.cfg.kb, kb_pointer=use_pointer,
+                                  kb_file=self.cfg.kb_file)
             messages = [{"role": "user", "content": prompt}]
         self.calls += 1
         samples = chat(
@@ -185,7 +187,7 @@ class LLMAgent:
 
 def build_prompt(role: str, ctx: dict, variant: str = "default",
                  introspect: bool = False, kb: bool = False,
-                 kb_pointer: bool = False) -> str:
+                 kb_pointer: bool = False, kb_file: str = "PROMPT_KB.md") -> str:
     """Inline (user-message) prompt: role + state + (optional KB) + question.
 
     kb=True with kb_pointer=False injects the playbook verbatim.
@@ -226,11 +228,11 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
             "=== END PLAYBOOK POINTER ===\n\n"
         )
     elif kb:
-        kb = _kb_text()
-        if kb:
+        kb_text = _kb_text(kb_file)
+        if kb_text:
             p += "=== DECISION PLAYBOOK (knowledge base) ===\n"
             p += "Use these rules when they apply. They are ground truth for this game:\n\n"
-            p += kb + "\n\n=== END PLAYBOOK ===\n\n"
+            p += kb_text + "\n\n=== END PLAYBOOK ===\n\n"
     if introspect:
         p += (
             "Before answering, think step by step about your state and which principle "
@@ -247,7 +249,7 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
 
 
 def build_system_prompt(role: str, variant: str = "default", kb: bool = False,
-                        introspect: bool = False) -> str:
+                        introspect: bool = False, kb_file: str = "PROMPT_KB.md") -> str:
     """System-message prompt: identity + goal + (KB) — the persistent instruction layer.
 
     Kept separate from the per-week state (which goes in the user message) so we
@@ -267,12 +269,12 @@ def build_system_prompt(role: str, variant: str = "default", kb: bool = False,
         "Shipments from your supplier take 2 weeks to arrive.\n\n"
     )
     if kb:
-        kb = _kb_text()
-        if kb:
+        kb_text = _kb_text(kb_file)
+        if kb_text:
             p += "=== DECISION PLAYBOOK (knowledge base) ===\n"
             p += "These rules are ground truth for this game. Apply them when they match "
             p += "your state each week:\n\n"
-            p += kb + "\n\n=== END PLAYBOOK ===\n"
+            p += kb_text + "\n\n=== END PLAYBOOK ===\n"
     if introspect:
         p += (
             "\nAnswer in EXACTLY this 3-line format (nothing else):\n"

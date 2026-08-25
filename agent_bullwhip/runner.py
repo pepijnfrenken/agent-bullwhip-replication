@@ -46,6 +46,13 @@ CONFIGS: dict[str, dict] = {
     "kb_pointer_gated": {"kb": True, "kb_placement": "pointer",
                          "introspect": True, "conf_threshold": 0.5,
                          "anchor_margin": 6},            # pointer + self-gate
+    # ---- Wave 2d: generalizable (domain-agnostic) KB — transfer test ----
+    "kb_general": {"kb": True, "kb_file": "GENERAL_KB.md"},              # general principles only
+    "kb_general_introspect": {"kb": True, "kb_file": "GENERAL_KB.md",
+                              "introspect": True},                       # general + trace
+    "kb_general_gated": {"kb": True, "kb_file": "GENERAL_KB.md",
+                         "introspect": True, "conf_threshold": 0.5,
+                         "anchor_margin": 6},            # general + self-gate
     # ---- deterministic baselines ----
     "mirror": {"_baseline": "mirror"},
     "order_up_to": {"_baseline": "order_up_to"},
