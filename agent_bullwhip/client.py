@@ -35,16 +35,29 @@ def chat(
     max_tokens: int = 64,
     n: int = 1,
     timeout: int = 90,
-    retries: int = 6,
+    retries: int = 10,
 ) -> list[str]:
     """Return n sampled completions. Retries with backoff on 429/5xx/network errors.
 
     Token usage is stored on the caller via the `token_sink` mechanism: this module
     keeps a module-level `last_usage` dict the agent layer reads after each call.
+    Prompt-hash collision check: module-level `prompt_hashes` list records a short
+    hash of the concatenated messages each call, so a post-hoc analysis can detect
+    whether identical prompts were sent repeatedly (cache-collision risk).
     """
     global last_usage
     model = model or DEFAULT_MODEL
     headers = {"Authorization": f"Bearer {KEY}"} if KEY else {}
+    # per-call nonce to defeat serving-level caching (audit #4): inject a harmless
+    # random token into the last user message so identical semantic prompts never
+    # share a byte-identical body across runs/windows.
+    messages = list(messages)
+    for idx in range(len(messages) - 1, -1, -1):
+        if messages[idx].get("role") == "user":
+            m = dict(messages[idx])
+            m["content"] = m["content"] + f"\n<!-- cache-buster {os.urandom(4).hex()} -->"
+            messages[idx] = m
+            break
     body = {
         "model": model,
         "messages": messages,
@@ -52,12 +65,20 @@ def chat(
         "max_tokens": max_tokens,
         "n": n,
     }
+    # collision check: record a fingerprint of the exact prompt (cheap, no PII)
+    import hashlib
+    _fp = hashlib.sha256(
+        ("\x1f".join(m.get("content", "") for m in messages)).encode()
+    ).hexdigest()[:16]
+    prompt_hashes.append(_fp)
     last_err: Exception | None = None
     for attempt in range(retries):
         try:
             resp = requests.post(f"{BASE}/chat/completions", headers=headers, json=body, timeout=timeout)
             if resp.status_code == 429:
-                time.sleep(3 + 3 * attempt)
+                # limit-1 endpoints: back off exponentially with jitter so our own
+                # retries don't collide with each other (3s, 6s, 12s, 24s, ...)
+                time.sleep(3 * (2 ** attempt) + os.urandom(1)[0] / 2)
                 continue
             resp.raise_for_status()
             data = resp.json()
@@ -87,6 +108,8 @@ def chat(
 last_usage: dict = {"prompt": 0, "completion": 0}
 # module-level reasoning sink (agent layer reads it after each call)
 last_reasoning: list | None = None
+# module-level prompt fingerprints (collision check; cleared by the runner per run)
+prompt_hashes: list[str] = []
 
 
 def parse_order(text: str) -> int | None:

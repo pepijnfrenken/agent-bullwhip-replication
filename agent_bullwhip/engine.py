@@ -72,17 +72,39 @@ class RunLog:
 
 
 def step_demand(t: int, pattern: str = "step") -> int:
-    """Canonical demand patterns. 'step' = classic beer game jump (4 then 8)."""
+    """Canonical demand patterns. 'step' = classic beer game jump (4 then 8).
+
+    'noisy' = step + AR(1)-style noise (seeded per-run via make_demand seed):
+    tests whether reliability conclusions survive when the deterministic floor
+    itself faces variance. Noise: d_t = step_demand + 0.5*(d_{t-1}-step_{t-1}) + eps,
+    eps ~ U{-2,-1,0,1,2}, clipped to [0, 20].
+    """
     if pattern == "constant":
         return 4
     if pattern == "step":
         return 8 if t >= 4 else 4
     if pattern == "shock":
         return 12 if t == 12 else (8 if t >= 4 else 4)
+    if pattern == "noisy":
+        raise ValueError("noisy needs make_demand (stateful)")
     raise ValueError(f"unknown demand pattern: {pattern}")
 
 
-def make_demand(horizon: int, pattern: str = "step") -> list[int]:
+def make_demand(horizon: int, pattern: str = "step", seed: int | None = None) -> list[int]:
+    """Demand vector. Deterministic patterns are identical across runs (that's the
+    point: CV isolates agent instability). 'noisy' uses a per-call RNG; pass a
+    seed for reproducibility (runner seeds per-run when pattern='noisy' so each
+    run sees a fresh realization while staying reproducible)."""
+    if pattern == "noisy":
+        import random
+        rng = random.Random(seed)
+        d: list[int] = []
+        prev_noise = 0.0
+        for t in range(horizon):
+            base = step_demand(t, "step")
+            prev_noise = 0.5 * prev_noise + rng.choice([-2, -1, 0, 1, 2])
+            d.append(max(0, min(20, base + int(round(prev_noise)))))
+        return d
     return [step_demand(t, pattern) for t in range(horizon)]
 
 
@@ -107,9 +129,15 @@ def run_game(
         # 1) agents place orders simultaneously, on state known at start of week t.
         orders: dict[str, int] = {}
         for r in ROLES:
-            incoming_now = demand[t] if r == "retailer" else orders[ROLES[ROLES.index(r) - 1]]
-            # paper timing: order placed on info through t-1 -> use prev_incoming in
-            # the prompt; but current-week incoming is also visible to the model (HBR).
+            # AUDIT2 FIX: only the retailer sees the CURRENT week's exogenous customer
+            # demand. Upstream tiers must NOT see the tier-below's same-week order
+            # (that is a one-week lookahead the deterministic floor doesn't get, and
+            # it systematically advantages the LLM — see AUDIT2.md §3). They decide on
+            # information through t-1 only (incoming_last).
+            if r == "retailer":
+                incoming_now = demand[t]
+            else:
+                incoming_now = None
             ctx = {
                 "role": r,
                 "t": t,

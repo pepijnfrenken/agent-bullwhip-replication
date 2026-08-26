@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
+import re
 
 from .client import chat, parse_order
 from . import client as client_mod
@@ -72,6 +73,7 @@ class LLMAgentConfig:
     kb_file: str = "PROMPT_KB.md"          # which KB file to inject (domain | GENERAL_KB.md)
     kb_placement: str = "inline"           # "inline" (user msg) | "system" (system msg) | "pointer" (guide only)
     conf_threshold: float | None = None    # below this, fall back to anchor (self-gate)
+    consistency_gate: bool = False         # verbal-consistency gate: thinking says "cover backlog"/"order-up-to" but order=0 with backlog>0 -> anchor
 
 
 class LLMAgent:
@@ -150,12 +152,35 @@ class LLMAgent:
                                 "reasoning": best.get("reasoning", ""),
                                 "thinking": best.get("thinking", ""),
                                 "api_reasoning": api_reason, "gated": True,
+                                "gated_verbal": False,
                                 "order_used": int(safe)})
             return self._apply_wrappers(ctx, int(safe))
+        # verbal-consistency gate: the model *says* it should cover the backlog /
+        # order up to target, but emits order=0 while a backlog exists. That is the
+        # dominant failure mode from trace mining (thinking names the right policy,
+        # the number says nothing) — override to the FULL deterministic floor for
+        # that state (NOT the anchor±margin, which under-orders under high backlog).
+        if self.cfg.consistency_gate and int(order) == 0 and ctx.get("backlog", 0) > 0:
+            text = f"{best.get('thinking', '')} {best.get('reasoning', '')}".lower()
+            if re.search(r"cover (the )?backlog|backlog (is|of|first)|order-?up-?to|not over-?react|pipelin|outstanding", text):
+                # full deterministic floor for this state (no anchor±margin clamp,
+                # which under-orders under high backlog). Use a FRESH OrderUpToAgent:
+                # self.anchor is stateful (running _forecast across the game), and we
+                # want the pure order-up-to for this exact state, not the drift.
+                from .agents import OrderUpToAgent as _OUTA
+                safe = _OUTA()(ctx)
+                self.traces.append({"ctx": ctx, "order": order, "confidence": conf,
+                                    "reasoning": best.get("reasoning", ""),
+                                    "thinking": best.get("thinking", ""),
+                                    "api_reasoning": api_reason, "gated": True,
+                                    "gated_verbal": True,
+                                    "order_used": int(safe)})
+                return self._apply_wrappers(ctx, int(safe))
         self.traces.append({"ctx": ctx, "order": order, "confidence": conf,
                             "reasoning": best.get("reasoning", ""),
                             "thinking": best.get("thinking", ""),
                             "api_reasoning": api_reason, "gated": False,
+                            "gated_verbal": False,
                             "order_used": int(order)})
         return self._apply_wrappers(ctx, int(order))
 
@@ -200,6 +225,11 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
         if variant == "weighted"
         else "minimize total supply chain cost"
     )
+    incoming_line = (
+        f"- Incoming order from your customer this week: {ctx['incoming_now']}\n"
+        if ctx.get("incoming_now") is not None
+        else "- Incoming order from your customer this week: not yet known (you decide on last week's information)\n"
+    )
     p = (
         f"You are the {role.upper()} in a four-stage beer supply chain:\n"
         "Retailer -> Wholesaler -> Distributor -> Factory.\n"
@@ -211,8 +241,8 @@ def build_prompt(role: str, ctx: dict, variant: str = "default",
         f"- Backlog (unfilled orders owed to your customer): {ctx['backlog']}\n"
         f"- Outstanding orders (ordered but not yet received): {ctx['outstanding']}\n"
         f"- Incoming order from your customer last week: {ctx['incoming_last']}\n"
-        f"- Incoming order from your customer this week: {ctx['incoming_now']}\n"
-        f"- Your recent orders: {ctx['last_orders']}\n\n"
+        + incoming_line
+        + f"- Your recent orders: {ctx['last_orders']}\n\n"
         "Holding cost is $1 per unit per week; backlog cost is $2 per unit per week.\n"
         "Shipments from your supplier take 2 weeks to arrive.\n\n"
     )

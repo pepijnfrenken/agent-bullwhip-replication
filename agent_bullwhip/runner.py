@@ -46,6 +46,13 @@ CONFIGS: dict[str, dict] = {
     "kb_pointer_gated": {"kb": True, "kb_placement": "pointer",
                          "introspect": True, "conf_threshold": 0.5,
                          "anchor_margin": 6},            # pointer + self-gate
+    # ---- Wave 2e: verbal-consistency gate (trace-driven ablation) ----
+    # pointer + self-gate + verbal-consistency gate: if the model says "cover the
+    # backlog / order-up-to" but emits order=0 with a backlog, override to anchor.
+    # Directly targets the dominant failure mode found in trace mining.
+    "kb_pointer_verbal": {"kb": True, "kb_placement": "pointer",
+                          "introspect": True, "conf_threshold": 0.5,
+                          "anchor_margin": 6, "consistency_gate": True},
     # ---- Wave 2d: generalizable (domain-agnostic) KB — transfer test ----
     "kb_general": {"kb": True, "kb_file": "GENERAL_KB.md"},              # general principles only
     "kb_general_introspect": {"kb": True, "kb_file": "GENERAL_KB.md",
@@ -72,15 +79,26 @@ def make_agents(config: dict, model: str, tag: str | None = None) -> dict:
 def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, outdir: Path) -> dict:
     cfg = CONFIGS[name]
     tag = f"{model}-{name}"
-    demand = make_demand(horizon, pattern)
     sim_cfg = SimConfig(horizon=horizon)
     results: list[dict] = []
     run_logs = []
     t0 = time.time()
     total_prompt_tokens = total_completion_tokens = 0
+    collision_total = 0
+    collision_runs = 0
     for i in range(runs):
         try:
+            # 'noisy' demand: fresh seeded realization per run (reproducible).
+            # Deterministic patterns stay identical across runs (CV isolates
+            # agent instability — that's the paper's design).
+            if pattern == "noisy":
+                demand = make_demand(horizon, pattern, seed=1000 + i)
+            else:
+                demand = make_demand(horizon, pattern)
             agents = make_agents(cfg, model, tag=tag)
+            # fresh prompt-hash log per run (module-level list, cleared before)
+            from . import client as client_mod
+            client_mod.prompt_hashes.clear()
             log = run_game(agents, demand, sim_cfg)
             log.agents = agents  # attach for failure metrics
             run_logs.append(log)
@@ -88,6 +106,12 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
             comp_tok = sum(getattr(a, "completion_tokens", 0) for a in agents.values())
             total_prompt_tokens += prompt_tok
             total_completion_tokens += comp_tok
+            # collision check: any repeated exact-prompt fingerprint within the run
+            hashes = client_mod.prompt_hashes
+            dups = len(hashes) - len(set(hashes))
+            if dups:
+                collision_total += dups
+                collision_runs += 1
             results.append({
                 "run": i,
                 "config": name,
@@ -99,6 +123,7 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
                 "failures": {r: agents[r].failures for r in ROLES},
                 "calls": {r: agents[r].calls for r in ROLES},
                 "tokens": {"prompt": prompt_tok, "completion": comp_tok},
+                "prompt_hash_dups": dups,
                 # Wave 2: per-decision traces (order/confidence/reasoning/gated) for gap mining
                 "traces": {r: getattr(agents[r], "traces", []) for r in ROLES},
             })
@@ -122,6 +147,10 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
         "wall_sec": time.time() - t0,
         "tokens": {"prompt": total_prompt_tokens, "completion": total_completion_tokens,
                    "total": total_prompt_tokens + total_completion_tokens},
+        # cache-collision check: repeated exact-prompt fingerprints (across runs, an
+        # identical week-1 prompt would appear 30x; within a run it's a red flag)
+        "prompt_hash_dups_total": collision_total,
+        "prompt_hash_dups_runs": collision_runs,
     })
     summary_path = outdir / f"{tag}.summary.json"
     summary_path.write_text(json.dumps(metrics, indent=2, default=float))
