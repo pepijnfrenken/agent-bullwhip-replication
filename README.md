@@ -8,15 +8,15 @@ Independent replication + extension of **arXiv 2605.17036** — *Reliability and
 
 **Where the intelligence in an "AI agent" actually lives: the deterministic wrapper, not the model.** We replicated the paper's Beer Game with free-API LLM agents and found:
 
-1. **Plain LLM agents are instability machines** — baseline cost CV 4.97 (fixed demand), worse than the paper's 0.13–0.46. The paper's reliability concern replicates, amplified.
-2. **A deterministic anchor (order-up-to) + confidence-gate wrapper tames them completely** — `kb_system_gated` = 4,113 / CV 0.073 (fixed, interleaved), ~12% above the floor, and 10–22× better than the ungated twin in the same windows.
+1. **Plain LLM agents are instability machines** — baseline cost CV ≈ 3–5 (worse under noise), far above the paper's 0.13–0.46. The paper's reliability concern replicates, amplified.
+2. **A deterministic anchor (order-up-to) + confidence-gate wrapper tames them completely** — `kb_system_gated` = 4,113 / CV 0.073 (fixed demand, interleaved), ~12% above the floor, and 10–22× better than the ungated twin in the same windows.
 3. **But the wrapper, not the LLM, is the entire win** — wrapper-only ablation = exactly 3,681 (the floor); the LLM inside adds +12–34% cost on fixed demand. The LLM is a passenger being pulled to safety.
-4. **Under noisy demand, a *tuned* formula ties the LLM** — a 1-minute (θ,λ) sweep (4,701) matches the gated LLM (4,849); the apparent "LLM beats the formula" result was an artifact of benchmarking against an *untuned* (3.0, 0.5) and a same-week information leak that has now been fixed.
-5. **The apparent LLM advantage under uncertainty was lookahead, not reasoning** — upstream tiers were seeing the tier-below's current-week order (`incoming_now`); a deterministic floor given the same information scored 37–40% below the LLM. **That leak is now removed** (see AUDIT2 §3, fix applied).
+4. **Under noisy demand, the formula beats the LLM — decisively, once information is equal.** A same-week information leak (`incoming_now`) gave LLM agents a one-week lookahead the formula lacked; a deterministic floor with that leak scored 37–40% below the LLM. **With the leak removed** (AUDIT2 fix): tuned floor (θ=3.5, λ=0.2) = **4,701** (OOS 4,616–4,970) vs leak-free **kb_system_gated 5,973** and **kb_pointer_verbal 5,424** — the tuned formula wins by **10–20% on cost with lower CV**.
+5. **The apparent LLM advantage under uncertainty was lookahead, not reasoning.** When information is equal, a 1-minute parameter sweep beats the best LLM agent on cost AND consistency.
 
 **Honest conclusion: on this task, deterministic structure + tuned formulas beat LLM judgment on cost; LLM agents only appear competitive when handed information the formulas don't get. The "agent" is the wrapper.**
 
-*(Full evidence: `AUDIT.md`, `AUDIT2.md`, `results/interleaved_val2/`, `results/wrapper_only/`, `results/noisy_interleaved/`.)*
+*(Full evidence: `AUDIT.md`, `AUDIT2.md`, `results/interleaved_val2/`, `results/wrapper_only/`, `results/noisy_interleaved/`, `results/noisy_leakfree/`.)*
 
 ## The question
 

@@ -1,5 +1,12 @@
 # Changes & Audit Log
 
+## 2026-08-26 — Leak-free noisy re-run (final clean dataset)
+
+- Re-ran the noisy-demand arm **with the leak fix in place** (`results/noisy_leakfree/`, interleaved, seed 7, 10 passes × 4 configs, 40/40, 0 failures).
+- **Final leak-free verdict:** tuned floor (θ=3.5, λ=0.2) = 4,701 (OOS 4,616–4,970) beats **kb_system_gated 5,973** and **kb_pointer_verbal 5,424** under noise. The tuned formula wins by 10–20% on cost with lower CV (0.092 vs 0.20). `kb_pointer_verbal` ties the *untuned* floor (5,424 vs 5,521, p=0.75) — but that's the deterministic anchor inside it, not model judgment (40% of its decisions are mirror fallbacks).
+- Added `oos_floor.py`: out-of-sample split-half tuned-floor check (4,616–4,970 across three splits).
+- README TL;DR updated to the final audit-surviving story.
+
 ## 2026-08-26 — Post-AUDIT2 fixes
 
 ### 1. Same-week information leak removed (AUDIT2 §3, HIGH)
