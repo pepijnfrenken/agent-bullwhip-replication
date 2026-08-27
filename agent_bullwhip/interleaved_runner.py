@@ -74,7 +74,7 @@ def main() -> None:
     ap.add_argument("--runs", type=int, default=30)
     ap.add_argument("--horizon", type=int, default=36)
     ap.add_argument("--model", default=os.environ.get("FREEINFERENCE_MODEL", "deepseek-v4-flash"))
-    ap.add_argument("--pattern", default="step", choices=["step", "shock", "constant", "noisy"])
+    ap.add_argument("--pattern", default="step", choices=["step", "shock", "constant", "noisy", "chaotic", "wild"])
     ap.add_argument("--outdir", default="results/interleaved")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--wrapper-only", action="store_true",
@@ -117,12 +117,12 @@ def main() -> None:
     for i in range(args.runs):
         order = configs[:]
         rng.shuffle(order)
+        # AUDIT3 FIX: generate ONE demand per pass (shared by all configs) and seed
+        # EVERY pattern. Previously chaotic/wild drew a fresh entropy-seeded path
+        # per (pass, config), destroying the within-pass pairing entirely.
+        demand = make_demand(args.horizon, args.pattern, seed=1000 + i)
         for c in order:
             try:
-                if args.pattern == "noisy":
-                    demand = make_demand(args.horizon, "noisy", seed=1000 + i)
-                else:
-                    demand = make_demand(args.horizon, args.pattern)
                 agents = make_agents(CONFIGS[c], args.model, tag=f"{args.model}-{c}")
                 if args.wrapper_only:
                     # wrapper-only ablation: every agent's order is forced to the anchor
