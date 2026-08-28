@@ -6,7 +6,7 @@ from pathlib import Path
 from statistics import median
 import re
 
-from .client import chat, parse_order
+from .client import chat, parse_order, parse_order_prefer_label
 from . import client as client_mod
 from .introspect import parse_introspection
 
@@ -121,7 +121,7 @@ class LLMAgent:
         self.last_api_reasoning = reasons or [None] * len(samples)
         if self.cfg.introspect:
             return self._decide_introspect(ctx, samples)
-        orders = [parse_order(s) for s in samples]
+        orders = [parse_order_prefer_label(s) for s in samples]
         parsed = [o for o in orders if o is not None]
         if not parsed:
             self.failures += 1

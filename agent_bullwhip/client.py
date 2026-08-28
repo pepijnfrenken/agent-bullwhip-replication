@@ -32,7 +32,7 @@ def chat(
     messages: list[dict],
     model: str | None = None,
     temperature: float = 0.7,
-    max_tokens: int = 64,
+    max_tokens: int | None = None,
     n: int = 1,
     timeout: int = 90,
     retries: int = 10,
@@ -47,6 +47,10 @@ def chat(
     """
     global last_usage
     model = model or DEFAULT_MODEL
+    # Reasoning-heavy models (GLM) need headroom: their THINKING burns tokens
+    # before the answer. Default 64 is fine for DeepSeek/Qwen but starves GLM.
+    if max_tokens is None:
+        max_tokens = 2048 if "glm" in model.lower() else 64
     headers = {"Authorization": f"Bearer {KEY}"} if KEY else {}
     # per-call nonce to defeat serving-level caching (audit #4): inject a harmless
     # random token into the last user message so identical semantic prompts never
@@ -116,6 +120,19 @@ def parse_order(text: str) -> int | None:
     """First integer in the model response; None if unparseable (instruction failure)."""
     m = _INT_RE.search(text or "")
     return int(m.group()) if m else None
+
+
+_ORDER_LABEL_RE = re.compile(r"\bORDER\s*[:\-]?\s*(-?\d+)", re.IGNORECASE)
+
+
+def parse_order_prefer_label(text: str) -> int | None:
+    """Parse order, preferring an explicit ORDER: label (GLM format)."""
+    if not text:
+        return None
+    m = _ORDER_LABEL_RE.search(text)
+    if m:
+        return int(m.group(1))
+    return parse_order(text)
 
 
 def list_models() -> list[str]:
