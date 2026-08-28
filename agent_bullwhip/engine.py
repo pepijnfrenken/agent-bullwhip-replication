@@ -105,6 +105,45 @@ def make_demand(horizon: int, pattern: str = "step", seed: int | None = None) ->
             prev_noise = 0.5 * prev_noise + rng.choice([-2, -1, 0, 1, 2])
             d.append(max(0, min(20, base + int(round(prev_noise)))))
         return d
+    if pattern == "chaotic":
+        # Regime-switching: demand jumps between low/mid/high regimes, with AR(1)
+        # noise and occasional big shocks. Non-stationary but structured — a tuned
+        # fixed-parameter formula should start to degrade here (its fit goes stale
+        # when the regime moves).
+        import random
+        rng = random.Random(seed)
+        d: list[int] = []
+        regime = rng.choice([4, 8, 16])
+        prev_noise = 0.0
+        for t in range(horizon):
+            if rng.random() < 0.08:  # regime switch ~every 12 weeks
+                regime = rng.choice([4, 8, 16])
+            prev_noise = 0.5 * prev_noise + rng.choice([-3, -2, -1, 0, 1, 2, 3])
+            val = regime + prev_noise
+            if rng.random() < 0.05:  # shock ~2x per horizon
+                val += rng.choice([-12, -10, 10, 12, 16])
+            d.append(max(1, min(40, int(round(val)))))
+        return d
+    if pattern == "wild":
+        # Geometric random walk + rare jumps/crashes. Multiplicative and
+        # non-stationary — a fixed (theta, lambda) smoothing formula cannot track
+        # this; this is the environment where an adaptive agent should finally
+        # earn its keep.
+        import random
+        rng = random.Random(seed)
+        d: list[int] = []
+        val = 8.0
+        for t in range(horizon):
+            shock = rng.random()
+            if shock < 0.06:
+                val *= rng.choice([2.5, 3.0, 4.0])  # rare jump up
+            elif shock < 0.10:
+                val *= rng.choice([0.25, 0.35])      # rare crash
+            else:
+                val *= 1.0 + rng.gauss(0, 0.25)     # multiplicative noise
+            val = max(1.0, min(60.0, val))
+            d.append(int(round(val)))
+        return d
     return [step_demand(t, pattern) for t in range(horizon)]
 
 
