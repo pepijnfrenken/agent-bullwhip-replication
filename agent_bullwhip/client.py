@@ -122,7 +122,7 @@ def parse_order(text: str) -> int | None:
     return int(m.group()) if m else None
 
 
-_ORDER_LABEL_RE = re.compile(r"\bORDER\s*[:\-]?\s*(-?\d+)", re.IGNORECASE)
+_ORDER_LABEL_RE = re.compile(r"(?:^|\n)\s*ORDER\s*[:=]?\s*(-?\d+)", re.IGNORECASE | re.MULTILINE)
 
 
 def parse_order_prefer_label(text: str) -> int | None:

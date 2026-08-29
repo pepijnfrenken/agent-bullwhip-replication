@@ -110,7 +110,7 @@ What interleaving did *not* fix: the gated-vs-ungated twin gap reproduced under 
 
 ### 4. Audit #3 — the seeding bug *(chaotic/wild arms, unseeded)*
 
-The crossover experiment ran **unseeded** — each config per pass drew independent demand, silently destroying the pairing, the interleaving control, and the tuned baselines (tuned on demand the LLM never saw). The "crossover" was an artifact of unshared randomness. Fix: every pattern seeded, one shared demand per pass, regression tests locking the contract. **48/48 tests pass** (unit tests — they bless the code, not the ten-pass means).
+The crossover experiment ran **unseeded** — each config per pass drew independent demand, silently destroying the pairing, the interleaving control, and the tuned baselines (tuned on demand the LLM never saw). The "crossover" was an artifact of unshared randomness. Fix: every pattern seeded, one shared demand per pass, regression tests locking the contract. **53/53 tests pass** (unit tests — they bless the code, not the ten-pass means).
 
 ### 5. The walk-forward objection
 
@@ -181,7 +181,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 # tuned-floor sweep:
 .venv/bin/python tuned_floor.py
 
-# audit regression suite: 48 tests
+# audit regression suite: 53 tests
 .venv/bin/python -m pytest tests/ -q
 ```
 
