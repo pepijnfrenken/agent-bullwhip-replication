@@ -169,18 +169,20 @@ The crossover experiment ran **unseeded** — each config per pass drew independ
 
 **Headline.** The tool agent **cannot beat the 1970s order-up-to formula**: game cost **6,948 vs 3,681 floor (+89%)**. Match-to-floor 61/144 (**42.4%**); when it deviates it over-orders 37.5% and under-orders 20.1% of decisions (mean |Δ| 7.96 units, max over +117, max under −177).
 
-**The failure taxonomy (the actual finding).**
+**The failure taxonomy (the actual finding, audit-verified from the trace).**
 
 | failure class | rate | detail |
 |---|---|---|
-| **Silent mirror fallback** | **43.8%** (63/144) | produced no valid order → copied the previous one. The same "silent fallback" anti-pattern seen in the verbal gate, now quantified at tool-agent level. |
+| **Mirror-after-error** | **13.9%** (20/144) | tool error occurred AND the returned order equals the previous week's order (the measurable version of the silent-fallback anti-pattern). No parse-fail records exist in the trace (0/144). |
 | **Broken code** | **22.9%** (33/144) | undefined names (`outstanding_sum`, `sim`, `sqrt` not imported, `demand_fn` never defined), TypeError 1, IndexError 2. |
 | **Recovery vs give-up** | 54% / 46% | of the 35 broken-code decisions: 19 issued another tool call (recovered), 16 gave up → mirrored. |
-| **Error is catastrophic** | 51% → ~10% | when code runs clean the model matches the floor ~51% of the time; when a tool error occurs, match drops to ~10% and mean |Δ| roughly doubles. |
-| **Reasoning collapse** | ~4,871 → ~699 chars | clean decisions carry ~4,871 chars of reasoning; error decisions ~699 — the model stops reasoning and just outputs a number. |
-| **Knows the right family** | high | base-stock formula in 95/144, forecast/mean in 128/144, simulation/brute-force in 110/144 — the strategy is right, the *execution* is what botches. |
+| **Error is catastrophic** | 51.4% → 12.1% | when code runs clean the model matches the floor 51.4% (57/111); when a tool error occurs, match drops to 12.1% (4/33) and mean |Δ| roughly doubles. |
+| **Code-length drop on error** | 1,178 → 765 chars | clean decisions carry ~1,178 chars of code; error decisions ~765 — the model writes less and stops reasoning. |
+| **Knows the right family** | high | base-stock formula in 95/144, forecast/mean in 128/144, simulation/brute-force in 109/144 — the strategy is right, the *execution* is what botches. |
 
-**Interpretation.** This is the same story as the main result, extended to tool use: the model knows the right *family* of solutions (order-up-to, base-stock, simulation), but execution failures (undefined names, wrong references, stopping after an error) make it worse than the formula — and the silent mirror fallback hides 43.8% of those failures inside the cost number. The intelligence is still in the deterministic layer; the tool-enabled model adds cost, not capability.
+> **Audit note (2026-08-30):** the earlier draft's "43.8% silent mirror fallback (63/144)" was **not supported** by the trace — there are 0 parse-fail records and no explicit fallback flag. The measurable form is **20/144 mirror-after-error (13.9%)** + the 12.1%-match-on-error collapse. The 6,948 game cost comes from the run summary (`results/toolagent_cc/*.summary.json`), not from per-decision fields in run0.jsonl. This section states only what the trace supports.
+
+**Interpretation.** This is the same story as the main result, extended to tool use: the model knows the right *family* of solutions (order-up-to, base-stock, simulation), but execution failures (undefined names, wrong references, stopping after an error) make it worse than the formula — and the mirror-after-error pattern (13.9% of decisions) hides part of that failure inside the cost number. The intelligence is still in the deterministic layer; the tool-enabled model adds cost, not capability.
 
 ### To be continued (TBC)
 
