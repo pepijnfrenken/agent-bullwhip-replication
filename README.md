@@ -161,7 +161,37 @@ The crossover experiment ran **unseeded** — each config per pass drew independ
 7. **Retailer lookahead residual** — shared, ~7% of floor cost to the holder, documented; a deviation from the paper's timing, not a demonstrated LLM-side bias.
 8. **Compute is quoted as engineering cost** (tokens + wall-clock), not scientific FLOPs.
 
-## Reproduce
+## Tool-calling arm — preliminary result (TBC with a better harness + model)
+
+> **Status: PRELIMINARY / TO BE CONTINUED.** One full game (n=1, 144 decisions), one model (Qwen/Qwen3.8-Flash with tool access), real engine, full per-decision trace. The result below is directional — the taxonomy is the finding, not the cost point. A stronger, more consistent tool-calling model + a harness with better error recovery is the planned continuation (see the TBC list at the end).
+
+**Setup.** `ToolAgent` may call a `run_python` tool to compute each week's order; the tool result (stdout or error) comes back, the agent decides, and the decision is recorded alongside what the deterministic floor would have ordered for the same state. 144 decisions (4 roles × 36 weeks) on the fixed step demand. Trace: `results/toolagent_traces/run0.jsonl` (one JSON per decision: ctx, code, exec result, floor comparison, error class).
+
+**Headline.** The tool agent **cannot beat the 1970s order-up-to formula**: game cost **6,948 vs 3,681 floor (+89%)**. Match-to-floor 61/144 (**42.4%**); when it deviates it over-orders 37.5% and under-orders 20.1% of decisions (mean |Δ| 7.96 units, max over +117, max under −177).
+
+**The failure taxonomy (the actual finding).**
+
+| failure class | rate | detail |
+|---|---|---|
+| **Silent mirror fallback** | **43.8%** (63/144) | produced no valid order → copied the previous one. The same "silent fallback" anti-pattern seen in the verbal gate, now quantified at tool-agent level. |
+| **Broken code** | **22.9%** (33/144) | undefined names (`outstanding_sum`, `sim`, `sqrt` not imported, `demand_fn` never defined), TypeError 1, IndexError 2. |
+| **Recovery vs give-up** | 54% / 46% | of the 35 broken-code decisions: 19 issued another tool call (recovered), 16 gave up → mirrored. |
+| **Error is catastrophic** | 51% → ~10% | when code runs clean the model matches the floor ~51% of the time; when a tool error occurs, match drops to ~10% and mean |Δ| roughly doubles. |
+| **Reasoning collapse** | ~4,871 → ~699 chars | clean decisions carry ~4,871 chars of reasoning; error decisions ~699 — the model stops reasoning and just outputs a number. |
+| **Knows the right family** | high | base-stock formula in 95/144, forecast/mean in 128/144, simulation/brute-force in 110/144 — the strategy is right, the *execution* is what botches. |
+
+**Interpretation.** This is the same story as the main result, extended to tool use: the model knows the right *family* of solutions (order-up-to, base-stock, simulation), but execution failures (undefined names, wrong references, stopping after an error) make it worse than the formula — and the silent mirror fallback hides 43.8% of those failures inside the cost number. The intelligence is still in the deterministic layer; the tool-enabled model adds cost, not capability.
+
+### To be continued (TBC)
+
+This arm is intentionally published as **preliminary**. The planned continuation, with a better harness and a more consistent tool-calling model:
+
+1. **Better model** — a model with reliable tool-calling (fewer undefined-name errors; better recovery after tool errors) instead of Qwen3.8-Flash.
+2. **Better harness** — the harness should: (a) catch faulty tool calls **mid-flight** and feed the error back for a retry loop, (b) gate/override on repeated failure (the deterministic floor as the fallback when the tool path degrades), (c) detect the silent-mirror failure mode and surface it, not hide it, (d) checkpoint per decision so a mid-game outage doesn't restart the whole game.
+3. **More games** — n≥3 games (or more) on the step pattern to confirm the taxonomy is stable, plus one noisy-demand arm to see whether tool use helps when the world isn't deterministic.
+4. **A tool-error-aware writeup** — the 51%→10% match-drop and reasoning collapse quantified across runs; whether recovery attempts (54%) ever actually fix the decision; whether gating on tool-error rate beats the fixed verbal gate.
+
+The trace collector and analyzers (`collect_tool_traces.py`, `analyze_toolagent.py`, `analyze_tool_traces.py`) are in the repo and reproduce everything above from `results/toolagent_traces/run0.jsonl`.
 
 ```bash
 # env: FREEINFERENCE_API_KEY set (model defaults to deepseek-v4-flash)
