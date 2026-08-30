@@ -210,6 +210,90 @@ class LLMAgent:
         return int(max(0, q)) if q is not None else 0
 
 
+class ToolAgent(LLMAgent):
+    """LLM agent with a per-decision `run_python` tool.
+
+    Each week the model sees the same state as the plain LLMAgent, but can
+    call `run_python(code)` to compute/validate its order (fit a formula,
+    run a mini-simulation, compute a forecast, etc.) before answering.
+    The final answer must still be an integer order.
+    """
+
+    def __init__(self, role: str, cfg: LLMAgentConfig | None = None,
+                 max_tool_rounds: int = 1):
+        super().__init__(role, cfg)
+        self.max_tool_rounds = max_tool_rounds
+        self.tool_traces: list[list[dict]] = []  # per-decision tool calls
+
+    @staticmethod
+    def _tools() -> list[dict]:
+        return [{
+            "type": "function",
+            "function": {
+                "name": "run_python",
+                "description": (
+                    "Execute Python code to help you compute the order. You have "
+                    "math, statistics, and numpy available. Use print() to see "
+                    "results. Example: compute a moving-average forecast and a "
+                    "safety stock, then print the resulting order."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "description": "Python code to run. Use print() for output.",
+                        }
+                    },
+                    "required": ["code"],
+                },
+            },
+        }]
+
+    def decide(self, ctx: dict) -> int | None:
+        from . import client as client_mod
+        prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant)
+        # add the tool instruction (do NOT hand it the formula — we want to see
+        # whether it derives the order-up-to policy itself)
+        prompt += (
+            "\n\nYou may call the run_python tool to help compute your order: "
+            "fit a forecast, simulate possible outcomes, or calculate a safety "
+            "stock — whatever you think is best. You must actually call the "
+            "tool before answering. After you have the result, reply with ONLY "
+            "an integer: the number of units to order this week."
+        )
+        self.calls += 1
+        exec_globals = {}
+        try:
+            import math, statistics
+            exec_globals["math"] = math
+            exec_globals["statistics"] = statistics
+            try:
+                import numpy as np
+                exec_globals["np"] = np
+            except Exception:
+                pass
+        except Exception:
+            pass
+        text, trace = client_mod.chat_with_tools(
+            [{"role": "user", "content": prompt}],
+            tools=self._tools(),
+            model=self.cfg.model,
+            temperature=self.cfg.temperature,
+            max_tool_rounds=self.max_tool_rounds,
+            exec_globals=exec_globals,
+        )
+        self.tool_traces.append(trace)
+        usage = getattr(client_mod, "last_usage", {}) or {}
+        self.prompt_tokens += usage.get("prompt", 0)
+        self.completion_tokens += usage.get("completion", 0)
+        order = parse_order_prefer_label(text)
+        if order is None:
+            self.failures += 1
+            return self._fallback(ctx)
+        return self._apply_wrappers(ctx, int(order))
+
+
 def build_prompt(role: str, ctx: dict, variant: str = "default",
                  introspect: bool = False, kb: bool = False,
                  kb_pointer: bool = False, kb_file: str = "PROMPT_KB.md") -> str:

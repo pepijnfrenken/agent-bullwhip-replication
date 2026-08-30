@@ -12,7 +12,7 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-from .agents import LLMAgent, LLMAgentConfig, MirrorAgent, OrderUpToAgent
+from .agents import LLMAgent, LLMAgentConfig, MirrorAgent, OrderUpToAgent, ToolAgent
 from .client import list_models
 from .engine import ROLES, SimConfig, make_demand, run_game
 from .metrics import compute_metrics
@@ -63,6 +63,8 @@ CONFIGS: dict[str, dict] = {
     # ---- deterministic baselines ----
     "mirror": {"_baseline": "mirror"},
     "order_up_to": {"_baseline": "order_up_to"},
+    # ---- Wave 4: tool-calling operator (run_python per decision) ----
+    "toolagent": {"_tool": True},   # LLM can call run_python each week before ordering
 }
 
 
@@ -73,12 +75,14 @@ def make_agents(config: dict, model: str, tag: str | None = None) -> dict:
         return {r: OrderUpToAgent() for r in ROLES}
     lcfg = {k: v for k, v in config.items() if not k.startswith("_")}
     lcfg["tag"] = tag or model
+    if config.get("_tool"):
+        return {r: ToolAgent(r, LLMAgentConfig(**lcfg, model=model)) for r in ROLES}
     return {r: LLMAgent(r, LLMAgentConfig(**lcfg, model=model)) for r in ROLES}
 
 
 def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, outdir: Path) -> dict:
     cfg = CONFIGS[name]
-    tag = f"{model}-{name}"
+    tag = f"{model}-{name}".replace("/", "__")  # model IDs contain / — safe for filenames
     sim_cfg = SimConfig(horizon=horizon)
     results: list[dict] = []
     run_logs = []
@@ -87,49 +91,60 @@ def run_config(name: str, runs: int, model: str, horizon: int, pattern: str, out
     collision_total = 0
     collision_runs = 0
     for i in range(runs):
-        try:
-            # 'noisy' demand: fresh seeded realization per run (reproducible).
-            # Deterministic patterns stay identical across runs (CV isolates
-            # agent instability — that's the paper's design).
-            if pattern == "noisy":
-                demand = make_demand(horizon, pattern, seed=1000 + i)
-            else:
-                demand = make_demand(horizon, pattern)
-            agents = make_agents(cfg, model, tag=tag)
-            # fresh prompt-hash log per run (module-level list, cleared before)
-            from . import client as client_mod
-            client_mod.prompt_hashes.clear()
-            log = run_game(agents, demand, sim_cfg)
-            log.agents = agents  # attach for failure metrics
-            run_logs.append(log)
-            prompt_tok = sum(getattr(a, "prompt_tokens", 0) for a in agents.values())
-            comp_tok = sum(getattr(a, "completion_tokens", 0) for a in agents.values())
-            total_prompt_tokens += prompt_tok
-            total_completion_tokens += comp_tok
-            # collision check: any repeated exact-prompt fingerprint within the run
-            hashes = client_mod.prompt_hashes
-            dups = len(hashes) - len(set(hashes))
-            if dups:
-                collision_total += dups
-                collision_runs += 1
-            results.append({
-                "run": i,
-                "config": name,
-                "model": model,
-                "tag": tag,
-                "total_cost": log.total_cost(),
-                "orders": {r: log.orders(r) for r in ROLES},
-                "backlogs": {r: log.backlogs(r) for r in ROLES},
-                "failures": {r: agents[r].failures for r in ROLES},
-                "calls": {r: agents[r].calls for r in ROLES},
-                "tokens": {"prompt": prompt_tok, "completion": comp_tok},
-                "prompt_hash_dups": dups,
-                # Wave 2: per-decision traces (order/confidence/reasoning/gated) for gap mining
-                "traces": {r: getattr(agents[r], "traces", []) for r in ROLES},
-            })
-        except Exception as e:  # noqa: BLE001 - a failed run must not kill the matrix
-            results.append({"run": i, "config": name, "model": model, "tag": tag,
-                            "total_cost": None, "error": str(e)})
+        run_error = None
+        for run_attempt in range(5):  # retry transient endpoint failures per run
+            try:
+                # 'noisy' demand: fresh seeded realization per run (reproducible).
+                # Deterministic patterns stay identical across runs (CV isolates
+                # agent instability — that's the paper's design).
+                if pattern == "noisy":
+                    demand = make_demand(horizon, pattern, seed=1000 + i)
+                else:
+                    demand = make_demand(horizon, pattern)
+                agents = make_agents(cfg, model, tag=tag)
+                # fresh prompt-hash log per run (module-level list, cleared before)
+                from . import client as client_mod
+                client_mod.prompt_hashes.clear()
+                log = run_game(agents, demand, sim_cfg)
+                log.agents = agents  # attach for failure metrics
+                run_logs.append(log)
+                prompt_tok = sum(getattr(a, "prompt_tokens", 0) for a in agents.values())
+                comp_tok = sum(getattr(a, "completion_tokens", 0) for a in agents.values())
+                total_prompt_tokens += prompt_tok
+                total_completion_tokens += comp_tok
+                # collision check: any repeated exact-prompt fingerprint within the run
+                hashes = client_mod.prompt_hashes
+                dups = len(hashes) - len(set(hashes))
+                if dups:
+                    collision_total += dups
+                    collision_runs += 1
+                results.append({
+                    "run": i,
+                    "config": name,
+                    "model": model,
+                    "tag": tag,
+                    "total_cost": log.total_cost(),
+                    "orders": {r: log.orders(r) for r in ROLES},
+                    "backlogs": {r: log.backlogs(r) for r in ROLES},
+                    "failures": {r: agents[r].failures for r in ROLES},
+                    "calls": {r: agents[r].calls for r in ROLES},
+                    "tokens": {"prompt": prompt_tok, "completion": comp_tok},
+                    "prompt_hash_dups": dups,
+                    # Wave 2: per-decision traces (order/confidence/reasoning/gated) for gap mining
+                    "traces": {r: getattr(agents[r], "traces", []) for r in ROLES},
+                    # Wave 4: tool-calling traces (what code the model wrote)
+                    "tool_traces": {r: getattr(agents[r], "tool_traces", []) for r in ROLES},
+                })
+                run_error = None
+                break
+            except Exception as e:  # noqa: BLE001 - a failed run must not kill the matrix
+                run_error = e
+                if run_attempt < 4:  # transient endpoint flakiness: retry
+                    print(f"[run {i}] attempt {run_attempt} failed: {str(e)[:80]} — retrying", flush=True)
+                    time.sleep(10 * (run_attempt + 1))
+                else:
+                    results.append({"run": i, "config": name, "model": model, "tag": tag,
+                                    "total_cost": None, "error": str(e)})
         outdir.mkdir(parents=True, exist_ok=True)
         with open(outdir / f"{tag}.jsonl", "a") as f:
             f.write(json.dumps(results[-1]) + "\n")
