@@ -20,8 +20,9 @@ def test_tool_agent_tools_schema():
 def test_tool_agent_constructs():
     cfg = LLMAgentConfig(model="qwen3.6-35b", tag="test")
     a = ToolAgent("retailer", cfg)
-    assert a.max_tool_rounds == 1
+    assert a.max_tool_rounds == 3  # default now allows error-recovery retries
     assert a.tool_traces == []
+    assert a.last_decision_meta == {}
 
 
 def test_lint_code_catches_undefined_function():
@@ -77,6 +78,76 @@ def test_chat_with_tools_executes_code():
     assert trace[0]["name"] == "run_python"
     assert trace[0]["result"] == "391"
     assert text == "391"
+
+
+def test_chat_with_tools_error_recovery_loop(monkeypatch):
+    """A tool error must be fed back so the model can retry (round 2 allowed)."""
+    import agent_bullwhip.client as c
+    monkeypatch.setattr(c, "PROVIDER", "freeinference")
+    responses = [
+        # round 0: forced tool call -> broken code
+        {"choices": [{"message": {"role": "assistant", "content": "",
+                                   "tool_calls": [{"id": "c1", "type": "function",
+                                                   "function": {"name": "run_python",
+                                                                "arguments": '{"code": "print(undefined_var)"}'}}]}}]},
+        # round 1 (auto): model retries with fixed code
+        {"choices": [{"message": {"role": "assistant", "content": "",
+                                   "tool_calls": [{"id": "c2", "type": "function",
+                                                   "function": {"name": "run_python",
+                                                                "arguments": '{"code": "print(10+5)"}'}}]}}]},
+        # round 2 (none): final answer
+        {"choices": [{"message": {"role": "assistant", "content": "15"}}]},
+    ]
+    def fake_post(*a, **k):
+        # check tool_choice progression: required -> auto -> none
+        nonlocal responses
+        resp = responses.pop(0)
+        class R:
+            status_code = 200
+            def raise_for_status(self): pass
+            def json(self): return resp
+        return R()
+    monkeypatch.setattr(c.requests, "post", fake_post)
+    text, trace = c.chat_with_tools(
+        [{"role": "user", "content": "compute 10+5 with the tool"}],
+        tools=ToolAgent._tools(), model="test",
+        max_tool_rounds=3, force_tool=True, retries=1,
+    )
+    assert text == "15"
+    # two tool calls: first errored, second succeeded -> recovery engaged
+    assert len(trace) == 2
+    assert trace[0]["result"].startswith("ERROR")
+    assert "15" in trace[1]["result"]
+
+
+def test_chat_with_tools_final_round_forces_none(monkeypatch):
+    """The last round must force tool_choice='none' so the model answers."""
+    import agent_bullwhip.client as c
+    monkeypatch.setattr(c, "PROVIDER", "freeinference")
+    seen = []
+    def fake_post(*a, **k):
+        tc = k["json"]["tool_choice"]
+        seen.append(tc)
+        class R:
+            status_code = 200
+            def raise_for_status(self): pass
+            def json(self):
+                # always call a tool until forced to answer
+                if tc != "none":
+                    return {"choices": [{"message": {"role": "assistant", "content": "",
+                                                     "tool_calls": [{"id": "c", "type": "function",
+                                                                     "function": {"name": "run_python",
+                                                                                  "arguments": '{"code": "print(1)"}'}}]}}]}
+                return {"choices": [{"message": {"role": "assistant", "content": "42"}}]}
+        return R()
+    monkeypatch.setattr(c.requests, "post", fake_post)
+    text, _ = c.chat_with_tools(
+        [{"role": "user", "content": "hi"}],
+        tools=ToolAgent._tools(), model="test",
+        max_tool_rounds=2, force_tool=True, retries=1,
+    )
+    assert text == "42"
+    assert seen == ["required", "auto", "none"]
 
 
 def test_chat_with_tools_handles_error_body(monkeypatch):

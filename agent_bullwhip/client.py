@@ -13,7 +13,31 @@ from pathlib import Path
 
 import requests
 
-# account-level rate limit: minimum seconds to sleep before each API call.
+# 2026-08-31 — Tool-calling arm harness hardening (Wave 4 continuation)
+#
+# - **Error-recovery loop**: tool_choice now goes `required -> auto -> auto -> none`
+#   instead of `required -> none -> none`. The old flow made a model that errored
+#   on its FIRST tool call unable to retry (round 2+ forced 'none'). Now middle
+#   rounds use 'auto', so the model can retry after an error OR answer directly.
+#   ToolAgent default max_tool_rounds bumped 1 -> 3.
+# - **Consecutive-error nudge**: after a tool exec error, the harness appends a
+#   pointed "[harness] Your previous code call(s) errored..." message so the model
+#   fixes the bug or simplifies instead of silently giving up.
+# - **Fallback labeling**: ToolAgent now records `last_decision_meta` per decision
+#   with `is_fallback` / `mirror_after_error` flags (kills the silent-mirror
+#   laundering anti-pattern from AUDIT2/3).
+# - **Per-decision checkpointing**: collect_tool_traces.py writes each decision to
+#   JSONL immediately (resume-friendly; mid-game outage doesn't lose the run).
+# - **401 / quota-lie retry**: FreeInference free tier returns 200 + {"error":
+#   "Invalid or expired API key"} when the account is throttled (NOT a real auth
+#   failure). chat() and chat_with_tools() now retry 401s and the error-body lie
+#   with backoff instead of treating them as terminal.
+# - **Model probe tooling**: probe_tool_models_light.py / run_model_comparison.py
+#   = quota-aware, resumable multi-model tool-calling comparison (checkpoints per
+#   decision, 30s between calls, interleaved so a quota recovery benefits all).
+#   Tests: 66 pass (2 new: error-recovery loop, forced-final-round).
+#
+# Account-level rate limit: minimum seconds to sleep before each API call.
 # The endpoint returns 400 {"type":"rate_limited"} when we hammer it; pacing
 # keeps us under the limit (free tier is very restrictive). Bump via env
 # FREEINFERENCE_RATE_LIMIT_DELAY if needed. CommandCode has no such limit.
@@ -122,6 +146,12 @@ def chat(
             if resp.status_code == 429:
                 # limit-1 endpoints: back off exponentially with jitter so our own
                 # retries don't collide with each other (3s, 6s, 12s, 24s, ...)
+                time.sleep(3 * (2 ** attempt) + os.urandom(1)[0] / 2)
+                continue
+            if resp.status_code == 401:
+                # FreeInference intermittently 401s under load even with a valid
+                # key (observed 2026-08-31). Retry with backoff; treat as terminal
+                # only after exhausting retries.
                 time.sleep(3 * (2 ** attempt) + os.urandom(1)[0] / 2)
                 continue
             resp.raise_for_status()
@@ -377,12 +407,18 @@ def chat_with_tools(
             data = {"choices": [{"message": msg}],
                     "usage": {"prompt": 0, "completion": 0}}
         else:
-            # CommandCode rejects tool_choice="required"/"none" in thinking mode;
-            # use "auto" (round 0) and "none" (after) on FreeInference only.
-            if PROVIDER == "commandcode":
-                tc = "auto" if (_round == 0) else "none"
+            # Tool-choice strategy: round 0 forced (if force_tool) so the model
+            # MUST call the tool once; middle rounds "auto" so the model can
+            # retry after an error OR answer directly (this is what makes the
+            # error-recovery loop possible); final round "none" forces a final
+            # answer. CommandCode rejects tool_choice="required"/"none" in
+            # thinking mode, so it gets "auto" on round 0 as well.
+            if _round >= max_tool_rounds:
+                tc = "none"  # last round: must produce a final answer
+            elif force_tool and _round == 0 and PROVIDER != "commandcode":
+                tc = "required"
             else:
-                tc = "required" if (force_tool and _round == 0) else "none"
+                tc = "auto"
             payload: dict = {
                 "model": model,
                 "messages": messages,
@@ -410,7 +446,7 @@ def chat_with_tools(
                             f"{BASE}/chat/completions", headers=_HEADERS, json=payload,
                             timeout=(10, 45),
                         )
-                        if resp.status_code in (429, 500, 502, 503, 400):
+                        if resp.status_code in (429, 401, 500, 502, 503, 400):
                             if attempt == 0 and resp.status_code == 400:
                                 # log the 400 body once so we can diagnose (transient vs payload)
                                 try:
@@ -425,6 +461,11 @@ def chat_with_tools(
                                 if attempt >= 24:
                                     raise RuntimeError("tool-chat: upstream 429 for 25+ min")
                                 time.sleep(60)
+                                continue
+                            if resp.status_code == 401:
+                                # transient 401 (FreeInference under load): short
+                                # backoff, treat as retryable like other 5xx.
+                                time.sleep(min(2 ** attempt, 30))
                                 continue
                             time.sleep(min(2 ** attempt, 30))
                             continue
@@ -459,6 +500,13 @@ def chat_with_tools(
         if "choices" not in data or not data["choices"]:
             # endpoint returned an error body (e.g. {"error": {...}}) — retryable
             err_detail = data.get("error", {}).get("message", str(data)[:120])
+            # FreeInference free tier lies about quota exhaustion: it returns
+            # 200 + {"error":"Invalid or expired API key"} when throttled, not a
+            # real auth failure. Treat it as retryable (it clears in seconds).
+            if "invalid or expired" in err_detail.lower() or "rate" in err_detail.lower():
+                if "attempt" in locals() and attempt < retries - 1:
+                    time.sleep(min(2 ** attempt, 30))
+                    continue
             if "attempt" in locals() and attempt < retries - 1:
                 time.sleep(min(2 ** attempt, 30))
                 continue
@@ -521,6 +569,21 @@ def chat_with_tools(
                     result = buf.getvalue().strip() or "(no output)"
                 except Exception as e:
                     result = f"ERROR: {type(e).__name__}: {e}"
+                    # error-recovery nudge: after consecutive tool errors, tell
+                    # the model explicitly to fix the code (or fall back to a
+                    # simple formula) instead of silently giving up. Track the
+                    # error streak on the trace list.
+                    err_streak = 0
+                    for prev in reversed(tool_trace):
+                        if prev.get("result", "").startswith("ERROR"):
+                            err_streak += 1
+                        else:
+                            break
+                    if err_streak >= 1:
+                        result += ("\n\n[harness] Your previous code call(s) errored. "
+                                   "Fix the bug (check variable names, imports, syntax) "
+                                   "or simplify: a moving-average or order-up-to style "
+                                   "computation is enough. Do not repeat the same bug.")
             else:
                 result = f"ERROR: unknown tool {name}"
             tool_trace.append({"name": name, "arguments": args, "result": result,

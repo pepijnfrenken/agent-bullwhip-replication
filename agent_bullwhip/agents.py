@@ -220,10 +220,11 @@ class ToolAgent(LLMAgent):
     """
 
     def __init__(self, role: str, cfg: LLMAgentConfig | None = None,
-                 max_tool_rounds: int = 1):
+                 max_tool_rounds: int = 3):
         super().__init__(role, cfg)
         self.max_tool_rounds = max_tool_rounds
         self.tool_traces: list[list[dict]] = []  # per-decision tool calls
+        self.last_decision_meta: dict = {}       # per-decision fallback/mirror flags
 
     @staticmethod
     def _tools() -> list[dict]:
@@ -252,6 +253,7 @@ class ToolAgent(LLMAgent):
 
     def decide(self, ctx: dict) -> int | None:
         from . import client as client_mod
+        self.last_decision_meta = {}  # reset per decision
         prompt = build_prompt(self.role, ctx, self.cfg.prompt_variant)
         # add the tool instruction (do NOT hand it the formula — we want to see
         # whether it derives the order-up-to policy itself)
@@ -290,7 +292,21 @@ class ToolAgent(LLMAgent):
         order = parse_order_prefer_label(text)
         if order is None:
             self.failures += 1
+            # LABEL the fallback so it's never silent: record it on the agent's
+            # decision-level trace (AUDIT2/3 anti-pattern was an *unlabeled*
+            # fallback laundering the stats).
+            self.last_decision_meta = {"is_fallback": True,
+                                       "fallback_reason": "parse_fail"}
             return self._fallback(ctx)
+        # detect the mirror-after-error anti-pattern and surface it on the trace
+        if self.tool_traces:
+            last_tc = self.tool_traces[-1]
+            if isinstance(last_tc, list):
+                had_err = any(str(t.get("result", "")).startswith("ERROR")
+                              for t in last_tc if isinstance(t, dict))
+                if had_err:
+                    self.last_decision_meta = {"mirror_after_error": bool(
+                        int(order) == int(ctx.get("incoming_last", -1)))}
         return self._apply_wrappers(ctx, int(order))
 
 

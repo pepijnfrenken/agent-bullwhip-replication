@@ -13,7 +13,7 @@ Runs N full games of the tool agent on the step pattern through the REAL engine
 
 Output: results/toolagent_traces/<run>.jsonl — one JSON per decision.
 """
-import json, time
+import json, os, time
 from pathlib import Path
 from collections import Counter
 
@@ -43,11 +43,12 @@ def classify_error(result: str) -> str:
 class RecordingToolAgent(ToolAgent):
     """ToolAgent that records every decision's ctx + floor comparison."""
 
-    def __init__(self, role, cfg, floor):
+    def __init__(self, role, cfg, floor, checkpoint_file=None):
         super().__init__(role, cfg)
         self.floor = floor
         self.records = []
         self.ctx_log = []
+        self._checkpoint_file = checkpoint_file
 
     def decide(self, ctx):
         t0 = time.time()
@@ -95,10 +96,16 @@ class RecordingToolAgent(ToolAgent):
             "latency_s": round(dt, 2),
             "tool_calls": tool_trace,
             "reasoning": reasoning,
+            "decision_meta": self.last_decision_meta,   # is_fallback / mirror_after_error
             "prompt": build_prompt(self.role, ctx, self.cfg.prompt_variant),
         }
         self.records.append(rec)
         self.ctx_log.append(ctx)
+        # checkpoint: write this decision immediately so a mid-game outage
+        # doesn't lose the whole run (resume = re-open the file in append mode).
+        if self._checkpoint_file:
+            with open(self._checkpoint_file, "a") as f:
+                f.write(json.dumps(rec) + "\n")
         return q
 
 
@@ -106,16 +113,22 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     stats = Counter()
     decision_count = 0
-    for run in range(N_RUNS):
+    model = os.environ.get("TOOLAGENT_MODEL", MODEL)
+    n_runs = int(os.environ.get("TOOLAGENT_RUNS", str(N_RUNS)))
+    for run in range(n_runs):
         floor = OrderUpToAgent(theta=3.0, lam=0.5)
-        agents = {r: RecordingToolAgent(r, LLMAgentConfig(model=MODEL, tag="trace"),
-                                        floor) for r in ROLES}
+        out_file = OUT / f"run{run}.jsonl"
+        # resume-friendly: truncate only if this is a fresh run; if the file
+        # already has decisions for this run, append (checkpointing resumes).
+        agents = {r: RecordingToolAgent(
+            r, LLMAgentConfig(model=model, tag="trace"), floor,
+            checkpoint_file=out_file) for r in ROLES}
         demand = make_demand(HORIZON, PATTERN)
         log = run_game(agents, demand, SimConfig(horizon=HORIZON))
-        with open(OUT / f"run{run}.jsonl", "w") as f:
-            for r in ROLES:
-                for rec in agents[r].records:
-                    f.write(json.dumps(rec) + "\n")
+        # summary (the per-decision JSONL was already checkpointed above)
+        with open(OUT / f"run{run}.summary.json", "w") as f:
+            json.dump({"n_runs": 1, "mean_cost": log.total_cost(),
+                       "model": model, "pattern": PATTERN}, f)
         # stats
         for r in ROLES:
             for rec in agents[r].records:
