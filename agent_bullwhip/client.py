@@ -471,6 +471,19 @@ def chat_with_tools(
                             continue
                         resp.raise_for_status()
                         data = resp.json()
+                        # FreeInference free tier returns 200 + {"error":
+                        # "Invalid or expired API key"} when throttled (NOT a real
+                        # auth failure). Retry inside the attempt loop so we don't
+                        # burn tool rounds on quota-lies.
+                        if "choices" not in data or not data.get("choices"):
+                            err_detail = data.get("error", {}).get("message", str(data)[:120])
+                            if ("invalid or expired" in err_detail.lower()
+                                    or "rate" in err_detail.lower()):
+                                if attempt < retries - 1:
+                                    time.sleep(min(2 ** attempt, 30))
+                                    continue
+                                raise RuntimeError(
+                                    f"tool-chat: quota-lie persisted: {err_detail}")
                     break
                 except requests.exceptions.Timeout:
                     # endpoint accepted but stalled — retry, but track the hang;
