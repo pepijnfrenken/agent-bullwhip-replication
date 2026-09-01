@@ -389,6 +389,17 @@ def chat_with_tools(
     exec_ns = {"__builtins__": __builtins__}
     if exec_globals:
         exec_ns.update(exec_globals)
+    else:
+        # default scientific stack for the run_python tool — models otherwise
+        # import scipy/numpy/pandas and hit ModuleNotFoundError (a harness trap,
+        # not a model failure). Make the common libs available by default.
+        for _mod, _alias in (("math", "math"), ("numpy", "np"),
+                             ("pandas", "pd"), ("statistics", "stats")):
+            try:
+                _m = __import__(_mod)
+                exec_ns[_alias] = _m
+            except ImportError:
+                pass
 
     msg: dict = {}
     data: dict = {}
@@ -596,7 +607,9 @@ def chat_with_tools(
                         result += ("\n\n[harness] Your previous code call(s) errored. "
                                    "Fix the bug (check variable names, imports, syntax) "
                                    "or simplify: a moving-average or order-up-to style "
-                                   "computation is enough. Do not repeat the same bug.")
+                                   "computation is enough. Do not repeat the same bug. "
+                                   "Available: math, numpy (np), pandas (pd), statistics (stats). "
+                                   "scipy is NOT installed — use numpy instead of scipy.stats.")
             else:
                 result = f"ERROR: unknown tool {name}"
             tool_trace.append({"name": name, "arguments": args, "result": result,
