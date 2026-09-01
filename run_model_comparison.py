@@ -93,7 +93,11 @@ def main():
         if f.exists():
             for line in f.read_text().splitlines():
                 try:
-                    done[m].add(json.loads(line)["state"])
+                    rec = json.loads(line)
+                    # only SUCCESSFUL decisions count as done — error lines
+                    # (stream stalls, quota-lies) must be retried on re-run
+                    if "error" not in rec:
+                        done[m].add(rec["state"])
                 except Exception:
                     pass
         print(f"{m}: {len(done[m])}/{args.decisions} decisions already done", flush=True)
@@ -112,7 +116,20 @@ def main():
             )
             rec = decision_stats(s, text, trace)
         except Exception as e:
+            # transient stalls (stream idle 3x) are common on CommandCode with
+            # verbose thinking models — retry ONCE before recording a failure
             rec = {"state": s["t"], "error": f"{type(e).__name__}: {str(e)[:120]}"}
+            print(f"    !! {rec['error']} — retrying once", flush=True)
+            time.sleep(10)
+            try:
+                text, trace = chat_with_tools(
+                    [{"role": "user", "content": build_prompt(s)}],
+                    tools=agent._tools(), model=m, temperature=0.3,
+                    max_tool_rounds=3, force_tool=True, retries=5, timeout=120,
+                )
+                rec = decision_stats(s, text, trace)
+            except Exception as e2:
+                rec = {"state": s["t"], "error": f"{type(e2).__name__}: {str(e2)[:120]}"}
         with open(OUT / _fname(m), "a") as f:
             f.write(json.dumps(rec) + "\n")
         print(f"    -> {json.dumps(rec)[:160]}", flush=True)
