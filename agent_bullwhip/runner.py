@@ -85,6 +85,8 @@ CONFIGS: dict[str, dict] = {
     "jev_jitter6_a": {"_jev": True, "mode": "jitter_only", "anchor_margin": 6, "jitter_seed": 1},
     "jev_jitter6_b": {"_jev": True, "mode": "jitter_only", "anchor_margin": 6, "jitter_seed": 7},
     "jev_jitter6_c": {"_jev": True, "mode": "jitter_only", "anchor_margin": 6, "jitter_seed": 13},
+    # the bar that matters: the OOS-tuned formula (fixed-demand 3,148 in the repo's own measurement)
+    "anchor_tuned": {"_jev": True, "mode": "anchor_only", "theta": 3.0, "lam": 0.35},
 }
 
 
