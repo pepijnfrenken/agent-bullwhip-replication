@@ -1,31 +1,10 @@
-# WAVE5.md — a decision-native model plays the Beer Game (post draft)
+# WAVE5.md — a decision-native model plays the Beer Game
 
 One place for everything wave 5: the story, the numbers, the audit trail, and the open items.
 Companion: `AUDIT4.md` (the mistakes and the controls, in full). Data: `results/jev_protocol/`,
 `results/jev_controls_*/`, `results/walkforward_paths.json`.
 
 **Status:** all four arms complete — 240 runs, 0 failures (interleaved, seeded, paired). The n=20 noisy extension + ±3/±12 band sweep completed 2026-09-17: the model beats the tuned floor by **−7.1% (15/20 paths, t=−2.15)** vs −18.2% (10/10, t=−3.89) at n=10 — direction holds, magnitude shrank; ±3 loses to the floor (+1.0%, 8/20) and ±12 is much worse (+18.7%). Data: `results/jev_noisy20/`.
-
----
-
-## 0. Framing audit — which headline works best
-
-### A. "The claim we retracted three audits ago returns — corrected" *(backstory, not headline)*
-- **For:** it *is* the corrected form of the same shape (agent beats formula under noise); strong narrative pull; the project's audits give it credibility.
-- **Against:** the old claim was about a *text LLM*; this is a different model class with a ±6 clamp — not the same treatment. Leading with vindication invites re-litigating the LLM arm, which the reader hasn't seen.
-- **Verdict:** opening paragraph. Never the headline.
-
-### B. "A bounded model correction is a hindsight-free substitute for tuning — and it wins exactly where tuning has nothing to buy" *(recommended headline)*
-- **For:** across the three complete arms the model's bounded correction improves on the untuned policy by **18–24% on every stochastic arm** (noisy −22.8%, chaotic −24.3%) and **harms by +6.2% on flat demand** — while per-path tuning's own gain ranges from **5.6% (noisy) to 39.4% (chaotic)**. Hence the crossover: the model **beats the tuned floor on noisy** (−18.2%, 10/10 paths, t=−3.89) and **loses on chaotic** (+25%, 3/10, not significant) — not because the model changed, but because tuning has far more to buy on chaotic. Sharper moral: a bounded, state-conditioned correction recovers a large share of what a hindsight-free parameter search finds, per decision, with no search.
-- **Against:** three arms, one model, n=10 paths, wild partial. A reviewer attacks: "it's a tuning substitute that loses to tuning — say that."
-- **Verdict:** headline — with the loss in the same sentence as the win. "It wins where tuning is weak" is more defensible than "it wins under noise" and it survives the chaotic arm.
-
-### C. "How to tell whether an agent adds information: jitter / offset / delta-replay" *(methods section, reusable)*
-- **For:** the control suite is reusable and it's what makes B credible: uniform ±6 jitter (+1,659 on noisy), best constant offset (−3: +912 behind the model on noisy, +2,288 behind on chaotic), the model's own deltas misaligned (+2,230) — and the *aligned* replay reproduces the model's game **to the unit** (3,783 = 3,783), verifying the machinery. Rule of thumb: *a model's intervention is information only if the same intervention, randomised or misaligned, loses its value.*
-- **Against:** methods posts have a smaller audience; needs B for stakes.
-- **Verdict:** act 3 of the post, its own section in the repo writeup.
-
-**Recommended structure:** open with A in three sentences → B as the thesis → prove B with the arm-crossing numbers → make B credible with C → close on the open mechanism. Keep the retraction list visible: that's the house style, and it's what makes the numbers believable.
 
 ---
 
@@ -91,7 +70,7 @@ Same ±6 budget, same anchor, on every stochastic arm the model beats every cont
 
 ## 5. Pending (do not claim yet)
 
-1. ~~Noisy extension to n=20 + band sweep~~ — **done 2026-09-17**: model 4,436.6 (CV 0.144) vs tuned floor 4,773.4 (CV 0.094) = **−7.1%, 15/20, t=−2.15**; ±3 4,819.9 (+1.0%, 8/20, ns); ±12 5,663.9 (+18.7%); anchor-only 5,487.9 (+15.0%); jitter control 6,750.9 (+41.4%, 1/20). Paired per-path stats: `results/jev_noisy20/paired_stats.json`; numbers (no charts): `POSTS.md` § Numbers.
+1. ~~Noisy extension to n=20 + band sweep~~ — **done 2026-09-17**: model 4,436.6 (CV 0.144) vs tuned floor 4,773.4 (CV 0.094) = **−7.1%, 15/20, t=−2.15**; ±3 4,819.9 (+1.0%, 8/20, ns); ±12 5,663.9 (+18.7%); anchor-only 5,487.9 (+15.0%); jitter control 6,750.9 (+41.4%, 1/20). Paired per-path stats: `results/jev_noisy20/paired_stats.json`; numbers (no charts): `(draft held locally, not in the repo)` § Numbers.
 2. Mechanism: what correction does the model make that tuning finds and the ±6 band can't? Decision-by-decision characterisation pending.
 3. A second decision-native model, for generality.
 

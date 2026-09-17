@@ -6,3 +6,6 @@ results/
 *.egg-info/
 
 .env.local
+# post drafts stay local — never in the repo
+POSTS.md
+POST_*.md
