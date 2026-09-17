@@ -81,6 +81,9 @@ CONFIGS: dict[str, dict] = {
     # threshold 0.0 = gate never fires (the model's own judgment only, clamped).
     "jev_gate_always": {"_jev": True, "mode": "choice_grid", "conf_threshold": 1.0, "anchor_margin": 6},
     "jev_gate_never": {"_jev": True, "mode": "choice_grid", "conf_threshold": 0.0, "anchor_margin": 6},
+    # band sweep: the model-only arm with a tighter/looser clamp (n=20 noisy extension)
+    "jev_gate_never_m3": {"_jev": True, "mode": "choice_grid", "conf_threshold": 0.0, "anchor_margin": 3},
+    "jev_gate_never_m12": {"_jev": True, "mode": "choice_grid", "conf_threshold": 0.0, "anchor_margin": 12},
     # decisive control: the SAME ±6 perturbation, from a seeded RNG instead of the model
     "jev_jitter6_a": {"_jev": True, "mode": "jitter_only", "anchor_margin": 6, "jitter_seed": 1},
     "jev_jitter6_b": {"_jev": True, "mode": "jitter_only", "anchor_margin": 6, "jitter_seed": 7},

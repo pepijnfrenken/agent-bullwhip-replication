@@ -4,7 +4,7 @@ One place for everything wave 5: the story, the numbers, the audit trail, and th
 Companion: `AUDIT4.md` (the mistakes and the controls, in full). Data: `results/jev_protocol/`,
 `results/jev_controls_*/`, `results/walkforward_paths.json`.
 
-**Status:** step, noisy and chaotic arms complete (10 passes each, interleaved, seeded, paired). Wild running (partial) — **no claim here rests on a partial arm.**
+**Status:** all four arms complete — 10 passes each, 240 runs, 0 failures (interleaved, seeded, paired). An n=20 noisy extension + ±3/±12 band sweep is running.
 
 ---
 
@@ -48,12 +48,12 @@ If the failure is the interface (text in, text out, parse the text), the clean t
 
 | arm | untuned (wrapper) | Jev, bounded (model only) | Jev vs untuned | tuning's own gain (wf − untuned) | Jev vs walk-forward floor | verdict |
 |---|---|---|---|---|---|---|
-| step (fixed) | 3,681 | 3,908 | **+6.2%** | −475 (−12.9%) | +702 (0/10) | loses |
-| noisy | 5,521 | **4,263** | **−22.8%** | −307 (−5.6%) | **−951 (10/10, t=−3.89)** | **wins** |
-| chaotic | 12,659 | **9,587** | **−24.3%** (9/10) | −4,982 (−39.4%) | +1,910 (3/10, ns) | loses to tuning |
-| wild | 16,159 | 13,268 *(partial 3/10)* | −17.9% *(partial)* | −4,048 *(partial)* | +4,957 (0/3) *(partial)* | pending |
+| step (fixed) | 3,681 | 3,908 | **+6.2%** | −12.9% | +21.9% (0/10) | loses |
+| noisy | 5,521 | **4,263** | **−22.8%** | −5.6% | **−18.2% (10/10, t=−3.89)** | **wins** |
+| chaotic | 12,659 | **9,587** | **−24.3%** (9/10) | −39.3% | +24.9% (3/10, ns) | loses to tuning |
+| wild | 16,159 | **13,710** | **−15.2%** (10/10, t=−4.29) | −25.1% | +13.2% (3/10, ns) | loses to tuning |
 
-Read it as: **the model's correction is consistent (≈−18–24% over the untuned policy on stochastic arms, +6% harm when demand is flat), while tuning's gain is arm-dependent. So the model wins exactly where tuning has little to buy.** Share of tuning's gain recovered by the model: noisy 410% (beats tuning), chaotic 62%, wild ~71% (partial).
+Read it as: **the model's correction is consistent (≈−15 to −24% over the untuned policy on stochastic arms, +6% harm when demand is flat), while tuning's gain is arm-dependent (−5.6% to −39.3%). So the model wins exactly where tuning has little to buy.** Share of tuning's gain recovered by the model: noisy 410% (beats tuning), chaotic 62%, wild 61%.
 
 ### 3.2 Fixed demand (step, 36 weeks, n=10)
 
@@ -91,11 +91,9 @@ Same ±6 budget, same anchor, on every stochastic arm the model beats every cont
 
 ## 5. Pending (do not claim yet)
 
-1. Wild arm (running, 3/10 passes).
-2. Noisy extension to n=20 paths.
-3. Band sweep ±3/±6/±12 (is the pattern band geometry? — partially answered: offsets of the same size don't reproduce it).
-4. Mechanism: what correction does the model make that tuning finds and the ±6 band can't? Decision-by-decision characterisation pending.
-5. A second decision-native model, for generality.
+1. Noisy extension to n=20 paths + band sweep ±3/±12 (running).
+2. Mechanism: what correction does the model make that tuning finds and the ±6 band can't? Decision-by-decision characterisation pending.
+3. A second decision-native model, for generality.
 
 ## 6. Compute
 

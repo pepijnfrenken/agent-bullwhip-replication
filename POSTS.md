@@ -27,8 +27,9 @@ The setup: 36-week, 4-echelon beer game (holding $1, backlog $2 per unit-week). 
 noisy demand: formula **5,214** → Jev **4,263** = **−18.2%**, better on 10/10 paths
 fixed demand: formula **3,206** → Jev **3,908** = **+22%**, worse on 10/10
 chaotic demand: formula **7,677** → Jev **9,587** = +25% — it *loses* to the tuned formula while still beating the untuned policy by 24%
+wild demand: formula **12,111** → Jev **13,710** = +13% — loses to the tuned formula, beats the untuned one by 15%, on 10/10 paths
 
-Which tells you what the real pattern is. The model's correction is consistent every time demand is stochastic — 23–24% better than the untuned policy on noisy and chaotic alike. What varies wildly is how much *tuning* buys: 5.6% on noisy, 39.4% on chaotic. So the model wins exactly where tuning has little to buy. It's not a better forecaster — it's a hindsight-free, per-decision partial substitute for tuning.
+Which tells you what the real pattern is. The model's correction is consistent every time demand is stochastic — 15–24% better than the untuned policy on all three stochastic arms. What varies wildly is how much *tuning* buys: 5.6% on noisy, 39.3% on chaotic. So the model wins exactly where tuning has little to buy. It's not a better forecaster — it's a hindsight-free, per-decision partial substitute for tuning.
 
 **4/**
 Before believing the noisy win I attacked it — five controls, all free and deterministic (zero API calls):
@@ -60,7 +61,7 @@ The formula still wins under determinism. But a bounded model that a formula can
 
 I gave a decision-native model (typed Q&A, no text generation) the Beer Game my LLM agents lost. Under noisy demand it beat the walk-forward-tuned 1970s formula by **18.2%** (paired, 10/10 paths). Under flat demand it lost by **22%**. Same model, same game, opposite verdicts.
 
-On chaotic demand it lost to the tuned formula too (+25%) — while beating the untuned policy by 24%. The real pattern: the model's correction is consistent whenever demand is stochastic; what varies is how much *tuning* buys (5.6% noisy vs 39.4% chaotic). It wins where tuning is weak — a hindsight-free partial substitute for tuning, not a better forecaster.
+On chaotic demand it lost to the tuned formula too (+25%) — while beating the untuned policy by 24%. Wild demand, same story (+13% vs the tuned formula, −15% vs the untuned one, 10/10 paths). The real pattern: the model's correction is consistent whenever demand is stochastic; what varies is how much *tuning* buys (5.6% noisy vs 39.3% chaotic). It wins where tuning is weak — a hindsight-free partial substitute for tuning, not a better forecaster.
 
 I attacked the win with five controls before believing it — random ±6 jitter is +1,659 worse, a constant offset is +912 behind, and replaying the model's own deltas misaligned is +2,230. It's information, in the timing.
 

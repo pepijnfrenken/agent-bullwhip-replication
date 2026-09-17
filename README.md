@@ -211,24 +211,22 @@ Full story, numbers and open items: **`WAVE5.md`**. The mistakes and every confo
 | step (fixed) | 3,681 | 3,206 | **3,908** (+227, 4/10) | 3,549 † | 4,972 |
 | noisy | 5,521 | 5,214 | **4,263 (−951, 10/10 paths, t=−3.89)** | 5,495 (+281 ≈ wash) | 6,873 (+1,659) |
 | chaotic | 12,659 | 7,677 | **9,587** (−24.3% vs the wrapper, 9/10; +1,910 vs the tuned floor, 3/10, ns) | 12,621 | 12,552 |
-| wild | 16,159 | 12,111 | 13,268 *(partial, 3/10 passes)* | 15,000 | 15,714 |
+| wild | 16,159 | 12,111 | **13,710** (−15.2% vs the wrapper, **10/10**, t=−4.29; +1,598 vs the tuned floor, 3/10, ns) | 16,178 | 16,028 |
 
 † retracted: the fixed-demand "win" is one-decision-deep (1 of 144 decisions differ from its own anchor; deterministic cascade). Details in `AUDIT4.md` §1.1.
 
 - **First paired comparison in the project:** the walk-forward floor was recomputed on the *identical* demand paths (seeds 1000+i) as the Jev arms, so every delta above is a per-path paired statistic, not a difference of means across unpaired columns (`walkforward_paths.py`, `paired_analysis.py`).
 - **The control suite (all free, deterministic, 0 API calls)** — `anchor_only` (wrapper alone), `gate_always`/`gate_never` (τ endpoints: the gate provably defers to the formula, 144/144, 0 violations), `jitter_only` (seeded uniform ±6), `offset_only` (±3/±6), `delta_replay` (the model's own deltas, replayed from another pass). Result on noisy: the model's win is **not** its interface (+0, controlled), **not** the clamp geometry (random ±6: +1,659), **not** a scalar nudge (best constant offset: +912), **not** its delta distribution (misaligned replay: +2,230; aligned replay reproduces the model's game exactly) — it is the **state-conditioned timing** of the adjustments.
-- **The pattern is not "it wins under noise" — it is "it wins where tuning is weak".** The model's correction is consistent across stochastic arms (−22.8% noisy, −24.3% chaotic, −17.9% wild-partial, vs the untuned policy) while per-path tuning's own gain ranges 5.6% → 39.4%. So it beats the tuned floor on noisy and loses on chaotic *without the model changing* — it is a hindsight-free, per-decision partial substitute for tuning.
+- **The pattern is not "it wins under noise" — it is "it wins where tuning is weak".** All four arms complete (240 runs, 0 failures): the model's correction is consistent across stochastic arms (−22.8% noisy, −24.3% chaotic, −15.2% wild vs the untuned policy) while per-path tuning's own gain ranges 5.6% → 39.3%. So it beats the tuned floor on noisy and loses on chaotic/wild *without the model changing* — it is a hindsight-free, per-decision partial substitute for tuning.
 - **The gate points the wrong way.** Deferral 42.7% on step → **85.2% on noisy** (confidence median 0.56 → 0.21). The gate closes exactly where the model's judgment is most valuable.
 - **`reads`, the mode with the best state-level agreement with the policy (mean |Δ| 7.3), is the worst in every game** (6,731 step / 7,883 noisy). State-level agreement does not predict game-level cost.
-- **Still running / open:** the wild arm (partial), a noisy extension to n=20 paths, a ±3/±6/±12 band sweep, and the decision-level mechanism ("what correction does the model make that tuning finds?").
+- **Still running / open:** a noisy extension to n=20 paths + a ±3/±12 band sweep (running), and the decision-level mechanism ("what correction does the model make that tuning finds?").
 
 ### Wave 5 — to be continued
 
-1. Wild arm (running, 3/10 passes) — the chaotic arm completed: the model improves on the untuned policy by 24% but loses to the tuned floor there.
-2. Noisy extension to n=20 paths.
-3. Band sweep ±3/±6/±12 (is the conditional pattern band geometry?).
-4. Mechanism characterisation: damping? trend-aware protection intervals? decision-by-decision.
-5. A second decision-native model, for generality.
+1. Noisy extension to n=20 paths + ±3/±12 band sweep (running).
+2. Mechanism characterisation: which correction does the model make that tuning finds and the ±6 band can't?
+3. A second decision-native model, for generality.
 
 ```bash
 # env: FREEINFERENCE_API_KEY set (model defaults to deepseek-v4-flash)

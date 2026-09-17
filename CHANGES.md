@@ -1,5 +1,14 @@
 # Changes & Audit Log
 
+## 2026-09-17 — Wave 5: decision-native model arm (Jev, TypeSafe)
+
+- **Agent:** `agent_bullwhip/jev_agent.py` — typed-question decision agent ("System One"): modes `choice_grid` / `choice_mult` / `expectation` / `reads`; structured JSON state payload; all arithmetic in code; confidence gate (τ) + ±`margin` clamp; anchor fallback on any failure.
+- **Controls (free, deterministic, 0 API calls):** `anchor_only` (wrapper alone), `gate_always`/`gate_never` (τ endpoints), `jitter_only` (seeded uniform ±margin), `offset_only` (constant ±k), `delta_replay` (the model's own deltas, misaligned). Configs in `runner.CONFIGS`.
+- **Analysis tooling:** `walkforward_paths.py` (per-path walk-forward / untuned / oracle floors on the protocol seeds 1000+i), `paired_analysis.py` (per-path paired deltas + t-stats), `analyze_jev_traces.py` (within-run audits — every decision trace stores its own `anchor`; cross-run sequence diffing is invalid in a closed loop), `extract_deltas.py`, `compare_jev_vs_text.py`, `probe_jev.py`.
+- **Result (all four arms, 10 passes, 240 runs, 0 failures):** model-only (bounded judgment) improves on the untuned policy by −22.8% / −24.3% / −15.2% (noisy / chaotic / wild) and harms +6.2% on step; it beats the walk-forward floor **only on noisy** (−18.2%, 10/10 paths, t=−3.89) and loses on chaotic/wild (+24.9% / +13.2%, 3/10 each, ns) — i.e. it wins where tuning has little to buy. Gate deferral 42.7% (step) → 85.2% (noisy): the gate closes where the model is valuable. `reads` (best state-level agreement) is worst in every game.
+- **Files:** `WAVE5.md` (story + framing audit), `AUDIT4.md` (mistakes + controls in full), `POSTS.md` (social drafts). Data: `results/jev_protocol/`, `results/jev_controls_*/`, `results/walkforward_paths.json` (results/ is gitignored).
+- **Running:** n=20 noisy extension + ±3/±12 band sweep (`results/jev_noisy20/`).
+
 ## 2026-08-29 — Publish cleanup + GLM parsing fix hardened
 
 - **GLM order parsing fixed and tested.** `parse_order_prefer_label` (added 2026-08-28, commit `accc0f9`) had two bugs: (1) `\bORDER` matched "order 7 units" inside a THINKING block, silently grabbing the wrong number instead of the `ORDER:` label; (2) `ORDER -3` parsed as `3` because the optional `-` separator consumed the sign. Fixed the regex to require the label at line start and to not treat `-` as a separator. Added `tests/test_label_parser.py` (5 tests) covering THINKING-pollution, negative orders, and all separator variants. **53 tests pass.**
