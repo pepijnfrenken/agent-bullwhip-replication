@@ -118,6 +118,8 @@ class JevAgentConfig:
     lam: float = 0.5                 # ES anchor smoothing
     conf_threshold: float | None = None   # below -> anchor (calibrated self-gate)
     anchor_margin: int | None = None      # clamp to +/- margin of the anchor
+    jitter_seed: int = 0                  # mode="jitter_only": seeds the pseudo-random perturbation
+    jitter_span: int = 6                  # mode="jitter_only": fallback span if no anchor_margin
     fallback: str = "anchor"         # anchor | mirror | zero  (on any failure)
     include_reads: bool = True       # ask the auxiliary read questions too (costs ~nothing)
     model: str | None = None
@@ -246,6 +248,22 @@ class JevAgent:
             self.last_decision_meta = {"is_fallback": False, "order": order,
                                        "confidence": None, "gate_fired": False,
                                        "detail": {"mode": "anchor_only"}}
+            return order
+        if self.cfg.mode == "jitter_only":
+            # The decisive control for "does the model have judgment?": apply the SAME
+            # bounded perturbation the model's ungated calls apply (±margin), but from a
+            # seeded RNG instead of the model. Same clamp, no API calls. If random jitter
+            # tracks the model's jitter in cost, the model added no information.
+            import hashlib
+            a = self.anchor(ctx)
+            key = f"{self.cfg.jitter_seed}:{ctx.get('role')}:{ctx.get('t')}".encode()
+            h = int(hashlib.sha256(key).hexdigest()[:8], 16)
+            span = self.cfg.anchor_margin if self.cfg.anchor_margin is not None else self.cfg.jitter_span
+            delta = (h % (2 * span + 1)) - span
+            order = int(max(0, a + delta))
+            self.last_decision_meta = {"is_fallback": False, "order": order, "confidence": None,
+                                       "gate_fired": False, "anchor": a,
+                                       "detail": {"mode": "jitter_only", "delta": delta}}
             return order
         q, meta = self._questions()
         self.calls += 1
