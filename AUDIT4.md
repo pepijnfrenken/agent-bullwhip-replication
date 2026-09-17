@@ -15,7 +15,7 @@ Status: **step and noisy arms complete (10 passes each, interleaved, seeded).** 
 | 1.3 | cross-run order-sequence diffing (our analysis method) | **INVALID** — closed loop; rewritten within-run |
 | 2 | noisy arm: "bounded model judgment beats the walk-forward floor by 18.2%" | **SURVIVED 5 controls + paired design** |
 | 3 | "the confidence gate defers exactly where the model is valuable" | **SURVIVED** (42.7% step vs 85.2% noisy) |
-| 4 | "model value is conditional on demand uncertainty" | **SURVIVED** so far (step +21.9% loss / noisy −18.2% win); chaotic/wild untested |
+| 4 | "model value is conditional on demand uncertainty" | **REVISED** — the correction is consistent on *every* stochastic arm (noisy −22.8%, chaotic −24.3%, wild −17.9% partial vs the untuned policy) and only flips sign when demand is flat (+6.2%). What is conditional is whether it beats *tuning* (noisy yes, chaotic no). See §3.2 |
 
 ---
 
@@ -59,6 +59,7 @@ All on the noisy arm (the claim), n=10 paths, paired (same demand path per pass 
 | constant offsets −6 / −3 / +3 / +6 | "a scalar nudge explains the win" | 6,155 / 5,545 / 5,175 / 6,900 — **best offset is +912 behind the model** |
 | **delta-replay** (the model's own deltas, replayed from another pass: same distribution, wrong state alignment) | "the delta distribution alone explains the win" | **6,493** (+2,230 vs the model) — and on its *aligned* pass it reproduces the model's game **exactly** (3,783 = 3,783), so the machinery is verified |
 | grid-ceiling check (is the model just forced to −6?) | "clamp geometry, not judgment" | on noisy the deltas sit at **+6: 37.6%**, −6: 22.6%, 0: 12.4% — the model orders *up* more than down; state-conditioned, not a bias |
+| same controls on chaotic + wild (free) | "the control conclusions are noisy-arm-specific" | chaotic: model 9,587 vs jitter 12,552, offsets 12,223-12,416; wild (partial): 13,268 vs 16,028 / 15,088-17,115 — **the model beats every control on every stochastic arm** |
 | paired analysis + walk-forward floor on the identical paths | "different paths / untuned baseline" | **−951 (−18.2%), 10/10 paths, t=−3.89** |
 
 **What the control suite establishes:** the model's win is not the interface, not the clamp geometry, not the magnitude, not the distribution — it is the **state-conditioned timing** of its adjustments. Same deltas misaligned cost +2,230; the best scalar nudge is +912 behind.
@@ -68,7 +69,7 @@ All on the noisy arm (the claim), n=10 paths, paired (same demand path per pass 
 ## 3. What survived (claims and their exact support)
 
 1. **On noisy demand, bounded model judgment beats the walk-forward tuned floor.** `gate_never` 4,263 vs wf floor 5,214: −951, −18.2%, paired, 10/10 paths, t=−3.89. Also below the untuned floor by −1,258 (10/10) and trending below the **full-path oracle** (4,544; −281, 7/10, t=−1.51 — *not* significant; quote it as "below, not proven below").
-2. **On fixed demand the same model loses.** +702 vs the wf floor (3,206), 0/10 paths; +227 vs the untuned floor (4/10). The model is not "better" — it is conditional.
+2. **On fixed demand the same model loses** (+702 vs the wf floor, 0/10; +227 vs the untuned wrapper, 4/10). And on chaotic it improves on the untuned policy by −24.3% (9/10) but **still loses to the per-path-tuned floor** (+1,910, +25%, 3/10, not significant). The correct statement is not "it wins under noise": the model is a **consistent ≈18–24% bounded correction over the untuned policy on stochastic arms**, which beats *tuning* only where tuning has little to buy (tuning's own gain: 5.6% noisy vs 39.4% chaotic).
 3. **The gate defers where the model is valuable.** Deferral 42.7% (step) → **85.2% (noisy)**; confidence median 0.56 → 0.21. So `grid_gated` ≈ the anchor on noisy (+281 vs wf floor, a wash) — the gate throws away the win it should harvest. *The gate knows when it doesn't know; it does not know when it's wrong.*
 4. **First config in this project to beat a walk-forward floor on any demand arm** (the LLM configs only ever beat the untuned point).
 5. **Cost profile:** ~974 prompt + 213 completion tokens per decision (no generation), ~0.5-2 s/call; the complete floor computation for all four patterns × 10 paths = **3.2 CPU-seconds, $0**.

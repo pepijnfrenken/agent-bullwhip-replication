@@ -2,33 +2,30 @@
 
 One place for everything wave 5: the story, the numbers, the audit trail, and the open items.
 Companion: `AUDIT4.md` (the mistakes and the controls, in full). Data: `results/jev_protocol/`,
-`results/jev_controls_noisy/`, `results/walkforward_paths.json`.
+`results/jev_controls_*/`, `results/walkforward_paths.json`.
 
-**Status:** step + noisy arms complete (10 passes each, interleaved, seeded, paired). Chaotic + wild
-running — **no claim here rests on a partial arm.** Plain-text tables; markdown version goes to the repo.
+**Status:** step, noisy and chaotic arms complete (10 passes each, interleaved, seeded, paired). Wild running (partial) — **no claim here rests on a partial arm.**
 
 ---
 
 ## 0. Framing audit — which headline works best
 
-Three candidate headlines, audited against what the data actually supports.
-
 ### A. "The claim we retracted three audits ago returns — corrected" *(backstory, not headline)*
 - **For:** it *is* the corrected form of the same shape (agent beats formula under noise); strong narrative pull; the project's audits give it credibility.
-- **Against:** the old claim was about a *text LLM*; this is a different model class with a ±6 clamp — not the same treatment. And leading with vindication invites re-litigating the LLM arm, which the reader hasn't seen. A reviewer attacks: "you found a bounded perturbation and dressed it as a comeback."
-- **Verdict:** use as the opening paragraph. Never the headline.
+- **Against:** the old claim was about a *text LLM*; this is a different model class with a ±6 clamp — not the same treatment. Leading with vindication invites re-litigating the LLM arm, which the reader hasn't seen.
+- **Verdict:** opening paragraph. Never the headline.
 
-### B. "A model's value is conditional on the world's uncertainty — and a confidence gate is the wrong instrument" *(recommended headline)*
-- **For:** it is what the two completed arms show, quantitatively and in opposite directions: **−18.2% (noisy, 10/10 paths) vs +21.9% (fixed demand, 0/10)**. It has a clean mechanism moral: the gate defers **42.7% → 85.2%**, i.e. it switches the model off exactly where the model earns its keep. And it generalises past this game: *confidence tells you when the model doesn't know — it does not tell you when the model is wrong; those are different questions and only the second one should gate.*
-- **Against:** rests on two arms (chaotic/wild pending); n=10 paths. A reviewer attacks: "which arm will the third one look like?"
-- **Verdict:** headline. State the n and the pending arms in the same breath — the discipline is the credibility.
+### B. "A bounded model correction is a hindsight-free substitute for tuning — and it wins exactly where tuning has nothing to buy" *(recommended headline)*
+- **For:** across the three complete arms the model's bounded correction improves on the untuned policy by **18–24% on every stochastic arm** (noisy −22.8%, chaotic −24.3%) and **harms by +6.2% on flat demand** — while per-path tuning's own gain ranges from **5.6% (noisy) to 39.4% (chaotic)**. Hence the crossover: the model **beats the tuned floor on noisy** (−18.2%, 10/10 paths, t=−3.89) and **loses on chaotic** (+25%, 3/10, not significant) — not because the model changed, but because tuning has far more to buy on chaotic. Sharper moral: a bounded, state-conditioned correction recovers a large share of what a hindsight-free parameter search finds, per decision, with no search.
+- **Against:** three arms, one model, n=10 paths, wild partial. A reviewer attacks: "it's a tuning substitute that loses to tuning — say that."
+- **Verdict:** headline — with the loss in the same sentence as the win. "It wins where tuning is weak" is more defensible than "it wins under noise" and it survives the chaotic arm.
 
 ### C. "How to tell whether an agent adds information: jitter / offset / delta-replay" *(methods section, reusable)*
-- **For:** the control suite is genuinely reusable and it's what makes B credible: uniform ±6 jitter (+1,659), best constant offset (−3: +912), the model's own deltas misaligned (+2,230) — and the aligned replay reproduces the model's game **to the unit** (3,783 = 3,783), which verifies the machinery. Rule of thumb it produces: *a model's intervention is information only if the same intervention, misaligned or randomised, loses its value.*
-- **Against:** methods posts have a smaller audience; needs B to supply the stakes.
-- **Verdict:** act 3 of the post, and its own section in the repo writeup.
+- **For:** the control suite is reusable and it's what makes B credible: uniform ±6 jitter (+1,659 on noisy), best constant offset (−3: +912 behind the model on noisy, +2,288 behind on chaotic), the model's own deltas misaligned (+2,230) — and the *aligned* replay reproduces the model's game **to the unit** (3,783 = 3,783), verifying the machinery. Rule of thumb: *a model's intervention is information only if the same intervention, randomised or misaligned, loses its value.*
+- **Against:** methods posts have a smaller audience; needs B for stakes.
+- **Verdict:** act 3 of the post, its own section in the repo writeup.
 
-**Recommended structure:** open with A in three sentences → B as the thesis → prove B with the arm-crossing numbers → make B credible with C → close on the open mechanism. And keep the retraction list visible: that's the house style, and it's the thing that makes the noisy number believable.
+**Recommended structure:** open with A in three sentences → B as the thesis → prove B with the arm-crossing numbers → make B credible with C → close on the open mechanism. Keep the retraction list visible: that's the house style, and it's what makes the numbers believable.
 
 ---
 
@@ -43,57 +40,72 @@ If the failure is the interface (text in, text out, parse the text), the clean t
 - **Modes:** `choice_grid` (pick a quantity), `choice_mult` (pick a coverage multiplier κ; order = max(0, κ·q̂ − IP), arithmetic in code), `expectation` (probability-weighted), `reads` (auxiliary state reads composed in code).
 - **Structure:** structured JSON state payload; all arithmetic stays deterministic in code. The model supplies judgment, the formula supplies arithmetic — the project thesis run forward on a decision-native model.
 - **Gate + clamp:** confidence < τ → order := the deterministic anchor; a ±6 margin clamp is always applied; any failure → anchor fallback.
-- **Controls (free, deterministic — no API calls):** `anchor_only` (the wrapper alone), `gate_always`/`gate_never` (τ endpoints), `jitter_only` (seeded uniform ±6), `offset_only` (±3/±6), `delta_replay` (the model's own deltas, misaligned).
+- **Controls (free, deterministic — 0 API calls):** `anchor_only` (the wrapper alone), `gate_always`/`gate_never` (τ endpoints), `jitter_only` (seeded uniform ±6), `offset_only` (±3/±6), `delta_replay` (the model's own deltas, misaligned).
 
 ## 3. Results
 
-### 3.1 Fixed demand (step, 36 weeks, seed 42, n=10)
+### 3.1 Cross-arm table (means; arms are paired per path, 10 paths each)
 
-- tuned formula (θ=3.0, λ=0.35): **3,148** — the bar; walk-forward grid floor 3,206
+| arm | untuned (wrapper) | Jev, bounded (model only) | Jev vs untuned | tuning's own gain (wf − untuned) | Jev vs walk-forward floor | verdict |
+|---|---|---|---|---|---|---|
+| step (fixed) | 3,681 | 3,908 | **+6.2%** | −475 (−12.9%) | +702 (0/10) | loses |
+| noisy | 5,521 | **4,263** | **−22.8%** | −307 (−5.6%) | **−951 (10/10, t=−3.89)** | **wins** |
+| chaotic | 12,659 | **9,587** | **−24.3%** (9/10) | −4,982 (−39.4%) | +1,910 (3/10, ns) | loses to tuning |
+| wild | 16,159 | 13,268 *(partial 3/10)* | −17.9% *(partial)* | −4,048 *(partial)* | +4,957 (0/3) *(partial)* | pending |
+
+Read it as: **the model's correction is consistent (≈−18–24% over the untuned policy on stochastic arms, +6% harm when demand is flat), while tuning's gain is arm-dependent. So the model wins exactly where tuning has little to buy.** Share of tuning's gain recovered by the model: noisy 410% (beats tuning), chaotic 62%, wild ~71% (partial).
+
+### 3.2 Fixed demand (step, 36 weeks, n=10)
+
+- tuned formula (θ=3.0, λ=0.35): **3,148**; walk-forward grid floor 3,206
 - wrapper alone (`anchor_only`, 0 API calls): **3,681** (CV 0.000)
 - `gate_always` (τ=1.0): **3,681** — gate 144/144, **0 violations**
-- `jev_grid_gated` (τ=0.5): **3,549** — *one-decision-deep; retracted, see AUDIT4 §1.1*
-- `gate_never` (τ=0.0, model only): **3,908** (+227 vs the wrapper, 4/10 paths better)
-- uniform ±6 jitter: **4,972** · `reads`: **6,731**
+- `jev_grid_gated` (τ=0.5): **3,549** — *retracted, one-decision-deep (AUDIT4 §1.1)*
+- `gate_never` (τ=0.0): **3,908** (+227 vs wrapper) · jitter: 4,972 · `reads`: 6,731
 
-### 3.2 Noisy demand (n=10 paths, paired, walk-forward floor on the identical paths)
+### 3.3 The noisy arm — the win
 
 - walk-forward floor **5,214** · untuned 5,521 · full-path oracle 4,544
-- **`gate_never` (bounded model judgment): 4,263 → −951 vs the floor = −18.2%, better on 10/10 paths, t=−3.89**; −1,258 vs untuned (10/10); trends below the oracle (−281, 7/10, t=−1.51 — *not* significant, quote it as "below, not proven below")
-- `jev_grid_gated`: **5,495** (+281 vs the floor — a wash; the gate deferred 85.2% of decisions and threw the win away)
-- uniform ±6 jitter: 6,873 (+1,659) · `reads`: 7,883 (+2,670) · best constant offset (−3): 5,175 (+912 behind the model)
-- **delta-replay** (own deltas, wrong pass): 6,493 (+2,230); aligned pass = exact replica (3,783 = 3,783)
+- **`gate_never` 4,263 → −951 (−18.2%), 10/10 paths, t=−3.89**; −1,258 vs untuned (10/10); below the oracle (−281, 7/10, t=−1.51 — *not* significant: "below, not proven below")
+- controls on the same paths: uniform ±6 jitter **6,873** (+1,659) · best constant offset (−3) **5,175** (+912 behind the model) · **delta-replay misaligned 6,493** (+2,230; aligned pass = exact replica 3,783 = 3,783)
+- raw deltas: +6: 37.6%, −6: 22.6%, 0: 12.4% — the model orders *up* more than down; not a bias
 
-### 3.3 The gate points the wrong way
+### 3.4 The gate points the wrong way
 
-| arm | gate deferral | confidence median | model value |
+| arm | deferral rate | confidence median | model value vs wrapper |
 |---|---|---|---|
-| step (fixed demand) | **42.7%** | 0.56 | −227 (hurts) |
-| noisy | **85.2%** | 0.21 | **+1,258 (helps, vs the wrapper)** |
+| step | **42.7%** | 0.56 | +227 (hurts) |
+| noisy | **85.2%** | 0.21 | −1,258 (helps) |
 
-The calibrated gate closes where the model's judgment is most valuable. The LLM arm's problem was a gate with nothing to gate on; Jev's problem is a gate that works perfectly and defers in the wrong direction. **Unsure is not the same as wrong.**
+The gate closes where the model's judgment is most valuable. The LLM arm's problem was a gate with nothing to gate; Jev's is a gate that works perfectly and points the wrong way. **Unsure is not the same as wrong.**
 
 ## 4. What the control suite establishes
 
-Same ±6 budget, same anchor: uniform random ±6 → +1,659; best scalar offset → +912; the model's own deltas misaligned → +2,230; aligned → the model's exact game. **The win is the state-conditioned timing of the adjustments — not the interface, the magnitude, the distribution, or the clamp.** Raw delta histogram on noisy: +6: 37.6%, −6: 22.6%, 0: 12.4% — the model orders *up* more than down; it is not a downward bias.
+Same ±6 budget, same anchor, on every stochastic arm the model beats every control:
+
+- noisy: model 4,263 vs jitter 6,873 · offsets 5,175-6,900 · misaligned replay 6,493
+- chaotic: model 9,587 vs jitter 12,552 · offsets 12,223-12,416
+- wild (partial): model 13,268 vs jitter 16,028 · offsets 15,088-17,115
+
+**The win is the state-conditioned timing of the adjustments — not the interface, the magnitude, the distribution, or the clamp.**
 
 ## 5. Pending (do not claim yet)
 
-1. Chaotic + wild arms (running, partial).
+1. Wild arm (running, 3/10 passes).
 2. Noisy extension to n=20 paths.
-3. Band sweep ±3/±6/±12 on noisy (is the conditional pattern band geometry?).
-4. Mechanism: *why* right under noise, wrong under flat demand? (damping? trend-aware protection intervals?) — decision-by-decision characterisation pending.
+3. Band sweep ±3/±6/±12 (is the pattern band geometry? — partially answered: offsets of the same size don't reproduce it).
+4. Mechanism: what correction does the model make that tuning finds and the ±6 band can't? Decision-by-decision characterisation pending.
 5. A second decision-native model, for generality.
 
 ## 6. Compute
 
-- Jev: ~974 prompt + 213 completion tokens per decision (no generation), ~0.5-2 s/call.
-- The complete floor computation — 4 patterns × 10 paths, walk-forward tuning + oracle — is **3.2 CPU-seconds, $0**.
-- Fixed-demand controls and replays are free (deterministic, 0 API calls).
+- Jev: ~974 prompt + 213 completion tokens per decision (no generation), ~0.4-2 s/call.
+- The complete floor computation — 4 patterns × 10 paths, walk-forward tuning + oracle — **3.2 CPU-seconds, $0**.
+- All controls and replays free (deterministic, 0 API calls).
 
-## 7. Limitations (carried, unchanged where noted)
+## 7. Limitations
 
-- n=10 paths per arm; single model; the ±6 band is a design choice (sweep pending).
-- The tuned floor is half in-sample (pre-existing caveat, unchanged).
-- `reads` — the config we picked from state-level metrics — is the worst in every game. State-level agreement does not predict game-level cost.
-- Wild is sample-brittle in the LLM arms (AUDIT3); expect the same caution for wave 5's wild arm.
+- n=10 paths per arm; single model; ±6 band is a design choice (sweep pending); wild partial.
+- The tuned floor is half in-sample (pre-existing caveat).
+- `reads` — the mode we picked from state-level metrics — is the worst in every game (6,731 / 7,883 / 17,061). State-level agreement does not predict game-level cost.
+- Wild is sample-brittle in the LLM arms (AUDIT3); the same caution applies to wave 5's wild arm.
