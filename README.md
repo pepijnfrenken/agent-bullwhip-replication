@@ -261,4 +261,4 @@ Do **not** use the sequential runner (`agent_bullwhip.runner`) for claims — th
 - Change log: `CHANGES.md`
 - Surviving data: `results/noisy_leakfree/` · `results/chaotic_seeded/` · `results/wild_seeded/`
 - Wave 5 (decision-native model): `WAVE5.md` · `AUDIT4.md` — data `results/jev_protocol/` · `results/jev_controls_noisy/` · `results/walkforward_paths.json`
-- Social drafts (unpublished): `POSTS.md`
+-  (unpublished): ``

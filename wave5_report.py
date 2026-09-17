@@ -16,11 +16,10 @@ import pathlib
 import statistics
 from collections import defaultdict
 
-KB = pathlib.Path(__file__).resolve().parent  # this script sits at the repo root
+KB = pathlib.Path(__file__).resolve.parent  # this script sits at the repo root
 R = KB / "results"
 
-
-def load_runs():
+def load_runs:
     import os
     rows = []
     files = sorted(glob.glob(os.path.join(str(R), "jev_noisy20", "*.jsonl")))
@@ -29,7 +28,7 @@ def load_runs():
         n_ok = n_bad = 0
         with open(f) as fh:
             for line in fh:
-                line = line.strip()
+                line = line.strip
                 if not line:
                     continue
                 try:
@@ -41,11 +40,10 @@ def load_runs():
         print(f"  [load] {os.path.basename(f)}: ok={n_ok} bad={n_bad}")
     return rows
 
-
-runs = load_runs()
+runs = load_runs
 print(f"[load] {len(runs)} run records")
 if runs:
-    keys = sorted(runs[0].keys())
+    keys = sorted(runs[0].keys)
     print(f"[schema] keys: {keys}")
     cost_key = next((k for k in ("total_cost", "cost", "total", "final_cost", "cum_cost") if k in runs[0]), None)
     cfg_key = next((k for k in ("config", "config_name", "arm", "tag_config") if k in runs[0]), None)
@@ -90,4 +88,4 @@ if runs:
     print("\nwrote results/jev_noisy20/paired_stats.json")
 
 # Figures were tried and removed (charts didn't read well for this data).
-# Numbers live in results/jev_noisy20/paired_stats.json and POSTS.md "Numbers".
+# Numbers live in results/jev_noisy20/paired_stats.json and  "Numbers".

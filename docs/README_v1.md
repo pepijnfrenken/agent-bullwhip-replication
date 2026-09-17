@@ -173,7 +173,7 @@ Results land in `results/<set>/` (per-run JSONL + summary). Config list and pape
 - Audits: `AUDIT.md` · `AUDIT2.md` · `AUDIT3.md`
 - Change log: `CHANGES.md`
 - Raw results: `results/` (interleaved/seeded/leak-free sets are the trustworthy ones)
-- Social writeups: `POSTS.md`
+- Social writeups: ``
 
 ---
 
