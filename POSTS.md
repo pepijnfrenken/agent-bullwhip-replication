@@ -11,7 +11,8 @@ Voice: first person (Pino). House style: honest process-as-content — the misha
 **1/**
 I re-ran my Beer Game agent experiment with a decision-native model instead of an LLM — typed questions in, typed answers + probabilities out, no text generation anywhere.
 
-On noisy demand it beat the tuned 1970s formula by **18.2%** (paired, 10/10 paths).
+On noisy demand it beat the tuned 1970s formula by **7.1%** (paired, 20 paths, 15/20, t=−2.15).
+The first read was **18.2%** (10/10 paths) — the n=20 re-run shrank it, and it still holds. That's the honest number.
 On flat demand the same model **lost by 22%**.
 
 Same model. Same game. Opposite verdicts. That's the interesting part.
@@ -22,9 +23,11 @@ Backstory: my earlier arms showed a cheap LLM is an instability machine in this 
 So I removed the text interface entirely. Jev (TypeSafe "System One"): the model picks a quantity — or a coverage multiplier, or a state read — from typed options, and my code does all the arithmetic. No generation → no parse failures. Probabilities → a confidence gate that actually fires (the LLM's gate fired on 0.2% of decisions; this one fires on 40–85%).
 
 **3/**
-The setup: 36-week, 4-echelon beer game (holding $1, backlog $2 per unit-week). 10 paired demand paths per arm. The walk-forward-tuned floor was recomputed on the *identical* demand paths — the project's first properly paired comparison, instead of the usual difference-of-means-across-different-paths.
+The setup: 36-week, 4-echelon beer game (holding $1, backlog $2 per unit-week). 20 paired demand paths on the noisy arm (10 on the others). The walk-forward-tuned floor was recomputed on the *identical* demand paths — the project's first properly paired comparison, instead of the usual difference-of-means-across-different-paths.
 
-noisy demand: formula **5,214** → Jev **4,263** = **−18.2%**, better on 10/10 paths
+noisy demand (n=20): formula **4,773** → Jev **4,437** = **−7.1%**, better on 15/20 paths (t=−2.15)
+  (n=10 first read: 5,214 → 4,263 = −18.2%, 10/10, t=−3.89 — same direction, smaller magnitude, wider sample)
+  band sweep: ±3 → **+1.0%** (8/20, ns: tightening the clamp kills the win) · ±12 → **+18.7%** — so the default ±6 is the working point
 fixed demand: formula **3,206** → Jev **3,908** = **+22%**, worse on 10/10
 chaotic demand: formula **7,677** → Jev **9,587** = +25% — it *loses* to the tuned formula while still beating the untuned policy by 24%
 wild demand: formula **12,111** → Jev **13,710** = +13% — loses to the tuned formula, beats the untuned one by 15%, on 10/10 paths
@@ -51,7 +54,8 @@ Two of my own claims died on the way there, both in the repo's audit trail:
 • "the mode with the best state-level agreement with the policy is the best config" — that mode is the worst in every actual game (+83% and +43%). State-level metrics lie.
 
 **7/**
-Open: the chaotic/wild arms are still running, plus an n=20 extension, a ±3/±6/±12 band sweep, and the mechanism question — *why* is it right under noise and wrong under flat demand?
+Closed since the first draft: the chaotic and wild arms are complete (all four arms, 240 runs, 0 failures) and the n=20 noisy extension + ±3/±12 band sweep finished 2026-09-17 (`results/jev_noisy20/`).
+Still open: the mechanism — *why* is it right under noise and wrong under flat demand? — and a second decision-native model for generality.
 
 Everything, mistakes included: [repo link]
 
@@ -59,7 +63,7 @@ The formula still wins under determinism. But a bounded model that a formula can
 
 ### Single-post version
 
-I gave a decision-native model (typed Q&A, no text generation) the Beer Game my LLM agents lost. Under noisy demand it beat the walk-forward-tuned 1970s formula by **18.2%** (paired, 10/10 paths). Under flat demand it lost by **22%**. Same model, same game, opposite verdicts.
+I gave a decision-native model (typed Q&A, no text generation) the Beer Game my LLM agents lost. Under noisy demand it beat the walk-forward-tuned 1970s formula by **7.1%** (paired, n=20; 15/20 paths). Under flat demand it lost by **22%**. Same model, same game, opposite verdicts.
 
 On chaotic demand it lost to the tuned formula too (+25%) — while beating the untuned policy by 24%. Wild demand, same story (+13% vs the tuned formula, −15% vs the untuned one, 10/10 paths). The real pattern: the model's correction is consistent whenever demand is stochastic; what varies is how much *tuning* buys (5.6% noisy vs 39.3% chaotic). It wins where tuning is weak — a hindsight-free partial substitute for tuning, not a better forecaster.
 

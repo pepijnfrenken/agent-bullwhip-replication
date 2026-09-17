@@ -4,7 +4,7 @@ One place for everything wave 5: the story, the numbers, the audit trail, and th
 Companion: `AUDIT4.md` (the mistakes and the controls, in full). Data: `results/jev_protocol/`,
 `results/jev_controls_*/`, `results/walkforward_paths.json`.
 
-**Status:** all four arms complete — 10 passes each, 240 runs, 0 failures (interleaved, seeded, paired). An n=20 noisy extension + ±3/±12 band sweep is running.
+**Status:** all four arms complete — 240 runs, 0 failures (interleaved, seeded, paired). The n=20 noisy extension + ±3/±12 band sweep completed 2026-09-17: the model beats the tuned floor by **−7.1% (15/20 paths, t=−2.15)** vs −18.2% (10/10, t=−3.89) at n=10 — direction holds, magnitude shrank; ±3 loses to the floor (+1.0%, 8/20) and ±12 is much worse (+18.7%). Data: `results/jev_noisy20/`.
 
 ---
 
@@ -91,7 +91,7 @@ Same ±6 budget, same anchor, on every stochastic arm the model beats every cont
 
 ## 5. Pending (do not claim yet)
 
-1. Noisy extension to n=20 paths + band sweep ±3/±12 (running).
+1. ~~Noisy extension to n=20 + band sweep~~ — **done 2026-09-17**: model 4,436.6 (CV 0.144) vs tuned floor 4,773.4 (CV 0.094) = **−7.1%, 15/20, t=−2.15**; ±3 4,819.9 (+1.0%, 8/20, ns); ±12 5,663.9 (+18.7%); anchor-only 5,487.9 (+15.0%); jitter control 6,750.9 (+41.4%, 1/20). Paired per-path stats: `results/jev_noisy20/paired_stats.json`; figure: `docs/wave5_jev_vs_tuned.png`.
 2. Mechanism: what correction does the model make that tuning finds and the ±6 band can't? Decision-by-decision characterisation pending.
 3. A second decision-native model, for generality.
 
