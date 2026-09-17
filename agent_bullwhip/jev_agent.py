@@ -120,6 +120,9 @@ class JevAgentConfig:
     anchor_margin: int | None = None      # clamp to +/- margin of the anchor
     jitter_seed: int = 0                  # mode="jitter_only": seeds the pseudo-random perturbation
     jitter_span: int = 6                  # mode="jitter_only": fallback span if no anchor_margin
+    offset: int = 0                       # mode="offset_only": constant delta added to the anchor
+    delta_file: str = ""                  # mode="delta_replay": JSON of recorded deltas
+    delta_shift: int = 0                  # mode="delta_replay": which pass's deltas to replay
     fallback: str = "anchor"         # anchor | mirror | zero  (on any failure)
     include_reads: bool = True       # ask the auxiliary read questions too (costs ~nothing)
     model: str | None = None
@@ -264,6 +267,31 @@ class JevAgent:
             self.last_decision_meta = {"is_fallback": False, "order": order, "confidence": None,
                                        "gate_fired": False, "anchor": a,
                                        "detail": {"mode": "jitter_only", "delta": delta}}
+            return order
+        if self.cfg.mode == "offset_only":
+            # Constant-offset control: anchor + k. If some scalar nudge reproduced the
+            # model's win, the model itself would add nothing.
+            a = self.anchor(ctx)
+            order = int(max(0, a + self.cfg.offset))
+            self.last_decision_meta = {"is_fallback": False, "order": order, "confidence": None,
+                                       "gate_fired": False, "anchor": a,
+                                       "detail": {"mode": "offset_only", "delta": self.cfg.offset}}
+            return order
+        if self.cfg.mode == "delta_replay":
+            # Delta-replay control: apply the model's OWN recorded deltas from a different
+            # pass (same distribution, wrong state alignment). If this scores like the model,
+            # the model's deltas carry no information beyond their distribution.
+            import json as _json
+            a = self.anchor(ctx)
+            with open(self.cfg.delta_file) as fh:
+                deltas = _json.load(fh)
+            seq = deltas[str(self.cfg.delta_shift)].get(ctx.get("role"), [])
+            i = int(ctx.get("t", 0))
+            d = seq[i % len(seq)] if seq else 0
+            order = int(max(0, a + d))
+            self.last_decision_meta = {"is_fallback": False, "order": order, "confidence": None,
+                                       "gate_fired": False, "anchor": a,
+                                       "detail": {"mode": "delta_replay", "delta": d}}
             return order
         q, meta = self._questions()
         self.calls += 1

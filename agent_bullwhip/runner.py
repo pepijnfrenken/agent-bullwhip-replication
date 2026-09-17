@@ -87,6 +87,14 @@ CONFIGS: dict[str, dict] = {
     "jev_jitter6_c": {"_jev": True, "mode": "jitter_only", "anchor_margin": 6, "jitter_seed": 13},
     # the bar that matters: the OOS-tuned formula (fixed-demand 3,148 in the repo's own measurement)
     "anchor_tuned": {"_jev": True, "mode": "anchor_only", "theta": 3.0, "lam": 0.35},
+    # scalar-nudge controls (free): if a constant offset reproduced the model's win, the model adds nothing
+    "offset_m6": {"_jev": True, "mode": "offset_only", "offset": -6},
+    "offset_p6": {"_jev": True, "mode": "offset_only", "offset": 6},
+    "offset_m3": {"_jev": True, "mode": "offset_only", "offset": -3},
+    "offset_p3": {"_jev": True, "mode": "offset_only", "offset": 3},
+    # delta-replay control: the model's own deltas, but from a different pass (wrong state alignment)
+    "delta_replay_s1": {"_jev": True, "mode": "delta_replay", "delta_file": "results/jev_deltas.json", "delta_shift": 1},
+    "delta_replay_s3": {"_jev": True, "mode": "delta_replay", "delta_file": "results/jev_deltas.json", "delta_shift": 3},
 }
 
 
