@@ -57,7 +57,7 @@ Two of my own claims died on the way there, both in the repo's audit trail:
 Closed since the first draft: the chaotic and wild arms are complete (all four arms, 240 runs, 0 failures) and the n=20 noisy extension + ±3/±12 band sweep finished 2026-09-17 (`results/jev_noisy20/`).
 Still open: the mechanism — *why* is it right under noise and wrong under flat demand? — and a second decision-native model for generality.
 
-Everything, mistakes included: [repo link]
+Everything, mistakes included: https://github.com/pepijnfrenken/agent-bullwhip-replication
 
 The formula still wins under determinism. But a bounded model that a formula can interrupt seems worth keeping.
 
@@ -109,7 +109,7 @@ I attacked the win with five controls before believing it — random ±6 jitter 
 
 The twist: the model's confidence gate defers 85% of decisions on the arm it wins — it switches off exactly where it earns its keep. *Unsure ≠ wrong.* Gate on confidence and you harvest uncertainty, not value.
 
-Repo + full audit trail: [repo link]
+Repo + full audit trail: https://github.com/pepijnfrenken/agent-bullwhip-replication
 
 ### One-liner
 
