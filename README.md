@@ -19,6 +19,7 @@ Every contested word in that sentence, grounded:
 - **"3-4 orders of magnitude less compute"** — measured two ways, both from the run records: one LLM arm (10 passes) burned **~2.73M prompt tokens + ~177K completion tokens across 4,320 API calls, ~56–65 minutes of wall-clock** per environment. The complete walk-forward + oracle computation for **all three** environments is ~4,900 deterministic simulations, **~3 CPU-seconds, $0**. We do not measure FLOPs; by API tokens and wall-clock the formula side is 3+ orders of magnitude cheaper.
 - **"apparent edge"** — the two retracted comparison wins (information leak; untuned baseline). Note: in the surviving table the verbal gate **still beats the untuned point in all three environments**. The wins that remain are against an untuned (θ, λ) — which is what tuning is for.
 - **"the intelligence … was the formula all along"** — the wrapper-only ablation (LLM decision replaced by the policy, zero chat calls) scores **exactly 3,681** on fixed demand: identical to the policy alone. The LLM *inside* the wrapper **adds** +12–34% cost; it does not subtract. On stochastic demand no LLM config mean beats the self-tuned policy.
+- **"wave 5 — a different model class"** — replace the text LLM with a decision-native model (typed questions in, typed answers + calibrated probabilities out, no generation) and the picture changes in exactly one place: on **noisy demand** its bounded, state-conditioned adjustments beat the walk-forward floor by **−18.2% (paired, 10/10 paths, t=−3.89)**; on fixed demand the same model **loses** by +22%. Under determinism the formula is still the win; under uncertainty a bounded model that a formula can interrupt is worth having. But its confidence gate defers **85%** of decisions on the arm where it wins — it switches itself off exactly where it earns its keep: *unsure is not the same as wrong*. `WAVE5.md` · `AUDIT4.md`
 
 ### The dead claims
 
@@ -139,6 +140,10 @@ The crossover experiment ran **unseeded** — each config per pass drew independ
 | "LLM beats formula under noise" | `incoming_now` leak (lookahead worth 37–40%) + untuned baseline | upstream t−1 only; 0/5,752 leaked weeks; tuned-floor baselines |
 | "LLM catches up as chaos rises" | chaotic/wild arms unseeded — different demand per config | seed every pattern, one demand per pass, regression tests |
 | (disclosure) | retailer sees demand[t]; 3,681 isn't optimal | documented; 3,148–3,206 settings exist; wrapper-only = 3,681 exactly |
+| (wave 5) "gated Jev beats the formula on fixed demand" | one-decision-deep — 1/144 decisions differ from its own anchor, deterministic cascade | retracted; within-run trace audit (`AUDIT4.md` §1.1) |
+| (wave 5) "`reads` is the best config" | state-level agreement ≠ game-level cost | 6,731 step / 7,883 noisy vs anchor 3,681 / 5,521 (`AUDIT4.md` §1.2) |
+| (wave 5, our method) cross-run order-sequence diffing | closed loop: different orders ⇒ different later states ⇒ two trajectories, not a treatment/control pair | invalid; audits are within-run, every decision trace stores its own anchor (`AUDIT4.md` §1.3) |
+| (wave 5) "bounded model judgment beats the walk-forward floor by 18.2% under noise" | attacked with paired paths, a path-matched walk-forward floor, jitter/offset/delta-replay controls | **survived** (`AUDIT4.md` §2) |
 
 ## Method
 
@@ -195,6 +200,33 @@ This arm is intentionally published as **preliminary**. The planned continuation
 
 The trace collector and analyzers (`collect_tool_traces.py`, `analyze_toolagent.py`, `analyze_tool_traces.py`) are in the repo and reproduce everything above from `results/toolagent_traces/run0.jsonl`.
 
+## Wave 5 — a decision-native model (step + noisy arms complete)
+
+The LLM arms failed for **executional** reasons: parse failures, silent mirror fallbacks (13.9% mirror-after-error), twins differing 10–20×, and a confidence gate that fired on **0.2%** of decisions — "gated LLM" was an empty treatment because there was nothing to gate. Wave 5 removes the text interface entirely: **Jev** (TypeSafe, "System One") — typed question in, typed answer + probability out. No generation, so no parse failures; probabilities, so the gate has resolution.
+
+Full story, numbers and open items: **`WAVE5.md`**. The mistakes and every confound control: **`AUDIT4.md`**.
+
+| demand arm | wrapper alone | walk-forward floor | Jev, model only | gated Jev (τ=0.5) | random ±6 jitter |
+|---|---|---|---|---|---|
+| step (fixed) | 3,681 | 3,206 | **3,908** (+227) | 3,549 † | 4,972 |
+| noisy | 5,521 | 5,214 | **4,263 (−951, 10/10 paths, t=−3.89)** | 5,495 (+281 ≈ wash) | 6,873 (+1,659) |
+
+† retracted: the fixed-demand "win" is one-decision-deep (1 of 144 decisions differ from its own anchor; deterministic cascade). Details in `AUDIT4.md` §1.1.
+
+- **First paired comparison in the project:** the walk-forward floor was recomputed on the *identical* demand paths (seeds 1000+i) as the Jev arms, so every delta above is a per-path paired statistic, not a difference of means across unpaired columns (`walkforward_paths.py`, `paired_analysis.py`).
+- **The control suite (all free, deterministic, 0 API calls)** — `anchor_only` (wrapper alone), `gate_always`/`gate_never` (τ endpoints: the gate provably defers to the formula, 144/144, 0 violations), `jitter_only` (seeded uniform ±6), `offset_only` (±3/±6), `delta_replay` (the model's own deltas, replayed from another pass). Result on noisy: the model's win is **not** its interface (+0, controlled), **not** the clamp geometry (random ±6: +1,659), **not** a scalar nudge (best constant offset: +912), **not** its delta distribution (misaligned replay: +2,230; aligned replay reproduces the model's game exactly) — it is the **state-conditioned timing** of the adjustments.
+- **The gate points the wrong way.** Deferral 42.7% on step → **85.2% on noisy** (confidence median 0.56 → 0.21). The gate closes exactly where the model's judgment is most valuable.
+- **`reads`, the mode with the best state-level agreement with the policy (mean |Δ| 7.3), is the worst in every game** (6,731 step / 7,883 noisy). State-level agreement does not predict game-level cost.
+- **Still running / open:** chaotic + wild arms, a noisy extension to n=20 paths, a ±3/±6/±12 band sweep, and the decision-level mechanism ("why right under noise, wrong under flat demand?").
+
+### Wave 5 — to be continued
+
+1. Chaotic + wild arms (running) — the conditional-value claim currently rests on two arms.
+2. Noisy extension to n=20 paths.
+3. Band sweep ±3/±6/±12 (is the conditional pattern band geometry?).
+4. Mechanism characterisation: damping? trend-aware protection intervals? decision-by-decision.
+5. A second decision-native model, for generality.
+
 ```bash
 # env: FREEINFERENCE_API_KEY set (model defaults to deepseek-v4-flash)
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -227,4 +259,5 @@ Do **not** use the sequential runner (`agent_bullwhip.runner`) for claims — th
 - Audits: `AUDIT.md` · `AUDIT2.md` · `AUDIT3.md` — the mistakes, in full
 - Change log: `CHANGES.md`
 - Surviving data: `results/noisy_leakfree/` · `results/chaotic_seeded/` · `results/wild_seeded/`
+- Wave 5 (decision-native model): `WAVE5.md` · `AUDIT4.md` — data `results/jev_protocol/` · `results/jev_controls_noisy/` · `results/walkforward_paths.json`
 - Social drafts (unpublished): `POSTS.md`
