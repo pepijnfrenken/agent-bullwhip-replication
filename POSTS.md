@@ -61,6 +61,44 @@ Everything, mistakes included: [repo link]
 
 The formula still wins under determinism. But a bounded model that a formula can interrupt seems worth keeping.
 
+### Numbers (the whole thing, no charts)
+
+```
+NOISY DEMAND — 20 paired paths (lower cost = better)
+  untuned policy (anchor only)   5,488      +15.0% vs tuned
+  Jev (model)                    4,437       -7.1% vs tuned   <- wins on 15/20 paths, t=-2.15
+  tuned formula (walk-fwd floor) 4,773         -
+  model with +-3 band            4,820       +1.0% vs tuned   <- over-tightening kills it
+  model with +-12 band           5,664      +18.7% vs tuned
+  random +-6 jitter (control)    6,751      +41.4% vs tuned   <- wins on 1/20
+
+  first read at 10 paths: 5,214 -> 4,263 = -18.2%, 10/10, t=-3.89
+  the n=20 re-run shrank it to -7.1% (15/20). Direction holds, magnitude doesn't.
+
+ALL FOUR ARMS — model vs the tuned formula (10 paths each, 240 runs, 0 failures)
+  noisy (n=10)   -18.2%     (n=20: -7.1%)
+  step          +6.2%      worse on 10/10
+  chaotic      +24.9%      loses to the formula, beats the untuned policy by 24.3%
+  wild         +13.2%      loses to the formula, beats the untuned policy by 15.2%
+
+  vs the untuned policy the model is better on every stochastic arm: -22.8 / -24.3 / -15.2%.
+  What varies is how much tuning buys (5.6% noisy vs 39.3% chaotic) -> it wins where tuning is weak.
+```
+
+| noisy n=20 (paired) | untuned | **Jev** | tuned floor | model vs floor | better on |
+|---|---|---|---|---|---|
+| cost (lower better) | 5,488 | **4,437** | 4,773 | **−7.1%** | **15/20** (t=−2.15) |
+| model ±3 band | | 4,820 | 4,773 | +1.0% | 8/20 (ns) |
+| model ±12 band | | 5,664 | 4,773 | +18.7% | 3/20 |
+| random ±6 jitter | | 6,751 | 4,773 | +41.4% | 1/20 |
+
+| arm (10 paths) | Jev vs tuned floor | Jev vs untuned policy |
+|---|---|---|
+| noisy | −18.2% (10/10) | −22.8% |
+| step | +6.2% (worse 10/10) | +6.2% (worse) |
+| chaotic | +24.9% (3/10, ns) | −24.3% |
+| wild | +13.2% (3/10, ns) | −15.2% |
+
 ### Single-post version
 
 I gave a decision-native model (typed Q&A, no text generation) the Beer Game my LLM agents lost. Under noisy demand it beat the walk-forward-tuned 1970s formula by **7.1%** (paired, n=20; 15/20 paths). Under flat demand it lost by **22%**. Same model, same game, opposite verdicts.

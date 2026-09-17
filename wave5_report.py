@@ -89,52 +89,5 @@ if runs:
     (R / "jev_noisy20" / "paired_stats.json").write_text(json.dumps(out, indent=2))
     print("\nwrote results/jev_noisy20/paired_stats.json")
 
-# ---------------- graph ----------------
-AXES = {
-    "noisy n=10": (5214, 4263), "noisy n=20": (4773, 4437),
-    "step": (None, None), "chaotic": (7677, 9587), "wild": (12111, 13710),
-}
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    have_mpl = True
-except Exception:
-    have_mpl = False
-print(f"\n[graph] matplotlib available: {have_mpl}")
-
-if have_mpl and runs:
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.2))
-    cs = [c for c in cfgs]
-    means = [out[c]["mean"] for c in cs]
-    lo = [out[c]["mean"] - out[c]["min"] for c in cs]
-    hi = [out[c]["max"] - out[c]["mean"] for c in cs]
-    colors = ["#1f6feb" if c == "jev_gate_never" else "#d29922" if c == base else "#8b949e" for c in cs]
-    ax1.bar(range(len(cs)), means, yerr=[lo, hi], color=colors, capsize=4, alpha=0.9, edgecolor="white")
-    ax1.set_xticks(range(len(cs)))
-    ax1.set_xticklabels([c.replace("jev_", "") for c in cs], rotation=20, ha="right", fontsize=9)
-    ax1.set_ylabel("mean total cost (lower = better)")
-    ax1.set_title("Noisy demand, n=20 paired paths\nblue = model · amber = tuned floor · grey = controls", fontsize=10)
-    ax1.grid(axis="y", alpha=0.25)
-    for i, c in enumerate(cs):
-        if c != base:
-            ax1.annotate(f"{out[c]['pct']:+.1f}%", (i, means[i]), ha="center", va="bottom", fontsize=8)
-    arms = ["noisy n=10", "noisy n=20", "chaotic", "wild"]
-    pcts = [round(100 * (AXES[a][1] - AXES[a][0]) / AXES[a][0], 1) for a in arms]
-    ax2.bar(range(len(arms)), pcts, color=["#1f6feb", "#1f6feb", "#d29922", "#d29922"], alpha=0.9, edgecolor="white")
-    ax2.axhline(0, color="#30363d", lw=1)
-    ax2.set_xticks(range(len(arms)))
-    ax2.set_xticklabels(arms, rotation=15, ha="right", fontsize=9)
-    ax2.set_ylabel("% vs the tuned floor (+ = model worse)")
-    ax2.set_title("Model vs the tuned floor, by arm\n(it wins where tuning is weak)", fontsize=10)
-    ax2.grid(axis="y", alpha=0.25)
-    for i, p in enumerate(pcts):
-        ax2.annotate(f"{p:+.1f}%", (i, p), ha="center", va="bottom" if p >= 0 else "top", fontsize=8)
-    fig.suptitle("Jev (decision-native model) vs the tuned order-up-to formula", fontsize=12)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    out_png = KB / "docs" / "wave5_jev_vs_tuned.png"
-    out_png.parent.mkdir(exist_ok=True)
-    fig.savefig(out_png, dpi=160)
-    print(f"[graph] wrote {out_png}")
-else:
-    print("[graph] matplotlib missing -- run: .venv/bin/pip install matplotlib, or use the numbers above")
+# Figures were tried and removed (charts didn't read well for this data).
+# Numbers live in results/jev_noisy20/paired_stats.json and POSTS.md "Numbers".

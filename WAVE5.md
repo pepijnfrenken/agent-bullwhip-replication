@@ -91,7 +91,7 @@ Same ±6 budget, same anchor, on every stochastic arm the model beats every cont
 
 ## 5. Pending (do not claim yet)
 
-1. ~~Noisy extension to n=20 + band sweep~~ — **done 2026-09-17**: model 4,436.6 (CV 0.144) vs tuned floor 4,773.4 (CV 0.094) = **−7.1%, 15/20, t=−2.15**; ±3 4,819.9 (+1.0%, 8/20, ns); ±12 5,663.9 (+18.7%); anchor-only 5,487.9 (+15.0%); jitter control 6,750.9 (+41.4%, 1/20). Paired per-path stats: `results/jev_noisy20/paired_stats.json`; figure: `docs/wave5_jev_vs_tuned.png`.
+1. ~~Noisy extension to n=20 + band sweep~~ — **done 2026-09-17**: model 4,436.6 (CV 0.144) vs tuned floor 4,773.4 (CV 0.094) = **−7.1%, 15/20, t=−2.15**; ±3 4,819.9 (+1.0%, 8/20, ns); ±12 5,663.9 (+18.7%); anchor-only 5,487.9 (+15.0%); jitter control 6,750.9 (+41.4%, 1/20). Paired per-path stats: `results/jev_noisy20/paired_stats.json`; numbers (no charts): `POSTS.md` § Numbers.
 2. Mechanism: what correction does the model make that tuning finds and the ±6 band can't? Decision-by-decision characterisation pending.
 3. A second decision-native model, for generality.
 
