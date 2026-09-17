@@ -75,6 +75,12 @@ CONFIGS: dict[str, dict] = {
     "jev_grid": {"_jev": True, "mode": "choice_grid"},
     "jev_grid_gated": {"_jev": True, "mode": "choice_grid", "conf_threshold": 0.5, "anchor_margin": 6},
     "jev_reads": {"_jev": True, "mode": "reads"},
+    # wrapper-only ablation: this agent's anchor, zero API calls (isolates the formula)
+    "jev_anchor_only": {"_jev": True, "mode": "anchor_only"},
+    # gate controls: threshold 1.0 = gate always fires (pure anchor, model still asked);
+    # threshold 0.0 = gate never fires (the model's own judgment only, clamped).
+    "jev_gate_always": {"_jev": True, "mode": "choice_grid", "conf_threshold": 1.0, "anchor_margin": 6},
+    "jev_gate_never": {"_jev": True, "mode": "choice_grid", "conf_threshold": 0.0, "anchor_margin": 6},
 }
 
 

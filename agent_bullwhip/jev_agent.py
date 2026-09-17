@@ -238,6 +238,15 @@ class JevAgent:
 
     # -- the decision ------------------------------------------------------- #
     def decide(self, ctx: dict) -> int:
+        if self.cfg.mode == "anchor_only":
+            # The wrapper ablation: the deterministic anchor with NO API calls.
+            # Isolates how much of a gated config's score is the model vs the formula
+            # (and how much of the score is this agent's warm-started forecast).
+            order = self.anchor(ctx)
+            self.last_decision_meta = {"is_fallback": False, "order": order,
+                                       "confidence": None, "gate_fired": False,
+                                       "detail": {"mode": "anchor_only"}}
+            return order
         q, meta = self._questions()
         self.calls += 1
         try:
@@ -259,18 +268,19 @@ class JevAgent:
             return self._fallback(ctx)
 
         gated = False
+        anchor_val = self.anchor(ctx)
         if self.cfg.conf_threshold is not None and conf is not None and conf < self.cfg.conf_threshold:
-            order = self.anchor(ctx)
+            order = anchor_val
             gated = True
             self.gate_fires += 1
         if self.cfg.anchor_margin is not None:
-            a = self.anchor(ctx)
+            a = anchor_val
             order = int(min(max(order, a - self.cfg.anchor_margin), a + self.cfg.anchor_margin))
 
         order = int(max(0, order))
         self.last_decision_meta = {
             "is_fallback": False, "order": order, "confidence": conf,
-            "gate_fired": gated, "detail": detail, "answers": ans,
+            "gate_fired": gated, "anchor": anchor_val, "detail": detail, "answers": ans,
             "usage": usage,
         }
         self.traces.append(self.last_decision_meta)
