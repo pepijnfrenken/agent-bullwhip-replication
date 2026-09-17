@@ -65,6 +65,16 @@ CONFIGS: dict[str, dict] = {
     "order_up_to": {"_baseline": "order_up_to"},
     # ---- Wave 4: tool-calling operator (run_python per decision) ----
     "toolagent": {"_tool": True},   # LLM can call run_python each week before ordering
+    # ---- Wave 5: TypeSafe Jev (System One decision model) — see agent_bullwhip/jev_agent.py
+    # The model only *chooses* (typed answers + calibrated confidence); the arithmetic
+    # stays deterministic in code. Gated variants test the confidence-gate idea that
+    # was inert for the text LLM (dead claim #1).
+    "jev_mult": {"_jev": True, "mode": "choice_mult"},
+    "jev_mult_expect": {"_jev": True, "mode": "expectation"},
+    "jev_mult_gated": {"_jev": True, "mode": "choice_mult", "conf_threshold": 0.5, "anchor_margin": 6},
+    "jev_grid": {"_jev": True, "mode": "choice_grid"},
+    "jev_grid_gated": {"_jev": True, "mode": "choice_grid", "conf_threshold": 0.5, "anchor_margin": 6},
+    "jev_reads": {"_jev": True, "mode": "reads"},
 }
 
 
@@ -75,6 +85,14 @@ def make_agents(config: dict, model: str, tag: str | None = None) -> dict:
         return {r: OrderUpToAgent() for r in ROLES}
     lcfg = {k: v for k, v in config.items() if not k.startswith("_")}
     lcfg["tag"] = tag or model
+    if config.get("_jev"):
+        # TypeSafe Jev: the runner's --model is a FreeInference id, so only pass it
+        # through when it is actually a Jev model (agent defaults to jev-latest).
+        from .jev_agent import JevAgent, JevAgentConfig
+        jcfg = dict(lcfg)
+        if not str(jcfg.get("model") or "").startswith("jev"):
+            jcfg["model"] = None
+        return {r: JevAgent(r, JevAgentConfig(**jcfg)) for r in ROLES}
     if config.get("_tool"):
         return {r: ToolAgent(r, LLMAgentConfig(**lcfg, model=model)) for r in ROLES}
     return {r: LLMAgent(r, LLMAgentConfig(**lcfg, model=model)) for r in ROLES}
