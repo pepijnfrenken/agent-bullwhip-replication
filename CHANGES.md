@@ -1,5 +1,27 @@
 # Changes & Audit Log
 
+## 2026-09-21 — Wave 6 opened: GRPO on our harness (domain-neutral), spec + env wire
+
+- **Decisions (Pino):** D1 TRL-first/hand-rolled-fallback · D2 ladder = Qwen3-0.6B →
+  LFM2.5-1.2B CPU arm → 4B parked · **D3 Modal OUT — all-desktop, $0** · D4 desktop smoke
+  first · D5 build the env layer domain-neutral so the recipe generalizes to
+  financial-services decision problems (cash buffers, settlement lags, shortfall costs).
+- **`WAVE6_SPEC.md`** — pre-registered: paper recipe (§6–7), ladder, success gates
+  (CV ↓ ≥25% + mean ↓ ≥20% vs untrained same model = "replicated"; below = partial/null),
+  collapse detector, no-step-demand-training rule, compute accounting. Changes after this
+  commit get logged in the spec's changes section.
+- **`agent_bullwhip/grpo_env.py`** — `DecisionRecord`/`EpisodeResult` over the existing
+  leak-free engine + wave 1–5 prompt family (`build_prompt`); system-level return-to-go
+  rewards r_{k,t} = −Σ_{τ≥t} c_τ; paper curricula; group-normalized advantage per
+  (agent, week) across G episodes (paper Eq. 25, two-pass explicit).
+- **`agent_bullwhip/grpo_trl.py`** — rollout aggregation + TRL `reward_fn` glue with a
+  hard-fail cursor guard (row-order desync can never train silently); torch imports lazy.
+- **Tests (11 new, suite 87 pass):** env shapes, leak-guard on prompts, advantage sign
+  (cheap policy reinforced / blowup discouraged), return-to-go geometry pinned (late cost
+  propagates to all earlier positions, early cost contained), curricula resample+bounds,
+  floor sanity (anchor 3,681 exactly at 36wk on step).
+- **Not yet done:** `grpo_train.py` (TRL loop, desktop), vLLM/llama.cpp serving, evals.
+
 ## 2026-09-17 — Wave 5: decision-native model arm (Jev, TypeSafe)
 
 - **Agent:** `agent_bullwhip/jev_agent.py` — typed-question decision agent ("System One"): modes `choice_grid` / `choice_mult` / `expectation` / `reads`; structured JSON state payload; all arithmetic in code; confidence gate (τ) + ±`margin` clamp; anchor fallback on any failure.
