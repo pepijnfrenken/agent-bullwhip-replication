@@ -18,6 +18,24 @@ generation and restores the previous side in `finally` (training tokenization un
 Bench timings are unaffected (padding side changes positions, not compute); the fix is
 re-verified on the cluster by campaign task 0, which re-runs the pilot config under it.
 
+**Bench readout** (351229, L4, G=8 H=36, 2 repeats, real model):
+
+| rollout_batch | step_wall_s | generate_wall_s | µs/decision | tok/s | peak VRAM |
+|---|---|---|---|---|---|
+| 1 (sequential) | 243.6 | 191.6 | 166 293.5 | 48.1 | 5.29 GB |
+| 4 | 113.9 | 61.7 | 53 551.0 | 149.4 | 5.32 GB |
+| **16 (default)** | **95.0** | **30.4** | **26 355.1** | **303.5** | 6.19 GB |
+| 32 | 93.3 | 31.0 | 26 919.0 | 297.2 | 6.14 GB |
+
+`speedup_vs_baseline`: {4: 2.14, 16: 2.56, 32: 2.61}. Two findings to keep: batch 32 buys
+nothing over 16 (within noise; pinned default stays 16), and at batch 16 the **train step is
+now the dominant cost** (64.6 s of 95.0 s — the generate share fell 191.6 → 30.4 s, 6.3×), so
+further speedup is training-side work, not rollout dispatch. VRAM 6.2 GB of the L4's 24 GB.
+Part A: two optimizer steps in 0.77 s, peak 5.99 GB — the desktop stall does not reproduce on
+the module stack (torch 2.1.2 + transformers 4.55.4 + TORCHDYNAMO_DISABLE=1).
+**Decision:** 13 × 300-step configs ≈ 7.9 h (a0-style) to ≈ 16 h (group16) → the Umbrella
+array fits; Snellius stays backup.
+
 ## 2026-09-30 — Wave 6 unparked: Batched rollouts, compile hardening, resumable runs, Umbrella kit
 
 Wave 6 was parked on 2026-09-21 (a compile-path stall on the desktop, `PARKED.md`). This entry
