@@ -47,6 +47,12 @@ were downloaded, no GPU was used, nothing trained — hub CPU work only.
 - **Kit vendored into the repo (2026-09-30).** The run kit moved from `~/hpc-umbrella/` to
   `hpc-umbrella/` here, so one public `git clone` on the cluster brings code + kit; `PARKED.md`
   is tracked now too (it was cited by `CHANGES.md` + `grpo_train.py` while untracked).
+- **First real Slurm submit (2026-09-30, evening).** The pilot exposed what hub-side checks
+  cannot: Slurm runs batch scripts from its own spool copy (`/var/spool/slurmd/jobNNN/slurm_script`),
+  so `KIT_DIR` from `$BASH_SOURCE` resolved to the spool dir and the job died in 2 s
+  (`config.sh: No such file or directory`). Fixed in all three sbatch files: `KIT_DIR` now comes
+  from `SLURM_SUBMIT_DIR` (manual-run fallback + loud FATAL otherwise); OPERATOR.md notes the
+  submit-from-kit-dir rule.
 - **`bench_rollout.py` (repo root).** The pilot's machine-readable numbers: per-step wall-clock,
   µs per `generate()` and per decision, generated tokens, tokens/s, peak VRAM, and
   batched-vs-sequential speedup, written to JSON. `--stub` runs torch-free (verified on the hub).

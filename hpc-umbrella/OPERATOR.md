@@ -8,6 +8,11 @@ unresolvable on the cluster. Facts behind the pins: `00-PROBE-AND-SETUP.md`.
 (the run kit lives at `hpc-umbrella/` inside it), and a hub session open for paste-back. `rsync` +
 `ssh` are needed only for `pull_results.sh` and the no-egress fallback.
 
+**Submit rule (learned the hard way):** always `cd` into the kit dir before `sbatch` — Slurm
+executes batch scripts from its own spool copy (`/var/spool/slurmd/jobNNN/slurm_script`), so the
+scripts locate `config.sh` via `SLURM_SUBMIT_DIR`, not via their own path. Submitting from
+elsewhere now fails loudly (`FATAL: config.sh not found`) instead of a mystery 2-second exit.
+
 **Where things live (all on scratch, all disposable):**
 
 | Path | What |

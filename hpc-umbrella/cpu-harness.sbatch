@@ -24,7 +24,17 @@
 
 set -euo pipefail
 
-KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Slurm runs batch scripts from its own spool dir (/var/spool/slurmd/jobNNN/slurm_script),
+# so $BASH_SOURCE does NOT point at this file. The kit dir is where `sbatch` was invoked
+# from (runbook: cd <kit> && sbatch <file>); BASH_SOURCE is only the manual-run fallback.
+KIT_DIR="${SLURM_SUBMIT_DIR:-}"
+if [ -z "${KIT_DIR}" ] || [ ! -r "${KIT_DIR}/config.sh" ]; then
+  KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+if [ ! -r "${KIT_DIR}/config.sh" ]; then
+  echo "FATAL: config.sh not found in KIT_DIR=${KIT_DIR} — submit from the kit dir (cd <kit> && sbatch <file>)" >&2
+  exit 1
+fi
 # shellcheck source=config.sh
 . "${KIT_DIR}/config.sh"
 
