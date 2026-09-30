@@ -95,7 +95,7 @@ BENCH_BATCHES="1,4,16,32" # bench_rollout.py chunk sizes (1 = the sequential bas
 bw_pin_table() {
   printf '%-22s %-44s %s\n' "PIN" "CURRENT VALUE" "SOURCE"
   printf '%-22s %-44s %s\n' \
-    "MODULE_UMBRELLA"   "$MODULE_UMBRELLA"   "probe 09-30 ok (2018/2024/2026)" \
+    "MODULE_UMBRELLA"   "$MODULE_UMBRELLA"   "probe 09-30: 2024 chosen (2026 tree has no torch yet)" \
     "MODULE_PYTORCH"    "$MODULE_PYTORCH"    "assumed; TU/e docs list it — load test decides" \
     "MODULE_PYTHON"     "$MODULE_PYTHON"     "assumed; docs list 3.11.3-GCCcore-12.3.0 (pip track)" \
     "CPU_PARTITION"     "$CPU_PARTITION"     "probe 09-30 ok" \

@@ -15,6 +15,10 @@
 - **Modules**: gateway modules `Umbrella/2018 | 2024 | 2026 (D)` + EESSI. Software is
   **hierarchical**: plain `module avail` pre-gateway shows only the gateways themselves;
   PyTorch/Python names appear only after `module load Umbrella/2024`.
+- **Umbrella/2026 (the current default) is NOT usable yet** (2nd probe run, 14:52): with it
+  loaded, its software tree (`/sw/versions/2026/...`) shows only `EasyBuild/5.4.0`, `VSCode`,
+  `code-server` - no PyTorch/Python/CUDA modules at all. Stick with **Umbrella/2024** (docs:
+  "most up-to-date modules"). Switching stacks later is a one-pin change.
 - **Egress: YES** - github.com and huggingface.co both reachable from the login node, so the git
   clone + HF-download flow works there; the rsync fallback is not needed.
 - **Filesystems**: `/scratch-shared/20234428` exists (8 TiB quota, 0 used); home 200 GiB fine.
