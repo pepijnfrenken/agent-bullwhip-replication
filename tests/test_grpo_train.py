@@ -7,25 +7,40 @@ constructed anywhere here.
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
+import signal
+import threading
+from pathlib import Path
 
 import pytest
 
+from agent_bullwhip import grpo_train
 from agent_bullwhip.grpo_train import (
     _torch_available,
     collect_step,
+    harden_compile_path,
+    load_resume_state,
     main,
     parse_args,
+    rng_from_state,
     run_loop,
+    save_checkpoint,
+    sigterm_handler,
 )
 
 
 class _FakeModel:
+    """Writes a real file so checkpoint tests can assert on-disk state."""
+
     def __init__(self):
         self.save_calls: list = []
 
     def save_pretrained(self, path):
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
+        (p / "adapter_model.bin").write_text("fake-lora-weights")
         self.save_calls.append(str(path))
 
 
@@ -34,6 +49,9 @@ class _FakeTok:
         self.save_calls: list = []
 
     def save_pretrained(self, path):
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
+        (p / "tok.bin").write_text("fake-tokenizer")
         self.save_calls.append(str(path))
 
 
@@ -185,6 +203,174 @@ def test_run_loop_dispatches_batched_rollout_calls(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
+# compile-path hardening (D2)
+# --------------------------------------------------------------------------- #
+def test_harden_compile_path_sets_env_and_generation_knob(monkeypatch):
+    monkeypatch.delenv("TORCHDYNAMO_DISABLE", raising=False)
+    monkeypatch.delenv("TOKENIZERS_PARALLELISM", raising=False)
+
+    class _GenCfg:
+        compile = True
+
+    class _Model:
+        generation_config = _GenCfg()
+
+    applied = harden_compile_path(_Model())
+    assert os.environ["TORCHDYNAMO_DISABLE"] == "1"
+    assert os.environ["TOKENIZERS_PARALLELISM"] == "false"
+    assert _Model.generation_config.compile is False
+    assert applied == {"TORCHDYNAMO_DISABLE": "1", "TOKENIZERS_PARALLELISM": "false",
+                       "generation_config.compile": False}
+
+
+def test_harden_compile_path_respects_explicit_operator_override(monkeypatch):
+    # Documented escape hatch: re-enabling the compile path to test the parked
+    # hypothesis must not be silently overridden.
+    monkeypatch.setenv("TORCHDYNAMO_DISABLE", "0")
+    assert harden_compile_path()["TORCHDYNAMO_DISABLE"] == "0"
+
+
+def test_harden_compile_path_reports_absent_generation_knob(monkeypatch):
+    # transformers 5.x may rename the decode-compile flag; the returned value is
+    # what the pilot prints, so "absent" must be visible, not silent.
+    monkeypatch.delenv("TORCHDYNAMO_DISABLE", raising=False)
+
+    class _Model:
+        pass
+
+    assert harden_compile_path(_Model())["generation_config.compile"] == "absent"
+
+
+# --------------------------------------------------------------------------- #
+# checkpoint / resume (D3)
+# --------------------------------------------------------------------------- #
+def test_run_loop_checkpoint_cadence_and_metadata(tmp_path):
+    out = tmp_path / "out"
+    pol = _StubPolicy()
+    pol.tok = _FakeTok()
+    run_loop(pol, _loop_args(steps=4, group=1, save_every=2), out / "train_log.jsonl",
+             out / "checkpoint", has_torch=lambda: True, rng=random.Random(5))
+    state = json.loads((out / "state.json").read_text())
+    assert state["step"] == 3                     # last completed step
+    assert len(pol.model.save_calls) == 1         # saved once (last step is also save_every)
+    assert not (out / "checkpoint.tmp").exists()  # atomic write left no debris
+    for key in ("rng_state", "model", "group", "horizon", "curricula", "lr",
+                "beta_kl", "rollout_batch", "saved_at"):
+        assert key in state
+
+
+def test_checkpoint_writes_metadata_without_torch(tmp_path):
+    # The hub has no torch: step counter + RNG must still be checkpointed so the
+    # dry-run/resume mechanics are testable (and a CPU harness can resume).
+    out = tmp_path / "out"
+    ckpt = out / "checkpoint"
+    payload = save_checkpoint(_StubPolicy(), ckpt, out / "state.json", step=7,
+                              rng=random.Random(3), args=_loop_args(steps=10),
+                              has_torch=lambda: False)
+    assert payload["adapter_saved"] is False and payload["optimizer_saved"] is False
+    assert not ckpt.exists()
+    assert json.loads((out / "state.json").read_text())["step"] == 7
+
+
+def test_save_checkpoint_calls_optimizer_hook_when_present(tmp_path):
+    out = tmp_path / "out"
+    pol = _StubPolicy()
+    pol.tok = _FakeTok()
+    pol.save_optimizer = lambda path: (out / "opt_calls").write_text(str(path)) or True
+    payload = save_checkpoint(pol, out / "checkpoint", out / "state.json", step=1,
+                              rng=random.Random(3), args=_loop_args(steps=4),
+                              has_torch=lambda: True)
+    assert payload["optimizer_saved"] is True
+    assert (out / "opt_calls").read_text() == str(out / "checkpoint")
+
+
+def test_load_resume_state_absent_returns_start(tmp_path):
+    assert load_resume_state(tmp_path / "nothing") == (0, None)
+
+
+def test_resume_continues_step_counter_and_rng(tmp_path):
+    out = tmp_path / "out"
+    log_path, ckpt_path = out / "train_log.jsonl", out / "checkpoint"
+    pol = _StubPolicy()
+    pol.tok = _FakeTok()
+    args = _loop_args(steps=2, group=1, save_every=2)
+    rng = random.Random(99)
+    run_loop(pol, args, log_path, ckpt_path, has_torch=lambda: True, rng=rng)
+
+    start_step, state = load_resume_state(out)
+    assert start_step == 2
+    # the RNG continues exactly where the checkpoint left it
+    assert rng_from_state(state).getstate() == rng.getstate()
+
+    # a wider --steps rerun resumes and only appends the new steps
+    run_loop(_StubPolicy(), _loop_args(steps=4, group=1, save_every=0), log_path,
+             ckpt_path, start_step=start_step, rng=rng_from_state(state),
+             has_torch=lambda: False)
+    recs = [json.loads(l) for l in log_path.read_text().splitlines()]
+    assert [r["step"] for r in recs] == [0, 1, 2, 3]
+    assert json.loads((out / "state.json").read_text())["step"] == 3
+
+
+def test_sigterm_handler_sets_stop_event():
+    stop = threading.Event()
+    sigterm_handler(stop)(signal.SIGTERM, None)
+    assert stop.is_set()
+
+
+class _SigtermPolicy(_StubPolicy):
+    """Simulates SIGTERM landing during an optimizer step."""
+
+    def __init__(self, stop: threading.Event, at_step: int = 1):
+        super().__init__()
+        self.stop, self.at_step, self.seen = stop, at_step, 0
+
+    def grpo_step(self, batch_prompts, batch_completions, advantages, **kwargs):
+        self.seen += 1
+        if self.seen == self.at_step + 1:   # steps are 0-indexed in the log
+            self.stop.set()
+        return self.loss
+
+
+def test_run_loop_checkpoints_and_exits_cleanly_on_sigterm(tmp_path):
+    out = tmp_path / "out"
+    log_path, ckpt_path = out / "train_log.jsonl", out / "checkpoint"
+    stop = threading.Event()
+    pol = _SigtermPolicy(stop, at_step=1)
+    pol.tok = _FakeTok()
+    run_loop(pol, _loop_args(steps=5, group=1, save_every=0), log_path, ckpt_path,
+             has_torch=lambda: True, rng=random.Random(2), stop=stop)
+
+    recs = [json.loads(l) for l in log_path.read_text().splitlines()]
+    steps_run = [r["step"] for r in recs if r.get("event") != "sigterm"]
+    assert steps_run == [0, 1]                             # step 2 never ran
+    assert recs[-1] == {"step": 1, "event": "sigterm", "adapter_saved": True}
+    # the job exits with a usable checkpoint even though save_every was 0
+    assert (ckpt_path / "adapter_model.bin").exists()
+    assert json.loads((out / "state.json").read_text())["step"] == 1
+    assert pol.seen == 2                                  # no further optimizer steps
+
+
+def test_main_installs_sigterm_handler_wired_to_the_loop(tmp_path, monkeypatch):
+    registered: dict = {}
+    monkeypatch.setattr(signal, "signal",
+                        lambda sig, h: registered.__setitem__(sig, h) or None)
+    monkeypatch.setattr(grpo_train, "_Policy", lambda model: _StubPolicy())
+    seen: dict = {}
+
+    def fake_run_loop(policy, args, log_path, ckpt_path, **kw):
+        seen.update(kw)
+
+    monkeypatch.setattr(grpo_train, "run_loop", fake_run_loop)
+    assert main(["--steps", "3", "--out", str(tmp_path / "out")]) == 0
+
+    handler = registered[signal.SIGTERM]
+    stop = seen["stop"]
+    assert isinstance(stop, threading.Event) and not stop.is_set()
+    handler(signal.SIGTERM, None)                         # simulate Slurm's warning
+    assert stop.is_set()
+
+
+# --------------------------------------------------------------------------- #
 # arg parsing / CLI short-circuit
 # --------------------------------------------------------------------------- #
 def test_steps_zero_short_circuits(tmp_path):
@@ -244,8 +430,12 @@ def test_run_loop_saves_checkpoint_on_last_step_when_torch(tmp_path):
     pol.tok = _FakeTok()
     run_loop(pol, _loop_args(steps=1, group=1), log_path, ckpt_path,
              has_torch=lambda: True, rng=random.Random(1))
-    assert pol.model.save_calls == [str(ckpt_path)]     # step 0 is also step%25==0
-    assert pol.tok.save_calls == [str(ckpt_path)]
+    # adapter + tokenizer land in the checkpoint dir, written atomically
+    assert (ckpt_path / "adapter_model.bin").read_text() == "fake-lora-weights"
+    assert (ckpt_path / "tok.bin").read_text() == "fake-tokenizer"
+    assert not (out / "checkpoint.tmp").exists()
+    state = json.loads((out / "state.json").read_text())
+    assert state["step"] == 0 and state["adapter_saved"] is True
 
 
 def test_run_loop_curriculum_alternates_across_steps(tmp_path):

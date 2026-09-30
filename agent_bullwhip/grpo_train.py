@@ -36,7 +36,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
+import shutil
+import signal
+import threading
 import time
 from pathlib import Path
 from typing import Callable, Protocol
@@ -45,6 +49,49 @@ from .engine import SimConfig
 from .grpo_env import (group_normalize, run_episodes_batched,
                        sample_curriculum_demand)
 from .grpo_trl import ep_result_to_rewards
+
+
+# --------------------------------------------------------------------------- #
+# Compile-path hardening (D2). The parked desktop stall: main thread inside
+# torch/_tensor.py backward with 21 inductor `compile_worker` processes stuck in
+# `_recv_msg`, GPU at 100% util but ~80 W, VRAM oscillating, 0 cached `.py` under
+# /tmp/torchinductor_*, and no explicit dynamo compile call anywhere in this repo.
+# Suspected cause: per-input-shape compilation from the transformers 5.17.0 /
+# torch 2.5.1+cu121 pairing (evidence: /home/pino/diag2.log, PARKED.md).
+# Fix step 1 is to disable the compile path outright; the Umbrella module stack
+# (PyTorch 2.1.2) is the independent second test of the version hypothesis.
+#
+# Two knobs, for two different reasons:
+#   * TORCHDYNAMO_DISABLE must be in the environment BEFORE `import torch`
+#     (torch._dynamo reads it at import time) -> set in _Policy.__init__ first line.
+#   * `generation_config.compile` must be cleared AFTER the model is loaded
+#     (transformers compiles the decoding loop when the flag is set) -> same call,
+#     with the loaded model.
+# --------------------------------------------------------------------------- #
+def harden_compile_path(model=None) -> dict:
+    """Disable the compile path; returns the resolved knob values (for the log).
+
+    Both env knobs use `setdefault`: an explicit operator override (e.g.
+    `TORCHDYNAMO_DISABLE=0 python -m agent_bullwhip.grpo_train ...` to test the
+    compile hypothesis deliberately) always wins.
+    """
+    os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    applied: dict = {
+        "TORCHDYNAMO_DISABLE": os.environ["TORCHDYNAMO_DISABLE"],
+        "TOKENIZERS_PARALLELISM": os.environ["TOKENIZERS_PARALLELISM"],
+    }
+    if model is not None:
+        gen_cfg = getattr(model, "generation_config", None)
+        # transformers >=4.50 compiles the decoding loop when this flag is set.
+        # If 5.x renamed it, the value shown here is the pilot's confirmation:
+        # "absent" means the knob moved and the pilot must re-check (print below).
+        if gen_cfg is not None and hasattr(gen_cfg, "compile"):
+            gen_cfg.compile = False
+            applied["generation_config.compile"] = False
+        else:
+            applied["generation_config.compile"] = "absent"
+    return applied
 
 
 # --------------------------------------------------------------------------- #
@@ -79,6 +126,9 @@ class _Policy:
     """
 
     def __init__(self, model_name: str, device: str = "auto", lora_r: int = 16):
+        # must run BEFORE `import torch`: torch._dynamo reads TORCHDYNAMO_DISABLE
+        # at import time (see harden_compile_path).
+        harden_compile_path()
         import torch
         from peft import LoraConfig
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -92,6 +142,10 @@ class _Policy:
         self.lora = LoraConfig(r=lora_r, lora_alpha=32, lora_dropout=0.05,
                                target_modules=["q_proj", "v_proj"])
         self.model.to(device if device != "auto" else ("cuda" if torch.cuda.is_available() else "cpu"))
+        # second knob: transformers' own decode-path compile flag, now that the
+        # model object exists. Printed so a pilot log proves the state it ran in.
+        self.compile_knobs = harden_compile_path(self.model)
+        print("compile-path knobs:", json.dumps(self.compile_knobs, sort_keys=True), flush=True)
 
     # -- rollout: sample completions under current policy -------------------
     def rollout(self, prompts: list[str], temperature: float = 1.0, max_new: int = 8):
@@ -119,23 +173,50 @@ class _Policy:
         tgt = input_ids[:, 1:]
         return logp.gather(-1, tgt.unsqueeze(-1)).squeeze(-1)[0, prompt_ids.shape[0] - 1:]
 
+    # -- optimizer (LoRA params only) ---------------------------------------
+    def _ensure_optimizer(self, lr: float):
+        """Create the AdamW over LoRA params once; resume reuses it."""
+        opt = getattr(self, "_opt", None)
+        if opt is not None:
+            return opt
+        import torch
+        from peft import PeftModel, get_peft_model
+        # resume path hands us an already-wrapped PeftModel; never wrap twice
+        # (double LoRA would stack two adapters on every linear).
+        if not isinstance(self.model, PeftModel):
+            self.model = get_peft_model(self.model, self.lora)
+            self.model.print_trainable_parameters()
+        opt = torch.optim.AdamW(
+            [p for p in self.model.parameters() if p.requires_grad], lr=lr)
+        self._opt = opt
+        return opt
+
+    # -- optimizer state persistence (walltime resume) ----------------------
+    def save_optimizer(self, path) -> bool:
+        """Save AdamW moments next to the adapter; False if never created."""
+        opt = getattr(self, "_opt", None)
+        if opt is None:
+            return False
+        import torch
+        torch.save(opt.state_dict(), Path(path) / "optimizer.pt")
+        return True
+
+    def load_optimizer(self, path, lr: float) -> bool:
+        """Restore AdamW moments; False when no optimizer.pt exists."""
+        src = Path(path) / "optimizer.pt"
+        if not src.exists():
+            return False
+        import torch
+        self._ensure_optimizer(lr).load_state_dict(torch.load(src, map_location="cpu"))
+        return True
+
     # -- one gradient step ---------------------------------------------------
     def grpo_step(self, batch_prompts, batch_completions, advantages,
                   lr=1e-5, beta_kl=0.02, clip=0.2, max_grad_norm=0.5,
                   micro_bs: int = 4):
         """ advantages: per-decision, aligned with the two batch lists. """
         import torch
-        opt = getattr(self, "_opt", None)
-        if opt is None:
-            from peft import PeftModel, get_peft_model
-            # resume path hands us an already-wrapped PeftModel; never wrap twice
-            # (double LoRA would stack two adapters on every linear).
-            if not isinstance(self.model, PeftModel):
-                self.model = get_peft_model(self.model, self.lora)
-                self.model.print_trainable_parameters()
-            opt = torch.optim.AdamW(
-                [p for p in self.model.parameters() if p.requires_grad], lr=lr)
-            self._opt = opt
+        opt = self._ensure_optimizer(lr)
 
         model, tok = self.model, self.tok
         model.train()
@@ -269,6 +350,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--rollout-batch", type=int, default=16,
                     help="max prompts per generate() call during rollouts; "
                          "1 = one prompt per call (tiny-VRAM path), <=0 = unbounded")
+    ap.add_argument("--save-every", type=int, default=25,
+                    help="checkpoint every N completed steps (0 = only on the "
+                         "last step / SIGTERM)")
     ap.add_argument("--out", default="results/grpo_a0")
     ap.add_argument("--resume", action="store_true")
     return ap.parse_args(argv)
@@ -282,18 +366,113 @@ def _torch_available() -> bool:
         return False
 
 
+# --------------------------------------------------------------------------- #
+# Walltime-safe checkpoint/resume (D3). Slurm sends SIGTERM before the kill
+# grace period, so an 18h job survives walltime only if SIGTERM -> checkpoint ->
+# clean exit. Every write is atomic (tmp + rename): a SIGKILL mid-write can
+# never leave a half-written checkpoint that the next run would trust.
+#
+# What is restored on --resume:
+#   * LoRA adapter + tokenizer  (torch path; `adapter_saved` in state.json)
+#   * AdamW moments             (optimizer.pt, when the run had created them)
+#   * step index and RNG state  (state.json, always — so the hub can dry-run it)
+# The KL reference is the FROZEN base weights (adapters only are trained), so it
+# carries no state; there are no other running buffers in the loop.
+# --------------------------------------------------------------------------- #
+def _atomic_write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True))
+    os.replace(tmp, path)
+
+
+def save_checkpoint(policy: PolicyLike, ckpt_path: Path, state_path: Path, *,
+                    step: int, rng: random.Random, args: argparse.Namespace,
+                    has_torch: Callable[[], bool] = _torch_available) -> dict:
+    """Checkpoint the run: adapter dir (torch) first, then the resume pointer.
+
+    Order matters under a walltime kill: state.json is only written once the
+    adapter is durable, so a resume never points at a half-saved adapter.
+    Returns the payload written to state.json.
+    """
+    adapter_saved = False
+    optimizer_saved = False
+    if has_torch():
+        tmp = ckpt_path.with_name(ckpt_path.name + ".tmp")
+        if tmp.exists():
+            shutil.rmtree(tmp)
+        tmp.mkdir(parents=True)
+        policy.model.save_pretrained(tmp)  # type: ignore[attr-defined]
+        tok = getattr(policy, "tok", None)
+        if tok is not None:
+            tok.save_pretrained(tmp)
+        if ckpt_path.exists():
+            shutil.rmtree(ckpt_path)
+        os.replace(tmp, ckpt_path)
+        adapter_saved = True
+        save_opt = getattr(policy, "save_optimizer", None)
+        if callable(save_opt):
+            optimizer_saved = bool(save_opt(ckpt_path))
+    payload = {
+        "step": step,                        # last COMPLETED step; resume at step + 1
+        "rng_state": list(rng.getstate()),   # json turns the inner tuple into a list
+        "adapter_saved": adapter_saved,
+        "optimizer_saved": optimizer_saved,
+        "model": args.model,
+        "group": args.group,
+        "horizon": args.horizon,
+        "curricula": args.curricula,
+        "lr": args.lr,
+        "beta_kl": args.beta_kl,
+        "rollout_batch": args.rollout_batch,
+        "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+    _atomic_write_json(state_path, payload)
+    return payload
+
+
+def load_resume_state(outdir: Path) -> tuple[int, dict | None]:
+    """Resume pointer -> (next step to run, payload). (0, None) if no checkpoint."""
+    path = outdir / "state.json"
+    if not path.exists():
+        return 0, None
+    payload = json.loads(path.read_text())
+    return int(payload["step"]) + 1, payload
+
+
+def rng_from_state(payload: dict) -> random.Random:
+    """Rebuild the loop RNG from a checkpoint payload (exact continuation)."""
+    rng = random.Random()
+    version, state, gauss_next = payload["rng_state"]
+    rng.setstate((version, tuple(state), gauss_next))
+    return rng
+
+
+def sigterm_handler(stop: threading.Event) -> Callable[[int, object], None]:
+    """SIGTERM -> set the stop event. The loop checkpoints and exits at the next
+    step boundary (Slurm's grace period is minutes, not hours, so this is the
+    difference between an 18h job resuming and an 18h job lost)."""
+    def _handler(signum, frame):
+        stop.set()
+    return _handler
+
+
 def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
              ckpt_path: Path, start_step: int = 0, rng: random.Random | None = None,
-             has_torch: Callable[[], bool] = _torch_available) -> None:
+             has_torch: Callable[[], bool] = _torch_available,
+             stop: threading.Event | None = None) -> None:
     """Core training loop: curriculum rotation -> collect_step -> grpo_step -> log.
 
-    `has_torch` gates checkpoint saves so the hub (no torch) can exercise the
-    full loop with a stub policy; tests inject a fake. Checkpointing (step %
-    25 == 0 or last step) writes the PEFT adapter + tokenizer to `ckpt_path`.
+    `has_torch` gates the adapter save so the hub (no torch) can exercise the
+    full loop with a stub policy; tests inject a fake. A checkpoint (adapter +
+    state.json) is written every `args.save_every` completed steps, on the last
+    step, and immediately when `stop` is set (SIGTERM). `stop` is checked at step
+    boundaries, so a kill mid-step costs at most that step.
     """
     rng = rng or random.Random(12345)
     curricula = args.curricula.split(",")
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path = ckpt_path.parent / "state.json"
     t0 = time.time()
     for step in range(start_step, args.steps):
         curriculum = curricula[step % len(curricula)]
@@ -312,11 +491,19 @@ def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
             f.write(json.dumps(rec) + "\n")
         if step % 10 == 0 or step == args.steps - 1:
             print(rec, flush=True)
-        if (step % 25 == 0 or step == args.steps - 1) and has_torch():
-            policy.model.save_pretrained(ckpt_path)  # type: ignore[attr-defined]
-            tok = getattr(policy, "tok", None)
-            if tok is not None:
-                tok.save_pretrained(ckpt_path)
+        stopped = stop is not None and stop.is_set()
+        due = (args.save_every > 0 and (step + 1) % args.save_every == 0) \
+            or step == args.steps - 1
+        if stopped or due:
+            payload = save_checkpoint(policy, ckpt_path, state_path, step=step,
+                                      rng=rng, args=args, has_torch=has_torch)
+            if stopped:
+                with log_path.open("a") as f:
+                    f.write(json.dumps({"step": step, "event": "sigterm",
+                                        "adapter_saved": payload["adapter_saved"]}) + "\n")
+                print(f"SIGTERM: checkpointed at step {step}, exiting cleanly "
+                      f"(resume with the same --out)", flush=True)
+                break
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -330,18 +517,32 @@ def main(argv: list[str] | None = None) -> int:
     log_path = outdir / "train_log.jsonl"
     ckpt_path = outdir / "checkpoint"
 
-    policy = _Policy(args.model)
-    start_step = 0
-    if args.resume and ckpt_path.exists():
-        from peft import PeftModel
-        policy.model = PeftModel.from_pretrained(
-            policy.model.get_base_model() if hasattr(policy.model, "get_base_model")
-            else policy.model, ckpt_path)
-        done = [json.loads(l) for l in log_path.read_text().splitlines() if l.strip()]
-        start_step = len(done)
-        print(f"resumed from step {start_step}")
+    # SIGTERM = Slurm's walltime warning. Set the flag; the loop checkpoints and
+    # exits at the next step boundary (SIGKILL after the grace period is then safe).
+    stop = threading.Event()
+    signal.signal(signal.SIGTERM, sigterm_handler(stop))
 
-    run_loop(policy, args, log_path, ckpt_path, start_step=start_step)
+    policy = _Policy(args.model)
+    start_step, state, rng = 0, None, None
+    if args.resume:
+        start_step, state = load_resume_state(outdir)
+        if state is None:
+            print(f"--resume: no {outdir / 'state.json'}; starting from step 0")
+        else:
+            rng = rng_from_state(state)
+            if state.get("adapter_saved") and ckpt_path.exists():
+                from peft import PeftModel
+                policy.model = PeftModel.from_pretrained(
+                    policy.model.get_base_model() if hasattr(policy.model, "get_base_model")
+                    else policy.model, ckpt_path)
+                policy.load_optimizer(ckpt_path, args.lr)
+                print(f"resumed from step {start_step} (adapter + tokenizer"
+                      f"{' + optimizer' if state.get('optimizer_saved') else ''})")
+            else:
+                print(f"resumed step counter from {start_step} (no adapter on disk; "
+                      "step/RNG only)")
+
+    run_loop(policy, args, log_path, ckpt_path, start_step=start_step, rng=rng, stop=stop)
     print("done:", outdir)
     return 0
 
