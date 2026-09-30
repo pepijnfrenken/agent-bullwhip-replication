@@ -24,8 +24,10 @@
 - **Filesystems**: `/scratch-shared/20234428` exists (8 TiB quota, 0 used); home 200 GiB fine.
 - **Login node**: python3 = 3.9.25 (`/usr/bin/python3` fresh login), git 2.52.0, rsync/curl/wget
   present, `squeue --me` empty, no GPU on the node itself.
-- **Still open**: exact `PyTorch/*` and `Python/*` module names inside the 2024 stack (visible
-  only after the gateway loads). `bash config.sh --check` verifies both once chosen.
+- **Module pins settled** (same day, load-tested): `PyTorch/2.1.2-foss-2023a-CUDA-12.1.1` loads
+  cleanly -> `py 3.11.3 | torch 2.1.2 | built-cuda 12.1`. Also in the tree:
+  `PyTorch/2.1.2-foss-2023a`(no CUDA) / `-foss-2022a` / `PyTorch/2.6.0-foss-2024a`, and
+  `Python/3.11.3-GCCcore-12.3.0` (chosen) plus 3.10.13 / 3.12.3 / 3.13.1 builds.
 
 ## Access
 - Web: https://hpc.tue.nl (Open OnDemand) — files, shell, job composer in the browser

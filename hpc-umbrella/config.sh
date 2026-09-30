@@ -5,8 +5,9 @@
 # Every probe/sbatch/stage script sources this file; nothing else in the kit
 # hardcodes a partition, module, path, walltime or run-shape knob. Values marked
 # "probe:" were reconciled against the login-node probe of 2026-09-30 (facts and
-# rulings in 00-PROBE-AND-SETUP.md -> "Login-node probe results"). Pins that are
-# still assumptions (exact module names) fail `bash config.sh --check` until settled.
+# rulings in 00-PROBE-AND-SETUP.md -> "Login-node probe results"); the module pins
+# were load-tested the same day. `bash config.sh --check` verifies everything
+# against the host on the cluster.
 #
 # Slurm limitation worth knowing: #SBATCH directives are read before the shell
 # runs, so an sbatch file cannot interpolate ${GPU_PARTITION}. The sbatch headers
@@ -53,10 +54,10 @@ CAMPAIGN_TSV="${KIT_DIR}/campaign.tsv"
 # pip: torch 2.5.1+cu121 (the desktop-proven matrix) into a clean venv; needs the
 # wheel downloads and a driver new enough for cu121.
 ENV_MODE="${ENV_MODE:-module}"
-# probe: exact names from `module avail` / `module spider`
+# settled on the login node 2026-09-30 (load-tested: py 3.11.3, torch 2.1.2, built-cuda 12.1)
 MODULE_UMBRELLA="Umbrella/2024"
 MODULE_PYTORCH="PyTorch/2.1.2-foss-2023a-CUDA-12.1.1"
-MODULE_PYTHON="Python/3.11.5-GCCcore-13.2.0"
+MODULE_PYTHON="Python/3.11.3-GCCcore-12.3.0"
 
 # --- partitions --------------------------------------------------------------
 # probe: `sinfo -o "%P %a %D %l %G"` + node features
@@ -96,8 +97,8 @@ bw_pin_table() {
   printf '%-22s %-44s %s\n' "PIN" "CURRENT VALUE" "SOURCE"
   printf '%-22s %-44s %s\n' \
     "MODULE_UMBRELLA"   "$MODULE_UMBRELLA"   "probe 09-30: 2024 chosen (2026 tree has no torch yet)" \
-    "MODULE_PYTORCH"    "$MODULE_PYTORCH"    "assumed; TU/e docs list it — load test decides" \
-    "MODULE_PYTHON"     "$MODULE_PYTHON"     "assumed; docs list 3.11.3-GCCcore-12.3.0 (pip track)" \
+    "MODULE_PYTORCH"    "$MODULE_PYTORCH"    "probe 09-30 ok: loads -> py 3.11.3, torch 2.1.2, cu 12.1" \
+    "MODULE_PYTHON"     "$MODULE_PYTHON"     "probe 09-30 ok (pip track)" \
     "CPU_PARTITION"     "$CPU_PARTITION"     "probe 09-30 ok" \
     "GPU_PARTITION"     "$GPU_PARTITION"     "probe 09-30 ok (gpuC: 8x L4)" \
     "GPU_PARTITION_ALT" "$GPU_PARTITION_ALT" "probe 09-30 ok (gpuB: 4x L4)" \
