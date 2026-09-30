@@ -12,6 +12,11 @@ State per tier (paper eqs. 9-11):
     IP_t     = OH_t + O_t - B_t   (paper eq. 2; Prop 1: IP_{t+1} = IP_t + q_t - q_{k-1,t})
 Receipts: r_{k,t} = s_{k+1,t-lag} (factory: its own orders, unlimited upstream).
 Shipments: s_{k,t} = min(OH_t + r_t, q_{k-1,t} + B_t).
+
+`GameStepper` holds this week loop; `run_game` drives it synchronously (one role at a
+time) and the batched rollout driver in `grpo_env` drives many episodes in lockstep
+(STEER-01: one implementation, no mirror). The week semantics must not change silently:
+`tests/test_engine_golden.py` pins per-week orders + costs for the waves 1-5 settings.
 """
 from __future__ import annotations
 
@@ -147,6 +152,125 @@ def make_demand(horizon: int, pattern: str = "step", seed: int | None = None) ->
     return [step_demand(t, pattern) for t in range(horizon)]
 
 
+class GameStepper:
+    """One week of the engine's operational model, as a shared stepper.
+
+    STEER-01: `run_game` (synchronous, one role at a time) and the batched rollout
+    driver in `grpo_env` (many episodes in lockstep, one generate() call per week)
+    both drive THIS code, so the week semantics cannot drift between them.
+
+    Contract per week:
+        ctxs = step.observations()          # ctx per role; mutates nothing
+        step.advance({role: order, ...})    # consumes the orders, appends a WeekRecord
+
+    `observations()` may be called repeatedly; `advance` requires an order for every
+    role (missing roles raise: a silently-defaulted order would corrupt a rollout)
+    and clamps negatives to 0 (the operational model's floor).
+    """
+
+    def __init__(self, demand: list[int], cfg: SimConfig | None = None):
+        self.cfg = cfg or SimConfig()
+        horizon = self.cfg.horizon if self.cfg.horizon else len(demand)
+        self.horizon = horizon
+        self.demand = list(demand[:horizon])
+        self.t = 0
+        self.state = {r: TierState(self.cfg.init_on_hand, self.cfg.init_backlog,
+                                  self.cfg.init_outstanding) for r in ROLES}
+        # incoming shipment queue per tier (FIFO, length = shipment_delay); factory's
+        # queue is filled by its own orders (unlimited upstream supplier, delayed).
+        self.inbound: dict[str, deque[int]] = {
+            r: deque([0] * self.cfg.shipment_delay) for r in ROLES}
+        self.prev_incoming: dict[str, int] = {r: 0 for r in ROLES}  # q_{k-1,t-1}
+        self.order_history: dict[str, list[int]] = {r: [] for r in ROLES}
+        self.weeks: list[WeekRecord] = []
+
+    def done(self) -> bool:
+        return self.t >= self.horizon
+
+    def observations(self) -> dict[str, dict]:
+        """Observation for every role at the start of the current week.
+
+        AUDIT2 FIX: only the retailer sees the CURRENT week's exogenous customer
+        demand. Upstream tiers must NOT see the tier-below's same-week order (that is
+        a one-week lookahead the deterministic floor doesn't get, and it systematically
+        advantages the LLM — see AUDIT2.md §3). They decide on information through t-1
+        only (`incoming_last`). This is also why a week's four decisions are mutually
+        independent and may be batched into one model call.
+        """
+        ctxs: dict[str, dict] = {}
+        for r in ROLES:
+            ctxs[r] = {
+                "role": r,
+                "t": self.t,
+                "on_hand": self.state[r].oh,
+                "backlog": self.state[r].b,
+                "outstanding": self.state[r].o,
+                "incoming_last": self.prev_incoming[r],
+                "incoming_now": self.demand[self.t] if r == "retailer" else None,
+                "last_orders": self.order_history[r][-6:],
+            }
+        return ctxs
+
+    def advance(self, orders: dict[str, int]) -> WeekRecord:
+        """Apply one week's orders (steps 2-5 + bookkeeping) and record the week."""
+        missing = [r for r in ROLES if r not in orders]
+        if missing:
+            raise ValueError(f"week {self.t}: no order for {missing}")
+        t = self.t
+        ords = {r: max(0, int(orders[r])) for r in ROLES}   # engine floor: q >= 0
+        for r in ROLES:
+            self.order_history[r].append(ords[r])
+
+        # 2) receipts arrive (shipments sent `shipment_delay` weeks ago).
+        receipts: dict[str, int] = {}
+        for r in ROLES:
+            receipts[r] = self.inbound[r].popleft()
+
+        # 3) shipments constrained by available inventory vs effective demand.
+        shipments: dict[str, int] = {}
+        for r in ROLES:
+            incoming_eff = self.demand[t] if r == "retailer" else ords[ROLES[ROLES.index(r) - 1]]
+            avail = self.state[r].oh + receipts[r]
+            shipments[r] = min(avail, incoming_eff + self.state[r].b)
+
+        # 4) push shipments upstream into the next tier's inbound queue (factory: own
+        #    orders). Tier k receives what tier k+1 ships this week, with `shipment_delay`
+        #    weeks of lag.
+        for i, r in enumerate(ROLES):
+            self.inbound[r].append(ords[r] if r == "factory" else shipments[ROLES[i + 1]])
+
+        # 5) update state (paper eqs. 9-11) and account the week's cost.
+        cost = 0.0
+        incoming: dict[str, int] = {}
+        for r in ROLES:
+            incoming_eff = self.demand[t] if r == "retailer" else ords[ROLES[ROLES.index(r) - 1]]
+            s = self.state[r]
+            s.oh = s.oh + receipts[r] - shipments[r]
+            s.b = s.b + incoming_eff - shipments[r]
+            s.o = s.o + ords[r] - receipts[r]
+            cost += self.cfg.holding_cost * s.oh + self.cfg.backlog_cost * s.b
+            self.prev_incoming[r] = incoming_eff
+            incoming[r] = incoming_eff
+
+        rec = WeekRecord(
+            t=t,
+            orders=ords,
+            incoming=incoming,
+            receipts=receipts,
+            shipments=shipments,
+            on_hand={r: self.state[r].oh for r in ROLES},
+            backlog={r: self.state[r].b for r in ROLES},
+            outstanding={r: self.state[r].o for r in ROLES},
+            cost=cost,
+        )
+        self.weeks.append(rec)
+        self.t += 1
+        return rec
+
+    def log(self) -> RunLog:
+        return RunLog(config=self.cfg, demand=self.demand, weeks=self.weeks)
+
+
 def run_game(
     agents: dict[str, object],
     demand: list[int],
@@ -154,87 +278,15 @@ def run_game(
 ) -> RunLog:
     """agents: {role: callable(ctx) -> int order}. ctx carries the observed state."""
     cfg = cfg or SimConfig()
-    horizon = cfg.horizon if cfg.horizon else len(demand)
-
-    state = {r: TierState(cfg.init_on_hand, cfg.init_backlog, cfg.init_outstanding) for r in ROLES}
-    # incoming shipment queue per tier (FIFO, length = shipment_delay); factory's queue
-    # is filled by its own orders (unlimited upstream supplier, delayed).
-    inbound: dict[str, deque[int]] = {r: deque([0] * cfg.shipment_delay) for r in ROLES}
-    prev_incoming: dict[str, int] = {r: 0 for r in ROLES}   # q_{k-1,t-1} observed by agent
-    order_history: dict[str, list[int]] = {r: [] for r in ROLES}
-    log = RunLog(config=cfg, demand=demand[:horizon])
-
-    for t in range(horizon):
-        # 1) agents place orders simultaneously, on state known at start of week t.
+    step = GameStepper(demand, cfg)
+    while not step.done():
+        # 1) agents place orders on state known at the start of the week (see
+        #    GameStepper.observations for the AUDIT2 no-lookahead rule)
+        ctxs = step.observations()
         orders: dict[str, int] = {}
         for r in ROLES:
-            # AUDIT2 FIX: only the retailer sees the CURRENT week's exogenous customer
-            # demand. Upstream tiers must NOT see the tier-below's same-week order
-            # (that is a one-week lookahead the deterministic floor doesn't get, and
-            # it systematically advantages the LLM — see AUDIT2.md §3). They decide on
-            # information through t-1 only (incoming_last).
-            if r == "retailer":
-                incoming_now = demand[t]
-            else:
-                incoming_now = None
-            ctx = {
-                "role": r,
-                "t": t,
-                "on_hand": state[r].oh,
-                "backlog": state[r].b,
-                "outstanding": state[r].o,
-                "incoming_last": prev_incoming[r],
-                "incoming_now": incoming_now,
-                "last_orders": order_history[r][-6:],
-            }
-            q = agents[r](ctx)
+            q = agents[r](ctxs[r])
             q = int(max(0, q)) if q is not None else 0
             orders[r] = q
-            order_history[r].append(q)
-
-        # 2) receipts arrive (shipments sent `shipment_delay` weeks ago).
-        receipts: dict[str, int] = {}
-        for r in ROLES:
-            receipts[r] = inbound[r].popleft()
-
-        # 3) shipments constrained by available inventory vs effective demand.
-        shipments: dict[str, int] = {}
-        for r in ROLES:
-            incoming_eff = demand[t] if r == "retailer" else orders[ROLES[ROLES.index(r) - 1]]
-            avail = state[r].oh + receipts[r]
-            eff_demand = incoming_eff + state[r].b
-            shipments[r] = min(avail, eff_demand)
-
-        # 4) push shipments upstream into the next tier's inbound queue (factory: own orders).
-        #    tier k receives what tier k+1 ships this week; factory receives its own orders
-        #    (unlimited external supplier), both with `shipment_delay` weeks of lag.
-        for i, r in enumerate(ROLES):
-            if r == "factory":
-                inbound[r].append(orders[r])
-            else:
-                inbound[r].append(shipments[ROLES[i + 1]])
-
-        # 5) update state (paper eqs. 9-11).
-        cost = 0.0
-        for r in ROLES:
-            incoming_eff = demand[t] if r == "retailer" else orders[ROLES[ROLES.index(r) - 1]]
-            s = state[r]
-            s.oh = s.oh + receipts[r] - shipments[r]
-            s.b = s.b + incoming_eff - shipments[r]
-            s.o = s.o + orders[r] - receipts[r]
-            cost += cfg.holding_cost * s.oh + cfg.backlog_cost * s.b
-            prev_incoming[r] = incoming_eff
-
-        log.weeks.append(WeekRecord(
-            t=t,
-            orders=dict(orders),
-            incoming={r: (demand[t] if r == "retailer" else orders[ROLES[ROLES.index(r) - 1]]) for r in ROLES},
-            receipts=receipts,
-            shipments=shipments,
-            on_hand={r: state[r].oh for r in ROLES},
-            backlog={r: state[r].b for r in ROLES},
-            outstanding={r: state[r].o for r in ROLES},
-            cost=cost,
-        ))
-
-    return log
+        step.advance(orders)
+    return step.log()
