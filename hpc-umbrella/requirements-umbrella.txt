@@ -17,16 +17,17 @@
 #       reproduces on both, the compile path (TORCHDYNAMO_DISABLE=1, already wired
 #       into the driver and the sbatch env) is the actual fix.
 #
-# Exact pins exist only where we have evidence (Track B = the desktop matrix that
-# ran 102+ green tests and the wave-6 refactor). Track A uses ranges because Umbrella's
-# module contents are only knowable from the probe (`module spider PyTorch`) — do not
-# invent exact versions there; `stage.sh` prints what it actually resolved.
+# Pins: exact where evidence exists. TRACK A was settled 2026-09-30 by empirical
+# bisect against torch 2.1.2 (the module build): transformers 4.56+ needs torch>=2.2
+# (public torch.utils._pytree API) and dies at import; 4.55.4 is the newest that
+# imports AND ships Qwen3 (>=4.51 required). Full rehearsal on exactly this set
+# (real Qwen3-0.6B load, LoRA wrap, 3 optimizer steps) passed before re-staging.
 # =============================================================================
 
 # >>>BEGIN TRACK A
-transformers>=4.50,<5
-peft>=0.11,<1.0
-accelerate>=0.30
+transformers==4.55.4
+peft==0.21.1
+accelerate==1.15.0
 # <<<END TRACK A
 
 # >>>BEGIN TRACK B

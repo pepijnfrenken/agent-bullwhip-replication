@@ -53,6 +53,13 @@ were downloaded, no GPU was used, nothing trained — hub CPU work only.
   (`config.sh: No such file or directory`). Fixed in all three sbatch files: `KIT_DIR` now comes
   from `SLURM_SUBMIT_DIR` (manual-run fallback + loud FATAL otherwise); OPERATOR.md notes the
   submit-from-kit-dir rule.
+- **TRACK A version pins settled empirically (2026-09-30).** The first staging run's import check
+  caught the module torch 2.1.2 ↔ modern transformers clash: transformers 4.56+ calls
+  `torch.utils._pytree.register_pytree_node` (exists only on torch >=2.2) and dies at import.
+  Local bisect against torch 2.1.2: 4.55.4 is the newest that imports AND ships Qwen3
+  (>=4.51 required). Full rehearsal on the exact set (real Qwen3-0.6B load, LoRA wrap, 3
+  optimizer steps: loss 6.2345 -> 6.1563) passed. `requirements-umbrella.txt` TRACK A now pins
+  transformers==4.55.4 / peft==0.21.1 / accelerate==1.15.0.
 - **`bench_rollout.py` (repo root).** The pilot's machine-readable numbers: per-step wall-clock,
   µs per `generate()` and per decision, generated tokens, tokens/s, peak VRAM, and
   batched-vs-sequential speedup, written to JSON. `--stub` runs torch-free (verified on the hub).
