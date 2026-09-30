@@ -5,6 +5,24 @@
 > `gpu-pilot.sbatch` / `gpu-campaign.sbatch` / `cpu-harness.sbatch` source those pins.
 > Read `OPERATOR.md` for the run order; this file stays as the verified-facts reference.
 
+## Login-node probe results (run 2026-09-30, tue-login002, user 20234428)
+
+- **Partitions**: `tue.gpu3.q` = tue-gpuc001, **8x L4** (gres `gpu:nvidia_l4:8`); `tue.gpu2.q` =
+  tue-gpub001, 4x L4; `tue.gpu1.q` = gpuA, A30 MIG `1g.6gb` (avoid). GPU **MaxTime 5 days**,
+  **DefaultTime 2 h** — so the 2 h pilot and the 18 h campaign both fit without touching the cap.
+  CPU: `tue.cpu3.q` = 128-core turin nodes; `tue.default.q` = the whole CPU pool; both MaxTime 5 d.
+- **Features**: token `l4` present on gpub001 + gpuc001 (full vocabulary: `ada,l4,amd,genoa,ampere,a30,milan,turin`).
+- **Modules**: gateway modules `Umbrella/2018 | 2024 | 2026 (D)` + EESSI. Software is
+  **hierarchical**: plain `module avail` pre-gateway shows only the gateways themselves;
+  PyTorch/Python names appear only after `module load Umbrella/2024`.
+- **Egress: YES** - github.com and huggingface.co both reachable from the login node, so the git
+  clone + HF-download flow works there; the rsync fallback is not needed.
+- **Filesystems**: `/scratch-shared/20234428` exists (8 TiB quota, 0 used); home 200 GiB fine.
+- **Login node**: python3 = 3.9.25 (`/usr/bin/python3` fresh login), git 2.52.0, rsync/curl/wget
+  present, `squeue --me` empty, no GPU on the node itself.
+- **Still open**: exact `PyTorch/*` and `Python/*` module names inside the 2024 stack (visible
+  only after the gateway loads). `bash config.sh --check` verifies both once chosen.
+
 ## Access
 - Web: https://hpc.tue.nl (Open OnDemand) — files, shell, job composer in the browser
 - SSH: `ssh <tue-username>@hpc.tue.nl`

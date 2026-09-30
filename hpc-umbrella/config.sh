@@ -4,10 +4,9 @@
 #
 # Every probe/sbatch/stage script sources this file; nothing else in the kit
 # hardcodes a partition, module, path, walltime or run-shape knob. Values marked
-# "probe:" come from a login-node probe (`bash probe.sh`) that has NOT been run
-# yet — they are best-guess pins from the verified notes in 00-PROBE-AND-SETUP.md
-# and must be reconciled with the probe output (`bash stage.sh --pins`) before the
-# GPU pilot. `bash config.sh --check` fails on anything it cannot resolve.
+# "probe:" were reconciled against the login-node probe of 2026-09-30 (facts and
+# rulings in 00-PROBE-AND-SETUP.md -> "Login-node probe results"). Pins that are
+# still assumptions (exact module names) fail `bash config.sh --check` until settled.
 #
 # Slurm limitation worth knowing: #SBATCH directives are read before the shell
 # runs, so an sbatch file cannot interpolate ${GPU_PARTITION}. The sbatch headers
@@ -25,9 +24,9 @@ set -u
 
 KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER="${USER:-$(id -un)}"
-# Your TU/e (SCC) username. Usually identical to the local one; pull_results.sh runs
-# from the laptop and needs it explicitly. Set once here, never edit the scripts.
-TUE_USER="${TUE_USER:-${USER}}"
+# Your TU/e (SCC) username (login-node probe 2026-09-30: 20234428). pull_results.sh
+# runs from the laptop and needs it explicitly. Set once here, never edit the scripts.
+TUE_USER="${TUE_USER:-20234428}"
 SSH_HOST="${SSH_HOST:-hpc.tue.nl}"
 
 # --- filesystem --------------------------------------------------------------
@@ -96,17 +95,17 @@ BENCH_BATCHES="1,4,16,32" # bench_rollout.py chunk sizes (1 = the sequential bas
 bw_pin_table() {
   printf '%-22s %-44s %s\n' "PIN" "CURRENT VALUE" "SOURCE"
   printf '%-22s %-44s %s\n' \
-    "MODULE_UMBRELLA"   "$MODULE_UMBRELLA"   "assumed" \
-    "MODULE_PYTORCH"    "$MODULE_PYTORCH"    "assumed (00-PROBE §2)" \
-    "MODULE_PYTHON"     "$MODULE_PYTHON"     "assumed" \
-    "CPU_PARTITION"     "$CPU_PARTITION"     "assumed" \
-    "GPU_PARTITION"     "$GPU_PARTITION"     "assumed (target gpuC)" \
-    "GPU_PARTITION_ALT" "$GPU_PARTITION_ALT" "assumed (fallback gpuB)" \
-    "L4_CONSTRAINT"     "$L4_CONSTRAINT"     "assumed -> verify with sinfo -N -o '%N %f'" \
-    "WALLTIME_PILOT"    "$WALLTIME_PILOT"    "assumed" \
-    "WALLTIME_CAMPAIGN" "$WALLTIME_CAMPAIGN" "assumed -> must fit the partition MaxTime" \
+    "MODULE_UMBRELLA"   "$MODULE_UMBRELLA"   "probe 09-30 ok (2018/2024/2026)" \
+    "MODULE_PYTORCH"    "$MODULE_PYTORCH"    "assumed; TU/e docs list it — load test decides" \
+    "MODULE_PYTHON"     "$MODULE_PYTHON"     "assumed; docs list 3.11.3-GCCcore-12.3.0 (pip track)" \
+    "CPU_PARTITION"     "$CPU_PARTITION"     "probe 09-30 ok" \
+    "GPU_PARTITION"     "$GPU_PARTITION"     "probe 09-30 ok (gpuC: 8x L4)" \
+    "GPU_PARTITION_ALT" "$GPU_PARTITION_ALT" "probe 09-30 ok (gpuB: 4x L4)" \
+    "L4_CONSTRAINT"     "$L4_CONSTRAINT"     "probe 09-30 ok (feature token on gpuB+gpuC)" \
+    "WALLTIME_PILOT"    "$WALLTIME_PILOT"    "probe 09-30 ok (DefaultTime 2h)" \
+    "WALLTIME_CAMPAIGN" "$WALLTIME_CAMPAIGN" "probe 09-30 ok (MaxTime 5d)" \
     "ENV_MODE"          "$ENV_MODE"          "recommended default" \
-    "TUE_USER"          "$TUE_USER"          "your SCC username (laptop-side pulls)" \
+    "TUE_USER"          "$TUE_USER"          "probe 09-30: 20234428 (laptop-side pulls)" \
     "ROLLOUT_BATCH"     "$ROLLOUT_BATCH"     "repo default; the pilot measures 1 vs N" \
     "SAVE_EVERY"        "$SAVE_EVERY"        "checkpoint cadence for the campaign"
 }
@@ -132,17 +131,25 @@ bw_module_cmd() {
 }
 
 bw_autodetect() {
-  # Best-effort only, and only where a Slurm client exists (login node). Never
-  # guesses a *module name* (too many variants) — that stays a pin + --check.
+  # Best-effort only, and only where a Slurm client exists (login node). NEVER
+  # overrides a pin that is already set — settled pins (probe-reconciled) are
+  # canonical and `--check` validates them against the host; set a pin to "" to
+  # have this fill it from sinfo. Never guesses a *module name* (too many
+  # variants) — that stays a pin + --check, and the software modules are
+  # hierarchical (the Umbrella gateway must be loaded before PyTorch/Python
+  # appear in `module avail` at all).
   bw_have sinfo || return 0
-  local feats constraint part cap
-  feats="$(sinfo -N -h -o '%N %f' 2>/dev/null || true)"
-  [ -n "$feats" ] || return 0
-  constraint="$(printf '%s\n' "$feats" | awk '{for (i = 2; i <= NF; i++) if (tolower($i) ~ /l4/) {print $i; exit}}')"
-  if [ -n "$constraint" ]; then
-    L4_CONSTRAINT="$constraint"
+  local feats cand part cap
+  if [ -z "${L4_CONSTRAINT}" ]; then
+    feats="$(sinfo -N -h -o '%N %f' 2>/dev/null || true)"
+    if [ -n "$feats" ]; then
+      cand="$(printf '%s\n' "$feats" | awk '{n = split($0, f, " "); for (i = 2; i <= n; i++) {m = split(f[i], a, ","); for (j = 1; j <= m; j++) if (tolower(a[j]) ~ /l4/) {print a[j]; exit}}}')"
+      [ -n "$cand" ] && L4_CONSTRAINT="$cand"
+    fi
+  fi
+  if [ -z "${GPU_PARTITION}" ]; then
     part="$(sinfo -h -o '%P %f' 2>/dev/null \
-      | awk -v c="$constraint" 'tolower($0) ~ tolower(c) {gsub(/\*$/, "", $1); print $1; exit}')"
+      | awk -v c="$L4_CONSTRAINT" 'index(tolower($0), tolower(c)) {gsub(/\*$/, "", $1); print $1; exit}')"
     [ -n "$part" ] && GPU_PARTITION="$part"
   fi
   # walltime cap of the chosen partition (the *default* is what sinfo reports)
@@ -200,8 +207,8 @@ bw_check() {
 
   bw_autodetect
   echo "-- auto-detected --"
-  ok "GPU_PARTITION (after detect): ${GPU_PARTITION}"
-  ok "L4_CONSTRAINT (after detect): ${L4_CONSTRAINT}"
+  ok "GPU_PARTITION (pins win; autodetect fills only empty pins): ${GPU_PARTITION}"
+  ok "L4_CONSTRAINT (pins win; autodetect fills only empty pins): ${L4_CONSTRAINT}"
   say "info" "GPU partition default walltime: ${WALLTIME_GPU_CAP:-unknown}"
   echo
 
@@ -242,10 +249,15 @@ bw_check() {
   if [ "$ENV_MODE" = "module" ]; then
     if bw_module_cmd; then
       local m
+      # Umbrella's software is hierarchical: the gateway module must be loaded
+      # before the PyTorch/Python names appear in `module avail` at all.
+      module load "$MODULE_UMBRELLA" >/dev/null 2>&1 || true
       for m in "$MODULE_UMBRELLA" "$MODULE_PYTORCH"; do
         if module -t avail "$m" 2>&1 | sed 's/ *(.*)//' | grep -qx "$m"; then ok "module available: $m"
         else bad "module not found: $m (run: module spider PyTorch)"; fi
       done
+      if module load "$MODULE_PYTORCH" >/dev/null 2>&1; then ok "module loads: ${MODULE_PYTORCH}"
+      else bad "module load ${MODULE_PYTORCH} failed"; fi
       m="$MODULE_PYTHON"
       if module -t avail "$m" 2>&1 | sed 's/ *(.*)//' | grep -qx "$m"; then ok "module available: $m"
       else warn "module not found: $m (needed for ENV_MODE=pip only; check with: module spider Python)"; fi
