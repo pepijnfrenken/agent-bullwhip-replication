@@ -10,6 +10,7 @@ compared path-by-path (paired deltas) instead of by means across different paths
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from agent_bullwhip.agents import OrderUpToAgent
 from agent_bullwhip.engine import ROLES, SimConfig, make_demand, run_game
@@ -53,9 +54,11 @@ def main() -> None:
             out.append(rec)
             print(f"{p:>8} pass {i}: wf=({th},{la}) {rec['wf_cost']:>8,.0f}  "
                   f"untuned {rec['untuned_cost']:>8,.0f}  oracle {rec['oracle_cost']:>8,.0f}")
-    with open("results/walkforward_paths.json", "w") as f:
+    out_path = Path("results/walkforward_paths.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)  # fresh clones have no results/
+    with out_path.open("w") as f:
         json.dump(out, f, indent=1)
-    print("\nwrote results/walkforward_paths.json")
+    print(f"\nwrote {out_path}")
 
 
 if __name__ == "__main__":

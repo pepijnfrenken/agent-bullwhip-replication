@@ -60,6 +60,13 @@ were downloaded, no GPU was used, nothing trained — hub CPU work only.
   (>=4.51 required). Full rehearsal on the exact set (real Qwen3-0.6B load, LoRA wrap, 3
   optimizer steps: loss 6.2345 -> 6.1563) passed. `requirements-umbrella.txt` TRACK A now pins
   transformers==4.55.4 / peft==0.21.1 / accelerate==1.15.0.
+- **Fresh-clone + version-proofing fixes (2026-09-30, night).** The first cpu-harness run after
+  re-staging (351112) went fully green — node env sanity, pytest 242 passed, all 40 walk-forward
+  floors printed — then died writing `results/walkforward_paths.json`: `results/` is gitignored,
+  so fresh clones lack it. Fixed: the script now creates its output dir (verified in a clean dir:
+  exit 0, 40 records, step pass 0 matches the cluster print exactly). Pre-flight also caught the
+  pilot's part A using the transformers-5.x-only `dtype=` kwarg (hard TypeError on 4.55.4);
+  gpu-pilot.sbatch now falls back to `torch_dtype=` with the fallback verified on 4.55.4.
 - **`bench_rollout.py` (repo root).** The pilot's machine-readable numbers: per-step wall-clock,
   µs per `generate()` and per decision, generated tokens, tokens/s, peak VRAM, and
   batched-vs-sequential speedup, written to JSON. `--stub` runs torch-free (verified on the hub).

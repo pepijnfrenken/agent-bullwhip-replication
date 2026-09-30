@@ -73,7 +73,11 @@ echo "=== A: minimal optimizer step (the thing the desktop never completed) ==="
 python3 -u - <<'PY'
 import time, torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-m = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-0.6B", dtype=torch.bfloat16).to("cuda")
+try:  # transformers >= 5 renamed the kwarg torch_dtype -> dtype
+    m = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-0.6B", dtype=torch.bfloat16)
+except TypeError:  # transformers 4.x (the module arm pins 4.55.4)
+    m = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-0.6B", torch_dtype=torch.bfloat16)
+m = m.to("cuda")
 t = AutoTokenizer.from_pretrained("Qwen/Qwen3-0.6B")
 if t.pad_token is None:
     t.pad_token = t.eos_token
