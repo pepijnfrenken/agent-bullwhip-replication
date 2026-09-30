@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import random
+import re
 
 import pytest
 
 from agent_bullwhip.engine import SimConfig, make_demand, ROLES
 from agent_bullwhip.grpo_env import (
     BeerGameEpisode,
+    extract_int,
     group_normalize,
     return_to_go_rewards,
+    run_episodes_batched,
     sample_curriculum_demand,
 )
 
@@ -118,3 +121,94 @@ def test_shared_policy_sees_all_four_roles():
     ep = BeerGameEpisode(SimConfig(horizon=4))
     ep.run(pol, demand=make_demand(4, "step"))
     assert seen == {0, 1, 2, 3}
+
+
+# --------------------------------------------------------------------------- #
+# extract_int: env-side parse (policy text -> order quantity)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("text,expected", [
+    ("42", 42),
+    ("Order: 17 units", 17),
+    ("-3", -3),          # valid signed integer (env clamps negatives to 0)
+    ("-", 0),            # negative-looking junk, no digit
+    ("abc", 0),          # junk, no digit
+    ("", 0),             # empty output
+])
+def test_extract_int(text, expected):
+    assert extract_int(text) == expected
+
+
+# --------------------------------------------------------------------------- #
+# Batched rollout driver: it must be the engine's week loop, only dispatched
+# differently. The action rule is derived FROM THE PROMPT so both drivers see
+# exactly the same information.
+# --------------------------------------------------------------------------- #
+def _action_from_prompt(prompt: str) -> str:
+    t = int(re.search(r"Current week: (\d+)", prompt).group(1))
+    role = re.search(r"You are the ([A-Z]+) in a four-stage", prompt).group(1).lower()
+    return str((ROLES.index(role) * 3 + t * 5) % 11)
+
+
+@pytest.mark.parametrize("chunk", [1, 4, 0])           # 1 = per-decision, 0 = unbounded
+@pytest.mark.parametrize("delay,init_oh,init_b,init_o", [
+    (2, 0, 0, 0),      # paper defaults
+    (1, 5, 2, 3),      # non-zero initial state, 1-week lag
+    (3, 0, 4, 1),      # 3-week lag + initial backlog
+])
+def test_batched_driver_matches_engine(chunk, delay, init_oh, init_b, init_o):
+    cfg = SimConfig(horizon=12, shipment_delay=delay, init_on_hand=init_oh,
+                    init_backlog=init_b, init_outstanding=init_o)
+    demands = [make_demand(12, "step"),
+               make_demand(12, "noisy", seed=11),
+               make_demand(12, "wild", seed=5)]
+    ep = BeerGameEpisode(cfg)
+    sequential = [ep.run(lambda a, t, p: _action_from_prompt(p), demand=d) for d in demands]
+    batched = run_episodes_batched(
+        lambda prompts: [_action_from_prompt(p) for p in prompts], demands, cfg, chunk=chunk)
+
+    assert len(batched) == len(sequential) == 3
+    for seq, bat in zip(sequential, batched):
+        # records carry (t, agent_id, prompt, completion) -> covers prompt text,
+        # prompt order, action alignment and the clamped-order bookkeeping
+        assert bat.records == seq.records
+        assert bat.orders == seq.orders
+        assert bat.sys_cost_by_week == seq.sys_cost_by_week
+        assert bat.total_sys_cost == seq.total_sys_cost
+    # prompt family unchanged (frozen waves 1-5 family)
+    assert all("Reply with ONLY an integer" in r.prompt
+               for res in batched for r in res.records)
+
+
+def test_batched_driver_rejects_wrong_completion_count():
+    # A desynced batch must fail loudly rather than silently misalign decisions
+    # (the AUDIT2 silent-fallback lesson).
+    with pytest.raises(ValueError, match="completions for"):
+        run_episodes_batched(lambda prompts: prompts[:1],
+                             [make_demand(4, "step")], SimConfig(horizon=4))
+
+
+def test_same_week_decisions_are_independent_of_each_other():
+    """The property batching rests on: a week-t decision cannot see a same-week
+    order from another tier (engine AUDIT2 fix: no one-week lookahead). Changing
+    the retailer's order at week 1 must leave the other three tiers' week-1
+    prompts bit-identical; if a same-week lookahead ever creeps into the engine,
+    batching these four decisions together would be wrong and this fails."""
+    cfg = SimConfig(horizon=6)
+    demand = make_demand(6, "step")
+
+    def run_with_retailer_order(order_at_week1: int) -> dict[str, str]:
+        def policy(prompt: str) -> str:
+            t = int(re.search(r"Current week: (\d+)", prompt).group(1))
+            role = re.search(r"You are the ([A-Z]+) in a four-stage", prompt).group(1).lower()
+            if role == "retailer" and t == 1:
+                return str(order_at_week1)
+            return _action_from_prompt(prompt)
+        res = run_episodes_batched(lambda prompts: [policy(p) for p in prompts],
+                                   [demand], cfg)[0]
+        return {(r.agent_id, r.t): r.prompt for r in res.records}
+
+    base = run_with_retailer_order(0)
+    other = run_with_retailer_order(100)
+    for aid in (1, 2, 3):
+        assert base[(aid, 1)] == other[(aid, 1)]
+

@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import json
 import random
+import re
 
 import pytest
 
 from agent_bullwhip.grpo_train import (
     _torch_available,
     collect_step,
-    extract_int,
     main,
     parse_args,
     run_loop,
@@ -38,21 +38,48 @@ class _FakeTok:
 
 
 class _StubPolicy:
-    """PolicyLike stub: deterministic completion text, recorded calls."""
+    """PolicyLike stub: deterministic completion text, recorded calls.
+
+    `calls` records the prompt list of every rollout() call, which is how the
+    batching tests measure dispatch (one call per chunk, not per decision).
+    """
 
     def __init__(self, answer: str = "8", loss: float = 0.123):
         self.answer = answer
         self.loss = loss
+        self.n_rollouts = 0
+        self.calls: list[list[str]] = []
+        self.model = _FakeModel()
+        self.tok = None
+
+    def rollout(self, prompts, temperature=1.0, max_new=8):
+        self.n_rollouts += 1
+        self.calls.append(list(prompts))
+        return None, [self.answer] * len(prompts)
+
+    def grpo_step(self, batch_prompts, batch_completions, advantages, **kwargs):
+        return self.loss
+
+
+class _WeekPolicy:
+    """Answers with the week number parsed from the prompt it was handed.
+
+    The flat batch is episode-major then (t, agent_id), so a misaligned wrap of
+    batched outputs would place the wrong week's answer in each slot; this stub
+    makes alignment checkable from the returned completions alone.
+    """
+
+    def __init__(self):
         self.n_rollouts = 0
         self.model = _FakeModel()
         self.tok = None
 
     def rollout(self, prompts, temperature=1.0, max_new=8):
         self.n_rollouts += 1
-        return None, [self.answer] * len(prompts)
+        return None, [re.search(r"Current week: (\d+)", p).group(1) for p in prompts]
 
     def grpo_step(self, batch_prompts, batch_completions, advantages, **kwargs):
-        return self.loss
+        return 0.0
 
 
 # --------------------------------------------------------------------------- #
@@ -101,18 +128,60 @@ def test_curricula_produce_different_demand_driven_patterns():
 
 
 # --------------------------------------------------------------------------- #
-# extract_int
+# rollout batching (D1): same prompts, same alignment, fewer generate() calls
 # --------------------------------------------------------------------------- #
-@pytest.mark.parametrize("text,expected", [
-    ("42", 42),
-    ("Order: 17 units", 17),
-    ("-3", -3),          # valid signed integer (env clamps negatives to 0)
-    ("-", 0),            # negative-looking junk, no digit
-    ("abc", 0),          # junk, no digit
-    ("", 0),             # empty output
+def test_collect_step_batching_preserves_prompts_completions_advantages():
+    # Same seed/curriculum: chunk=1 (per-decision dispatch) and chunk=0
+    # (everything pending in one call) must produce identical flat batches.
+    p_seq, c_seq, a_seq = collect_step(_StubPolicy(), G=2, curriculum="poisson",
+                                       horizon=6, seed=7, rollout_batch=1)
+    p_bat, c_bat, a_bat = collect_step(_StubPolicy(), G=2, curriculum="poisson",
+                                       horizon=6, seed=7, rollout_batch=0)
+    assert p_seq == p_bat
+    assert c_seq == c_bat
+    assert a_seq == a_bat
+
+
+@pytest.mark.parametrize("chunk,expected_calls", [
+    (1, 48),    # 48 decisions, one prompt per call (tiny-VRAM path)
+    (4, 12),    # one same-week role group per call
+    (8, 6),     # one week (2 episodes x 4 roles) per call
+    (16, 6),    # default: still one week per call at G=2
+    (0, 6),     # unbounded: all pending decisions of a week in one call
 ])
-def test_extract_int(text, expected):
-    assert extract_int(text) == expected
+def test_collect_step_call_counts_scale_with_rollout_batch(chunk, expected_calls):
+    G, T = 2, 6   # 48 decisions -> 48 * T prompts
+    pol = _StubPolicy()
+    collect_step(pol, G=G, curriculum="poisson", horizon=T, seed=7, rollout_batch=chunk)
+    assert pol.n_rollouts == expected_calls
+    assert sum(len(c) for c in pol.calls) == G * 4 * T   # every decision submitted once
+    assert max(len(c) for c in pol.calls) <= (chunk if chunk > 0 else G * 4 * T)
+
+
+@pytest.mark.parametrize("chunk", [1, 8, 0])
+def test_collect_step_unwraps_batched_outputs_to_per_decision_alignment(chunk):
+    # The stub answers with the week number parsed from its own prompt. The flat
+    # batch is episode-major then (t, agent_id) -> slot (g, t, k) must hold str(t).
+    G, T = 3, 5
+    _, completions, advs = collect_step(_WeekPolicy(), G=G, curriculum="poisson",
+                                        horizon=T, seed=3, rollout_batch=chunk)
+    assert len(completions) == len(advs) == G * 4 * T
+    for g in range(G):
+        for t in range(T):
+            for k in range(4):
+                assert completions[g * 4 * T + t * 4 + k] == str(t)
+
+
+def test_run_loop_dispatches_batched_rollout_calls(tmp_path):
+    # Integration: the loop must hand the batch size through to collect_step.
+    # 2 steps x 2 episodes x 4 roles x 6 weeks = 96 decisions; with the default
+    # chunk=16 and 8 prompts/week that is 6 calls per step, not 48.
+    pol = _StubPolicy()
+    run_loop(pol, _loop_args(steps=2, group=2, horizon=6),
+             tmp_path / "train_log.jsonl", tmp_path / "checkpoint",
+             has_torch=lambda: False)
+    assert pol.n_rollouts == 12
+    assert all(len(c) == 8 for c in pol.calls)
 
 
 # --------------------------------------------------------------------------- #
@@ -129,6 +198,7 @@ def test_parse_args_defaults_and_override():
     args = parse_args(["--steps", "5", "--group", "2", "--horizon", "6"])
     assert args.steps == 5 and args.group == 2 and args.horizon == 6
     assert args.curricula == "poisson,truncnorm" and args.beta_kl == 0.02
+    assert args.rollout_batch == 16   # batched by default; 1 = per-decision
 
 
 # --------------------------------------------------------------------------- #

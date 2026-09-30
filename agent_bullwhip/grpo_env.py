@@ -30,10 +30,12 @@ Paper recipe implemented here (§6):
 from __future__ import annotations
 
 import random
+import re
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable
 
-from .engine import ROLES, SimConfig, make_demand, run_game
+from .engine import ROLES, SimConfig, TierState, make_demand, run_game
 from .agents import build_prompt
 
 # --------------------------------------------------------------------------- #
@@ -169,6 +171,151 @@ class BeerGameEpisode:
         return EpisodeResult(records=records, orders=orders,
                              sys_cost_by_week=costs,
                              total_sys_cost=log.total_cost())
+
+
+def extract_int(text: str) -> int:
+    """First signed integer in `text`; 0 if none (env clamps negatives to 0).
+
+    Lives here rather than in grpo_train because it is the env-side parse:
+    policy text -> order quantity. Same rule as the waves 1-5 `parse_order`
+    (first integer anywhere), so the trained policy is served by the same
+    contract the earlier waves used.
+    """
+    m = re.search(r"-?\d+", text or "")
+    return int(m.group()) if m else 0
+
+
+def run_episodes_batched(batch_policy: Callable[[list[str]], list[str]],
+                         demands: list[list[int]],
+                         sim_cfg: SimConfig | None = None, *,
+                         prompt_variant: str = "default", chunk: int = 16,
+                         parse: Callable[[str], int] = extract_int) -> list[EpisodeResult]:
+    """Run `len(demands)` episodes in lockstep, batching generate() across
+    decisions that are causally independent.
+
+    Why batching is semantically safe here:
+      * across TIME: a week-t decision reads state through week t-1 only, so the
+        lockstep week loop visits decisions in exactly `engine.run_game`'s order.
+      * across ROLES within one week: the engine's week loop builds every role's
+        ctx from the state at the START of week t and exposes no same-week order
+        to anybody (`incoming_now` is the retailer's exogenous demand, not a
+        downstream order — the AUDIT2 leak fix). The 4 role decisions of a week
+        are therefore mutually independent and may share one generate() call.
+      * across EPISODES: separate demand realizations, separate state, nothing
+        flows between them, so all G episodes' week-t decisions may share a call.
+
+    Only the *dispatch* is batched: every decision keeps its own prompt and its
+    own sampled completion. Disabling the feature is `chunk=1`.
+
+    This mirrors `engine.run_game` step for step (the numbered comments below
+    match its step numbers) because the engine stays the synchronous source of
+    truth and is frozen for this wave. The equivalence is pinned by
+    `tests/test_grpo_env.py::test_batched_driver_matches_engine`, which drives
+    both drivers with the same action policy over random demands and configs and
+    compares the full EpisodeResult; if the engine's week semantics ever change,
+    that test fails rather than the training quietly diverging.
+
+    `chunk` = max prompts per batch_policy call (<= 0 = every pending decision of
+    the week in one call). Returns one EpisodeResult per demand, in order, with
+    the same record layout/order as `BeerGameEpisode.run`.
+    """
+    cfg = sim_cfg or SimConfig(horizon=36)
+    G = len(demands)
+    if G == 0:
+        return []
+    horizon = cfg.horizon if cfg.horizon else len(demands[0])
+    demand_vec = [d[:horizon] for d in demands]
+
+    # Per-episode engine state — the same objects/naming as engine.run_game.
+    state = [{r: TierState(cfg.init_on_hand, cfg.init_backlog, cfg.init_outstanding)
+              for r in ROLES} for _ in range(G)]
+    inbound: list[dict[str, deque]] = [
+        {r: deque([0] * cfg.shipment_delay) for r in ROLES} for _ in range(G)]
+    prev_incoming = [{r: 0 for r in ROLES} for _ in range(G)]
+    order_history: list[dict[str, list[int]]] = [{r: [] for r in ROLES} for _ in range(G)]
+    prompts: list[dict[str, list[str]]] = [{r: [] for r in ROLES} for _ in range(G)]
+    orders_by_role: list[dict[str, list[int]]] = [{r: [] for r in ROLES} for _ in range(G)]
+    costs: list[list[float]] = [[] for _ in range(G)]
+
+    max_chunk = chunk if chunk > 0 else 1 << 30
+    for t in range(horizon):
+        # 1a) build every week-t observation (no state is mutated in this phase).
+        pending: list[tuple[int, str, str]] = []
+        for g in range(G):
+            for r in ROLES:
+                incoming_now = demand_vec[g][t] if r == "retailer" else None
+                ctx = {
+                    "role": r,
+                    "t": t,
+                    "on_hand": state[g][r].oh,
+                    "backlog": state[g][r].b,
+                    "outstanding": state[g][r].o,
+                    "incoming_last": prev_incoming[g][r],
+                    "incoming_now": incoming_now,
+                    "last_orders": order_history[g][r][-6:],
+                }
+                p = build_prompt(r, ctx, prompt_variant)
+                prompts[g][r].append(p)
+                pending.append((g, r, p))
+
+        # 1b) the batched lever: one generate() per `max_chunk` decisions.
+        texts: list[str] = []
+        for i in range(0, len(pending), max_chunk):
+            texts.extend(batch_policy([p for _, _, p in pending[i:i + max_chunk]]))
+        if len(texts) != len(pending):
+            raise ValueError(
+                f"batch_policy returned {len(texts)} completions for {len(pending)} prompts")
+
+        orders: list[dict[str, int]] = [{} for _ in range(G)]
+        for (g, r, _), text in zip(pending, texts):
+            q = int(parse(text))
+            orders[g][r] = max(0, q)          # engine: orders are clamped to >= 0
+            order_history[g][r].append(orders[g][r])
+            orders_by_role[g][r].append(orders[g][r])
+
+        for g in range(G):
+            # 2) receipts arrive (shipped `shipment_delay` weeks ago).
+            receipts = {r: inbound[g][r].popleft() for r in ROLES}
+            # 3) shipments constrained by available inventory vs effective demand.
+            shipments: dict[str, int] = {}
+            for r in ROLES:
+                idx = ROLES.index(r)
+                incoming_eff = demand_vec[g][t] if r == "retailer" else orders[g][ROLES[idx - 1]]
+                shipments[r] = min(state[g][r].oh + receipts[r],
+                                   incoming_eff + state[g][r].b)
+            # 4) push shipments upstream into the next tier's inbound queue.
+            for i, r in enumerate(ROLES):
+                inbound[g][r].append(orders[g][r] if r == "factory"
+                                     else shipments[ROLES[i + 1]])
+            # 5) update state (paper eqs. 9-11) and account the week's cost.
+            cost = 0.0
+            for r in ROLES:
+                idx = ROLES.index(r)
+                incoming_eff = demand_vec[g][t] if r == "retailer" else orders[g][ROLES[idx - 1]]
+                s = state[g][r]
+                s.oh = s.oh + receipts[r] - shipments[r]
+                s.b = s.b + incoming_eff - shipments[r]
+                s.o = s.o + orders[g][r] - receipts[r]
+                cost += cfg.holding_cost * s.oh + cfg.backlog_cost * s.b
+                prev_incoming[g][r] = incoming_eff
+            costs[g].append(cost)
+
+    out: list[EpisodeResult] = []
+    for g in range(G):
+        records: list[DecisionRecord] = []
+        for aid, role in enumerate(ROLES):
+            qs = orders_by_role[g][role]
+            for t, p in enumerate(prompts[g][role]):
+                records.append(DecisionRecord(agent_id=aid, t=t, prompt=p,
+                                              completion=str(qs[t])))
+        records.sort(key=lambda d: (d.t, d.agent_id))
+        out.append(EpisodeResult(
+            records=records,
+            orders={aid: orders_by_role[g][role] for aid, role in enumerate(ROLES)},
+            sys_cost_by_week=costs[g],
+            total_sys_cost=sum(costs[g])))
+    return out
+
 
 # --------------------------------------------------------------------------- #
 # GRPO advantage (paper Eq. 25): normalize per (agent, week) across the G

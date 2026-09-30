@@ -1,13 +1,16 @@
-"""Wave 6 GRPO training driver (runs on the desktop; D3: Modal OUT).
+"""Wave 6 GRPO training driver (desktop 3060 Ti, or a TU/e Umbrella L4; D3: Modal OUT).
 
 D1: TRL `GRPOTrainer` with a custom rollout source. The env side lives in
 `grpo_env.py`; this file owns the training loop wiring:
 
   per step:
     1. sample G curriculum episodes under the CURRENT policy (plain
-       transformers generate inside torch.no_grad for rollouts — 0.6B on an 8GB
-       card generates 4*36 short integer completions fast enough that vLLM is
-       not worth the dependency for the pilot; revisit for 1.2B+)
+       transformers generate inside torch.no_grad for rollouts — 0.6B short
+       integer completions are cheap enough that vLLM is not worth the
+       dependency for the pilot; revisit for 1.2B+). Rollouts are **batched**:
+       all decisions of one week (G episodes x 4 roles) go through one
+       `generate()` call per `--rollout-batch` prompts, because those decisions
+       are causally independent (see `grpo_env.run_episodes_batched`)
     2. compute system-level return-to-go rewards + group-normalized advantages
        per (agent, week) across the G episodes (grpo_env.group_normalize)
     3. one policy-gradient step on advantage-weighted logprobs of the emitted
@@ -22,24 +25,25 @@ The loop itself is torch-free and policy-agnostic: it drives any `PolicyLike`
 the hub can unit-test and dry-run the full step loop with a stub policy. All
 torch imports stay inside `_Policy` (module imports on a torch-less box).
 
-Usage (desktop, inside the wave6 venv):
+Usage (desktop / Umbrella compute node, inside the wave6 venv):
     python -m agent_bullwhip.grpo_train --model Qwen/Qwen3-0.6B \
         --steps 300 --group 8 --out results/grpo_a0 --resume
 
 Success criteria / eval protocol: WAVE6_SPEC.md (never trained on step demand).
+Slurm run kit (probe/config/sbatch/runbook): `~/hpc-umbrella/OPERATOR.md`.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import random
-import re
 import time
 from pathlib import Path
 from typing import Callable, Protocol
 
 from .engine import SimConfig
-from .grpo_env import BeerGameEpisode, group_normalize, sample_curriculum_demand
+from .grpo_env import (group_normalize, run_episodes_batched,
+                       sample_curriculum_demand)
 from .grpo_trl import ep_result_to_rewards
 
 
@@ -206,29 +210,35 @@ class _Policy:
 # Rollout collection for one training step
 # --------------------------------------------------------------------------- #
 def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
-                 seed: int | None = None, temperature: float = 1.0):
+                 seed: int | None = None, temperature: float = 1.0,
+                 rollout_batch: int = 16):
     """Run G episodes under `policy`; returns flat (prompts, completions, advantages).
 
-    One rollout per decision: the engine drives the policy synchronously, one
-    (agent, week) at a time, so each call submits a single-prompt batch. Batching
-    the 4 agents of a week would need two-phase engine stepping; the rollout cost
-    at 0.6B makes the 4x single-prompt calls cheap — revisit only if a profile
-    says otherwise.
+    Rollouts are **batched**: the decisions of one week (4 roles) across all G
+    episodes are causally independent — the engine builds each role's ctx from
+    state at the start of the week and never exposes a same-week order to another
+    agent (AUDIT2 leak fix) — so they are submitted in a single
+    `policy.rollout()` call, chunked to at most `rollout_batch` prompts per call.
+    For the default G=8 that is 32 prompts/call and 36 calls per step instead of
+    the previous 2,304 single-prompt calls. See `grpo_env.run_episodes_batched`
+    for the invariance argument and the test that pins it against the engine.
+
+    `rollout_batch=1` dispatches one prompt per call (the tiny-VRAM escape
+    hatch); `rollout_batch<=0` puts every pending decision of a week in one call.
 
     Returns three parallel lists, each of length G * 4 * horizon, ordered by
     episode then (t, agent_id) — the same row order `grpo_step` consumes.
     """
     rng = random.Random(seed)
-    episodes = []
-    for _ in range(G):
-        demand = sample_curriculum_demand(rng, curriculum, horizon)
-        ep = BeerGameEpisode(SimConfig(horizon=horizon))
+    demands = [sample_curriculum_demand(rng, curriculum, horizon) for _ in range(G)]
 
-        def pol(agent_id: int, t: int, prompt: str) -> str:
-            _, texts = policy.rollout([prompt], temperature=temperature)
-            return str(extract_int(texts[0]))
+    def batch_policy(prompts: list[str]) -> list[str]:
+        _, texts = policy.rollout(prompts, temperature=temperature)
+        return list(texts)
 
-        episodes.append(ep.run(pol, demand=demand))
+    episodes = run_episodes_batched(batch_policy, demands,
+                                    SimConfig(horizon=horizon),
+                                    chunk=rollout_batch)
     rewards = [ep_result_to_rewards(e) for e in episodes]
     adv = group_normalize(rewards)
     prompts_all: list[str] = []
@@ -240,12 +250,6 @@ def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
             completions_all.append(rec.completion)
             flat_adv.append(a[rec.agent_id][rec.t])
     return prompts_all, completions_all, flat_adv
-
-
-def extract_int(text: str) -> int:
-    """First signed integer in `text`; 0 if none (env clamps negatives to 0)."""
-    m = re.search(r"-?\d+", text or "")
-    return int(m.group()) if m else 0
 
 
 # --------------------------------------------------------------------------- #
@@ -262,6 +266,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--curricula", default="poisson,truncnorm")
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--beta-kl", type=float, default=0.02)
+    ap.add_argument("--rollout-batch", type=int, default=16,
+                    help="max prompts per generate() call during rollouts; "
+                         "1 = one prompt per call (tiny-VRAM path), <=0 = unbounded")
     ap.add_argument("--out", default="results/grpo_a0")
     ap.add_argument("--resume", action="store_true")
     return ap.parse_args(argv)
@@ -292,7 +299,7 @@ def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
         curriculum = curricula[step % len(curricula)]
         prompts, completions, advs = collect_step(
             policy, G=args.group, curriculum=curriculum, horizon=args.horizon,
-            seed=rng.randint(0, 2**31))
+            seed=rng.randint(0, 2**31), rollout_batch=args.rollout_batch)
         loss = policy.grpo_step(prompts, completions, advs,
                                 lr=args.lr, beta_kl=args.beta_kl)
         rec = {
