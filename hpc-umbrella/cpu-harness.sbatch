@@ -101,19 +101,30 @@ class Stub:
         return 0.25
 
 
-def args(steps, save_every="0"):
-    return parse_args(["--steps", str(steps), "--group", "2", "--horizon", "6",
-                       "--save-every", save_every, "--out", "/tmp/ignored"])
+def args(steps, save_every="0", rollout_batch=None):
+    argv = ["--steps", str(steps), "--group", "2", "--horizon", "6",
+            "--save-every", save_every, "--out", "/tmp/ignored"]
+    if rollout_batch is not None:
+        argv += ["--rollout-batch", str(rollout_batch)]
+    return parse_args(argv)
 
 
 root = Path("results/grpo_dryrun_cpu")
-for chunk in (1, 16, 0):
+seen = {}
+for chunk in (1, 16, 4, 0):
     out = root / f"chunk{chunk}"
     pol = Stub()
-    run_loop(pol, args(3), out / "train_log.jsonl", out / "checkpoint",
+    run_loop(pol, args(3, rollout_batch=chunk), out / "train_log.jsonl", out / "checkpoint",
              has_torch=lambda: False)
-    print(f"rollout_batch={chunk:>2}  generate_calls={pol.calls:>3} for 3 steps "
-          f"(144 decisions/step at G=2,T=6)")
+    seen[chunk] = pol.calls
+    print(f"rollout_batch={chunk:>2}  generate_calls={pol.calls:>3} for 3 steps")
+# 4 roles x 6 weeks x G=2 = 48 decision-prompts/step, dispatched in week-level
+# chunks of 8 prompts: batch=1 -> 8 calls/week (144 for 3 steps); batch=4 -> 2/week
+# (36); batch=16 or <=0 (whole week per call) -> 1/week (18). Exact counts = tripwire.
+expected = {1: 144, 16: 18, 4: 36, 0: 18}
+assert seen == expected, f"batched-rollout call counts drifted: got {seen}, expected {expected}"
+print(f"-> {seen[1] // 3} decision-prompts/step at G=2,T=6; "
+      f"batching: {seen} calls for 3 steps")
 
 # SIGTERM -> checkpoint -> resume, on the cluster interpreter
 stop = threading.Event()

@@ -67,6 +67,12 @@ were downloaded, no GPU was used, nothing trained — hub CPU work only.
   exit 0, 40 records, step pass 0 matches the cluster print exactly). Pre-flight also caught the
   pilot's part A using the transformers-5.x-only `dtype=` kwarg (hard TypeError on 4.55.4);
   gpu-pilot.sbatch now falls back to `torch_dtype=` with the fallback verified on 4.55.4.
+- **cpu-harness green end-to-end + batching check made real (2026-09-30, night).** Run 351155
+  completed exit 0 — env sanity, pytest 242, floors + `walkforward_paths.json` write, stub
+  dry-run, SIGTERM checkpoint/resume — all on the cluster. Its dry-run had a vacuous batching
+  demo (the loop never passed `--rollout-batch`; all three chunks printed identical counts);
+  now wired through with exact expected counts `{1: 144, 16: 18, 4: 36, 0: 18}` (week-level
+  dispatch of 8 decision-prompts/week at G=2,T=6) as a tripwire — verified torch-free locally.
 - **`bench_rollout.py` (repo root).** The pilot's machine-readable numbers: per-step wall-clock,
   µs per `generate()` and per decision, generated tokens, tokens/s, peak VRAM, and
   batched-vs-sequential speedup, written to JSON. `--stub` runs torch-free (verified on the hub).
