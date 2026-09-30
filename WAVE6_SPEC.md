@@ -162,9 +162,10 @@ systemd+checkpoint pattern; the box powers off at night, so checkpoints are mand
   checkpoint/resume with a SIGTERM handler — and moves training to `tue.gpu3.q` (8× L4, 24 GB each).
   The **4B paper-comparable rung stays parked** (unlocks only by an explicit new decision after the
   0.6B results are reviewed). Nothing in §1–§5 of this spec (recipe, ladder, success criteria,
-  pre-registered controls) changes; only where the compute comes from. The run kit lives outside
-  this repo at `~/hpc-umbrella/` (`OPERATOR.md`), and the run book is: probe → pin one file →
-  stage → cpu-harness → gpu-pilot → campaign array.
+  pre-registered controls) changes; only where the compute comes from. The run kit lives in this
+  repo at `hpc-umbrella/` (`OPERATOR.md`; vendored 2026-09-30 — the cluster needs one public
+  `git clone`), and the run book is: probe → pin one file → stage → cpu-harness → gpu-pilot →
+  campaign array.
 - 2026-09-30 — **STEER-01 (internal refactor, no scope change):** the batched rollout driver shares
   the engine's week loop (`engine.GameStepper`) instead of mirroring it; `run_game` is a thin
   adapter over the same stepper. Behaviour is pinned by a new waves-1–5 golden fixture

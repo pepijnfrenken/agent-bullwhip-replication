@@ -1,0 +1,14 @@
+name	group	horizon	curricula	lr	beta_kl	steps
+pilot	8	36	poisson,truncnorm	1e-5	0.02	4
+a0_base	8	36	poisson,truncnorm	1e-5	0.02	300
+a1_group4	4	36	poisson,truncnorm	1e-5	0.02	300
+a2_group16	16	36	poisson,truncnorm	1e-5	0.02	300
+a3_horizon24	8	24	poisson,truncnorm	1e-5	0.02	300
+a4_horizon52	8	52	poisson,truncnorm	1e-5	0.02	300
+a5_poisson_only	8	36	poisson	1e-5	0.02	300
+a6_truncnorm_only	8	36	truncnorm	1e-5	0.02	300
+a7_kl_low	8	36	poisson,truncnorm	1e-5	0.005	300
+a8_kl_high	8	36	poisson,truncnorm	1e-5	0.1	300
+a9_lr_low	8	36	poisson,truncnorm	5e-6	0.02	300
+a10_lr_high	8	36	poisson,truncnorm	2e-5	0.02	300
+a11_seed2	8	36	poisson,truncnorm	1e-5	0.02	300

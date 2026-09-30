@@ -1,0 +1,45 @@
+# =============================================================================
+# requirements-umbrella.txt — Wave-6 environment for TU/e Umbrella.
+#
+# stage.sh installs ONE of the two tracks below (chosen by ENV_MODE in config.sh):
+#
+#   TRACK A (recommended; ENV_MODE=module)  torch comes from the module stack
+#       (Umbrella/2024 + PyTorch/2.1.2-foss-2023a-CUDA-12.1.1, CUDA 12.1.1), and
+#       this venv layers the python libraries on top with --system-site-packages.
+#       Why recommended: no multi-GB wheel download, CUDA matched to the node
+#       driver, and it is a *matched-era* pairing. The parked desktop stall is
+#       suspected to be a transformers/torch version mismatch, so running the
+#       pilot on a matched pair is the control arm of that experiment.
+#
+#   TRACK B (ENV_MODE=pip)  the desktop-proven matrix, verbatim: torch 2.5.1+cu121
+#       with transformers 5.17.0 etc. This is the *treatment* arm — if the stall
+#       reproduces here but not on Track A, the version pairing is confirmed; if it
+#       reproduces on both, the compile path (TORCHDYNAMO_DISABLE=1, already wired
+#       into the driver and the sbatch env) is the actual fix.
+#
+# Exact pins exist only where we have evidence (Track B = the desktop matrix that
+# ran 102+ green tests and the wave-6 refactor). Track A uses ranges because Umbrella's
+# module contents are only knowable from the probe (`module spider PyTorch`) — do not
+# invent exact versions there; `stage.sh` prints what it actually resolved.
+# =============================================================================
+
+# >>>BEGIN TRACK A
+transformers>=4.50,<5
+peft>=0.11,<1.0
+accelerate>=0.30
+# <<<END TRACK A
+
+# >>>BEGIN TRACK B
+transformers==5.17.0
+peft==0.21.0
+trl==1.13.0
+accelerate==1.15.0
+bitsandbytes==0.50.2
+# torch is installed separately (CUDA index URL) — see stage.sh ENV_MODE=pip
+# <<<END TRACK B
+
+# --- common (both tracks) ----------------------------------------------------
+pytest>=7
+numpy
+pandas
+huggingface_hub>=0.23

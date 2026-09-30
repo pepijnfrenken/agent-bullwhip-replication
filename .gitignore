@@ -9,3 +9,7 @@ results/
 # post drafts stay local — never in the repo
 POSTS.md
 POST_*.md
+
+# local agent/mission runtime — never in the repo
+.omp/
+.mr-mission

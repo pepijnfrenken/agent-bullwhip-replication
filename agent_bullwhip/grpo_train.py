@@ -30,7 +30,7 @@ Usage (desktop / Umbrella compute node, inside the wave6 venv):
         --steps 300 --group 8 --out results/grpo_a0 --resume
 
 Success criteria / eval protocol: WAVE6_SPEC.md (never trained on step demand).
-Slurm run kit (probe/config/sbatch/runbook): `~/hpc-umbrella/OPERATOR.md`.
+Slurm run kit (probe/config/sbatch/runbook): `hpc-umbrella/OPERATOR.md` (in this repo).
 """
 from __future__ import annotations
 

@@ -36,7 +36,7 @@ were downloaded, no GPU was used, nothing trained — hub CPU work only.
   exits at the next step boundary — Slurm's pre-walltime SIGTERM is what makes an 18 h job
   survivable. Hub-verified with stub runs (SIGTERM at step 2 → `state.json` step 2 → resume ran
   3–5, no `.tmp` debris).
-- **D4 — Umbrella run kit (`~/hpc-umbrella/`, outside this repo).** New: `probe.sh` (login-node
+- **D4 — Umbrella run kit (`hpc-umbrella/` in this repo, vendored 2026-09-30; originally outside at `~/hpc-umbrella/`).** New: `probe.sh` (login-node
   probe → paste-back file), `config.sh` (the one pins file: `--print` / `--pins` / `--check`;
   auto-detects the L4 partition + feature from `sinfo` and fails on any unresolvable pin, including
   sbatch-header/pin drift), `stage.sh` (staging + the two environment tracks), `pull_results.sh`
@@ -44,6 +44,9 @@ were downloaded, no GPU was used, nothing trained — hub CPU work only.
   failure playbook + the Snellius decision arithmetic), and rewritten `cpu-harness.sbatch` /
   `gpu-pilot.sbatch` / `gpu-campaign.sbatch` (all sourced from `config.sh`, with
   `--signal=B:TERM@600` forwarding SIGTERM to python).
+- **Kit vendored into the repo (2026-09-30).** The run kit moved from `~/hpc-umbrella/` to
+  `hpc-umbrella/` here, so one public `git clone` on the cluster brings code + kit; `PARKED.md`
+  is tracked now too (it was cited by `CHANGES.md` + `grpo_train.py` while untracked).
 - **`bench_rollout.py` (repo root).** The pilot's machine-readable numbers: per-step wall-clock,
   µs per `generate()` and per decision, generated tokens, tokens/s, peak VRAM, and
   batched-vs-sequential speedup, written to JSON. `--stub` runs torch-free (verified on the hub).
