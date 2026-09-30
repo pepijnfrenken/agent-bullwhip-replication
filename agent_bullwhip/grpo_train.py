@@ -298,10 +298,12 @@ def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
     Rollouts are **batched**: the decisions of one week (4 roles) across all G
     episodes are causally independent — the engine builds each role's ctx from
     state at the start of the week and never exposes a same-week order to another
-    agent (AUDIT2 leak fix) — so they are submitted in a single
-    `policy.rollout()` call, chunked to at most `rollout_batch` prompts per call.
-    For the default G=8 that is 32 prompts/call and 36 calls per step instead of
-    the previous 2,304 single-prompt calls. See `grpo_env.run_episodes_batched`
+    agent (AUDIT2 leak fix) — so they are submitted together, chunked to at most
+    `rollout_batch` prompts per call (one call per week when `rollout_batch` covers
+    the week: 4·G prompts). For the default G=8 a week holds 32 prompts: 72 calls
+    per step with the default `rollout_batch=16`, 36 with `rollout_batch<=0` —
+    versus the previous 1,152 single-prompt calls (measured on the hub,
+    2026-09-30). See `grpo_env.run_episodes_batched`
     for the invariance argument and the test that pins it against the engine.
 
     `rollout_batch=1` dispatches one prompt per call (the tiny-VRAM escape

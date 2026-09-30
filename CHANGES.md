@@ -8,9 +8,10 @@ and the three code blockers are fixed. Suite: 102 → **243 tests, all green**. 
 were downloaded, no GPU was used, nothing trained — hub CPU work only.
 
 - **D1 — batched rollouts (`agent_bullwhip/grpo_env.py`, `grpo_train.py`).** Rollout collection
-  used to submit one prompt per `generate()` call (2 304 calls per step at G=8, horizon 36). It now
+  used to submit one prompt per `generate()` call (1 152 calls per step at G=8, horizon 36). It now
   drives all causally independent decisions of a week — the 4 roles × G episodes — through one
-  call per `--rollout-batch` prompts: **36 calls per step** at the default (64× fewer). Why it is
+  call per `--rollout-batch` prompts: **72 calls per step** at the default (`--rollout-batch 16`;
+  16× fewer), or **36** with the whole week in one call (`<=0`; 32× fewer). Why it is
   semantically safe: a week-t decision reads state through t−1 only (engine's AUDIT2 no-lookahead
   rule) and episodes share no state. `--rollout-batch 1` restores the per-decision path for small
   VRAM; `<=0` is unbounded.
