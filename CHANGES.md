@@ -1,5 +1,23 @@
 # Changes & Audit Log
 
+## 2026-09-30 — Pilot readout (351229) + batched-generation padding fix
+
+`gpu-pilot` 351229 **COMPLETED** on Umbrella (L4). All three parts ran: A (the minimal
+optimizer step the desktop stalled on), B (`bench_rollout.py` → `results/grpo_bench/bench_351229.json`),
+C (4-step GRPO pilot → `results/grpo_a0_pilot_351229/`, checkpoint + state.json + train_log.jsonl).
+`train_log.jsonl`'s `elapsed_s` is **cumulative since run start**: 4 steps in 369.5 s ≈
+**92 s/step** at G=8, horizon=36, `rollout_batch=16` → 300-step configs ≈ 7.7 h, inside the
+18 h array window (final go/no-go on the bench table).
+
+**Bug found in the pilot log:** hundreds of `right-padding was detected` warnings. Nothing in
+the repo set `padding_side`, so the batched `generate()` right-padded its prompts. HF's warning
+is real here: right-padded batches generate from position-shifted sequences, so the batched arm
+would not reproduce the per-prompt (`rollout_batch=1`) path waves 1–5 ran — D1's "batching is
+semantically safe" claim would not hold *exactly*. **Fixed:** `_Policy.rollout` left-pads for
+generation and restores the previous side in `finally` (training tokenization unchanged).
+Bench timings are unaffected (padding side changes positions, not compute); the fix is
+re-verified on the cluster by campaign task 0, which re-runs the pilot config under it.
+
 ## 2026-09-30 — Wave 6 unparked: Batched rollouts, compile hardening, resumable runs, Umbrella kit
 
 Wave 6 was parked on 2026-09-21 (a compile-path stall on the desktop, `PARKED.md`). This entry

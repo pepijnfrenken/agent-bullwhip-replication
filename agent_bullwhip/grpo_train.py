@@ -151,13 +151,24 @@ class _Policy:
     def rollout(self, prompts: list[str], temperature: float = 1.0, max_new: int = 8):
         import torch
         tok, model = self.tok, self.model
-        enc = tok(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
-        with torch.no_grad():
-            out = model.generate(
-                **enc, do_sample=True, temperature=max(temperature, 1e-4),
-                max_new_tokens=max_new, min_new_tokens=1,
-                output_scores=False, return_dict_in_generate=True, pad_token_id=tok.pad_token_id,
-            )
+        # Left-pad for generation. The tokenizer default (right padding) makes a
+        # batched generate() continue from position-shifted sequences -- transformers
+        # warns "right-padding was detected" -- so the batched arm would NOT reproduce
+        # the per-prompt (rollout_batch=1) path waves 1-5 ran, and D1's "batching is
+        # semantically safe" claim would not hold exactly. Restored in finally, so the
+        # training tokenization (right-padded, mask-correct) is unchanged.
+        prev_side = tok.padding_side
+        tok.padding_side = "left"
+        try:
+            enc = tok(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
+            with torch.no_grad():
+                out = model.generate(
+                    **enc, do_sample=True, temperature=max(temperature, 1e-4),
+                    max_new_tokens=max_new, min_new_tokens=1,
+                    output_scores=False, return_dict_in_generate=True, pad_token_id=tok.pad_token_id,
+                )
+        finally:
+            tok.padding_side = prev_side
         seqs = out.sequences[:, enc["input_ids"].shape[1]:]
         texts = tok.batch_decode(seqs, skip_special_tokens=True)
         return seqs, texts
