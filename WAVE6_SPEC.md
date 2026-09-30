@@ -154,3 +154,20 @@ systemd+checkpoint pattern; the box powers off at night, so checkpoints are mand
 ## Changes log
 
 - 2026-09-21: decisions D1–D5 recorded (D3 supersedes the Modal track); draft written.
+- 2026-09-30 — **D6 (compute route): this wave trains on TU/e Umbrella**, the free institutional
+  Slurm cluster, superseding the desktop-only reading of D3 (Modal remains OUT). The desktop stall
+  parked the wave (`PARKED.md`); the unpark fixes the three code blockers first — batched rollouts
+  (D1 above / `--rollout-batch`, one `generate()` per week instead of per decision), the compile
+  path disabled (`TORCHDYNAMO_DISABLE=1` + the generation-compile knob), and walltime-safe
+  checkpoint/resume with a SIGTERM handler — and moves training to `tue.gpu3.q` (8× L4, 24 GB each).
+  The **4B paper-comparable rung stays parked** (unlocks only by an explicit new decision after the
+  0.6B results are reviewed). Nothing in §1–§5 of this spec (recipe, ladder, success criteria,
+  pre-registered controls) changes; only where the compute comes from. The run kit lives outside
+  this repo at `~/hpc-umbrella/` (`OPERATOR.md`), and the run book is: probe → pin one file →
+  stage → cpu-harness → gpu-pilot → campaign array.
+- 2026-09-30 — **STEER-01 (internal refactor, no scope change):** the batched rollout driver shares
+  the engine's week loop (`engine.GameStepper`) instead of mirroring it; `run_game` is a thin
+  adapter over the same stepper. Behaviour is pinned by a new waves-1–5 golden fixture
+  (`tests/fixtures/engine_golden.json`, 108 cases, exact equality on per-week orders/costs/totals),
+  so the refactor cannot have moved any number the earlier waves depend on. Full reasoning:
+  `~/missions/grpo-umbrella/DECISION-REQUEST-engine-mirror.md`.

@@ -1,5 +1,55 @@
 # Changes & Audit Log
 
+## 2026-09-30 — Wave 6 unparked: Batched rollouts, compile hardening, resumable runs, Umbrella kit
+
+Wave 6 was parked on 2026-09-21 (a compile-path stall on the desktop, `PARKED.md`). This entry
+is the unpark: the compute route becomes **TU/e Umbrella** (free institutional Slurm; D6 below),
+and the three code blockers are fixed. Suite: 102 → **243 tests, all green**. No model weights
+were downloaded, no GPU was used, nothing trained — hub CPU work only.
+
+- **D1 — batched rollouts (`agent_bullwhip/grpo_env.py`, `grpo_train.py`).** Rollout collection
+  used to submit one prompt per `generate()` call (2 304 calls per step at G=8, horizon 36). It now
+  drives all causally independent decisions of a week — the 4 roles × G episodes — through one
+  call per `--rollout-batch` prompts: **36 calls per step** at the default (64× fewer). Why it is
+  semantically safe: a week-t decision reads state through t−1 only (engine's AUDIT2 no-lookahead
+  rule) and episodes share no state. `--rollout-batch 1` restores the per-decision path for small
+  VRAM; `<=0` is unbounded.
+- **STEER-01 refactor — one week loop, not two.** The batched driver first mirrored
+  `engine.run_game`; the operator ruled for a shared implementation instead, so the numbered week
+  steps now live in **`engine.GameStepper`** (`observations()` / `advance()` / `log()`), `run_game`
+  is a thin synchronous adapter over it, and `grpo_env` drives the same stepper. Record assembly
+  is shared too (`grpo_env.episode_result_from_log`). Guarded from both sides:
+  `tests/fixtures/engine_golden.json` + `tests/test_engine_golden.py` (108 cases — 3 demand
+  patterns × seeds 1–3 × horizons 12/36 × 3 config variants × 2 action rules — pinning per-week
+  orders, costs and totals for the waves 1–5 settings by **exact equality**), plus the batching
+  driver-equivalence and same-week-independence tests. Decision record:
+  `~/missions/grpo-umbrella/DECISION-REQUEST-engine-mirror.md`.
+- **D2 — compile-path hardening.** `grpo_train.harden_compile_path()` sets `TORCHDYNAMO_DISABLE=1`
+  *before* `import torch` and clears `generation_config.compile` after model load (setdefault, so
+  an explicit operator override wins), and prints the resolved knobs so a pilot log proves the
+  state it ran in. `git grep torch.compile` across `*.py`: no hits.
+- **D3 — walltime-safe checkpoint/resume.** `--save-every N`, atomic writes (adapter dir via
+  `.tmp` + rename, then `state.json` via tmp + rename, so a SIGKILL can never leave a half-written
+  checkpoint), `--resume` continuing from `state.json` (adapter + tokenizer + AdamW moments on the
+  torch path; step index and RNG state always), and a **SIGTERM handler** that checkpoints and
+  exits at the next step boundary — Slurm's pre-walltime SIGTERM is what makes an 18 h job
+  survivable. Hub-verified with stub runs (SIGTERM at step 2 → `state.json` step 2 → resume ran
+  3–5, no `.tmp` debris).
+- **D4 — Umbrella run kit (`~/hpc-umbrella/`, outside this repo).** New: `probe.sh` (login-node
+  probe → paste-back file), `config.sh` (the one pins file: `--print` / `--pins` / `--check`;
+  auto-detects the L4 partition + feature from `sinfo` and fails on any unresolvable pin, including
+  sbatch-header/pin drift), `stage.sh` (staging + the two environment tracks), `pull_results.sh`
+  (VPN-side rsync off expiring scratch), `requirements-umbrella.txt`, `OPERATOR.md` (run order +
+  failure playbook + the Snellius decision arithmetic), and rewritten `cpu-harness.sbatch` /
+  `gpu-pilot.sbatch` / `gpu-campaign.sbatch` (all sourced from `config.sh`, with
+  `--signal=B:TERM@600` forwarding SIGTERM to python).
+- **`bench_rollout.py` (repo root).** The pilot's machine-readable numbers: per-step wall-clock,
+  µs per `generate()` and per decision, generated tokens, tokens/s, peak VRAM, and
+  batched-vs-sequential speedup, written to JSON. `--stub` runs torch-free (verified on the hub).
+- **D6 — compute route (spec changes log).** Training this wave runs on **Umbrella** (free,
+  institutional), superseding the desktop-only D3; the 4B paper-comparable rung stays parked.
+  Modal stays out.
+
 ## 2026-09-21 — Wave 6 opened: GRPO on our harness (domain-neutral), spec + env wire
 
 - **Decisions (Pino):** D1 TRL-first/hand-rolled-fallback · D2 ladder = Qwen3-0.6B →
