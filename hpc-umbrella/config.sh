@@ -43,7 +43,7 @@ PIP_CACHE_DIR="${BULLWHIP_ROOT}/pipcache"
 TORCHINDUCTOR_CACHE_DIR="${BULLWHIP_ROOT}/torchinductor"
 VENV_DIR="${BULLWHIP_ROOT}/venv"
 BBOX_TMP="${BULLWHIP_ROOT}/tmp"
-REPO_URL="https://github.com/pepijnfrenken/agent-bullwhip-replication.git"
+REPO_URL="git@github.com:pepijnfrenken/agent-bullwhip-replication.git"   # private repo → SSH (login-node key is authorized)
 MODEL_ID="Qwen/Qwen3-0.6B"
 CAMPAIGN_TSV="${KIT_DIR}/campaign.tsv"
 

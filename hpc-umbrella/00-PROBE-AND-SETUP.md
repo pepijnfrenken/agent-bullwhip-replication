@@ -56,7 +56,7 @@ Decision rule from the output:
 If the login node has internet (see probe):
 ```bash
 mkdir -p /scratch-shared/$USER/bullwhip && cd /scratch-shared/$USER/bullwhip
-git clone https://github.com/pepijnfrenken/agent-bullwhip-replication.git
+git clone git@github.com:pepijnfrenken/agent-bullwhip-replication.git   # private repo — SSH
 cd agent-bullwhip-replication
 export HF_HOME=/scratch-shared/$USER/hf
 python3 -m pip install --user huggingface_hub

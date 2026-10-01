@@ -32,7 +32,10 @@ The kit lives at `hpc-umbrella/` **inside this repo** — one clone brings code 
 is **public**, so no credentials are needed on the cluster. On the login node:
 
 ```bash
-git clone https://github.com/pepijnfrenken/agent-bullwhip-replication.git ~/bullwhip-repo
+git clone git@github.com:pepijnfrenken/agent-bullwhip-replication.git ~/bullwhip-repo
+# (repo is private → SSH; the login node's GitHub key is already authorized.
+#  Already cloned when it was public? switch the origin once:
+#  git -C ~/bullwhip-repo remote set-url origin git@github.com:pepijnfrenken/agent-bullwhip-replication.git)
 cd ~/bullwhip-repo/hpc-umbrella
 ```
 

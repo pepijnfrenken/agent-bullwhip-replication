@@ -55,6 +55,10 @@ if [ -d "${REPO_DIR}/.git" ]; then
   # the array ran a stale checkout). The HEAD + dirty stamp goes into the stage
   # log, and an EXPECTED_COMMIT pin (config.sh, empty = log only) becomes a hard
   # gate: staging refuses to serve any other commit.
+  # Private repo (2026-10-01): pin the clone's origin to config.sh's URL so an existing
+  # clone created over HTTPS (or any drifted origin) self-heals to SSH — HTTPS would need
+  # a token for a private repo; the login node's key is already authorized.
+  doit "git -C '${REPO_DIR}' remote set-url origin '${REPO_URL}'"
   doit "git -C '${REPO_DIR}' fetch --all --prune || { echo '[stage] FATAL: git fetch failed (no egress?) — refusing to stage a possibly-stale checkout' >&2; exit 1; }"
   doit "git -C '${REPO_DIR}' checkout master"
   doit "git -C '${REPO_DIR}' pull --ff-only || { echo '[stage] FATAL: git pull failed — refusing to stage a possibly-stale checkout' >&2; exit 1; }"
