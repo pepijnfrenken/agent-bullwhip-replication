@@ -760,3 +760,19 @@ def test_optimizer_lr_reads_saved_param_group_without_torch():
 
     pol._opt = _FakeOpt()
     assert pol.optimizer_lr() == 2.5e-5
+
+def test_policy_class_exposes_grpo_step():
+    """Regression for pilot 360562 step B: the D8 splice orphaned `_Policy.grpo_step`
+    into a nested dead def under `warn_resume_lr_mismatch`. No hub test instantiates
+    the real `_Policy` (no torch on this host), so nothing noticed — the GPU pilot did.
+    This pins the class surface torch-free."""
+    import inspect
+
+    from agent_bullwhip.grpo_train import _Policy
+
+    assert callable(getattr(_Policy, "rollout", None)), "_Policy.rollout missing"
+    assert callable(getattr(_Policy, "grpo_step", None)), "_Policy.grpo_step missing"
+    params = set(inspect.signature(_Policy.grpo_step).parameters)
+    assert {"batch_prompts", "batch_completions", "advantages"} <= params
+    assert callable(getattr(_Policy, "save_optimizer", None))
+    assert callable(getattr(_Policy, "load_optimizer", None))

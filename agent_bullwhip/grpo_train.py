@@ -385,19 +385,6 @@ class _Policy:
         return float(groups[0]["lr"]) if groups else None
 
 
-def warn_resume_lr_mismatch(cli_lr: float, saved_lr: float) -> str | None:
-    """D8: the warning text when `--lr` on `--resume` differs from the SAVED
-    optimizer lr (the saved `param_groups` value wins; the CLI value is
-    silently overridden by `load_state_dict`). Returns None when they agree.
-
-    Extracted from main() so the mismatch rule is unit-testable on the hub
-    (main's resume path needs peft/torch)."""
-    if abs(saved_lr - cli_lr) > 1e-12:
-        return (f"WARNING: --lr {cli_lr} differs from the saved optimizer lr "
-                f"{saved_lr}; the SAVED value wins on resume (param_groups) — "
-                "use a fresh --out for a different-lr arm")
-    return None
-
     # -- one gradient step (F3: ONE opt.step per training step) --------------
     def grpo_step(self, batch_prompts, batch_completions, advantages,
                   lr=1e-5, beta_kl=0.02, clip=0.2, max_grad_norm=0.5,
@@ -623,6 +610,22 @@ def warn_resume_lr_mismatch(cli_lr: float, saved_lr: float) -> str | None:
 # --------------------------------------------------------------------------- #
 # Rollout collection for one training step
 # --------------------------------------------------------------------------- #
+
+
+def warn_resume_lr_mismatch(cli_lr: float, saved_lr: float) -> str | None:
+    """D8: the warning text when `--lr` on `--resume` differs from the SAVED
+    optimizer lr (the saved `param_groups` value wins; the CLI value is
+    silently overridden by `load_state_dict`). Returns None when they agree.
+
+    Extracted from main() so the mismatch rule is unit-testable on the hub
+    (main's resume path needs peft/torch)."""
+    if abs(saved_lr - cli_lr) > 1e-12:
+        return (f"WARNING: --lr {cli_lr} differs from the saved optimizer lr "
+                f"{saved_lr}; the SAVED value wins on resume (param_groups) — "
+                "use a fresh --out for a different-lr arm")
+    return None
+
+
 def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
                  seed: int | None = None, temperature: float = 1.0,
                  rollout_batch: int = 16, shared_demand: bool = True) -> StepRollout:
