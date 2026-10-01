@@ -78,7 +78,7 @@ GPU_GRES="gpu:1"
 # --- walltimes (probe: `scontrol show partition <p>` MaxTime / `sinfo -o "%P %l"`)
 WALLTIME_CPU="01:00:00"
 WALLTIME_PILOT="02:00:00"
-WALLTIME_CAMPAIGN="18:00:00"
+WALLTIME_CAMPAIGN="14:00:00"
 # Slurm sends SIGTERM to the batch shell this many seconds before the walltime
 # kill; the sbatch traps it and forwards it to python, whose handler checkpoints
 # and exits (see grpo_train --save-every / SIGTERM). Also: `sbatch --signal=B:TERM@N`.

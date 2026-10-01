@@ -26,7 +26,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+#SBATCH --mem=16G
 #SBATCH --output=/scratch-shared/%u/bullwhip/logs/gpu-pilot_%j.log
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=umbrella-cluster@pepijnfrenken.nl

@@ -20,12 +20,12 @@
 #SBATCH --partition=tue.gpu.q
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=l4
-#SBATCH --time=18:00:00
+#SBATCH --time=14:00:00
 #SBATCH --signal=B:TERM@600
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+#SBATCH --mem=16G
 #SBATCH --output=/scratch-shared/%u/bullwhip/logs/campaign_%A_%a.log
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=umbrella-cluster@pepijnfrenken.nl
