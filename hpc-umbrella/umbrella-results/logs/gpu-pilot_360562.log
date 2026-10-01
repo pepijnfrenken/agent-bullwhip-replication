@@ -1,0 +1,45 @@
+=== bw-pilot 360562 on tue-gpuc001.cluster | 2026-10-01T14:38:45+02:00 ===
+partition=tue.gpu.q gres=? env_mode=module
+TORCHDYNAMO_DISABLE=1 HF_HOME=/scratch-shared/20234428/bullwhip/hf
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=6bfe2e07aab99b48a9578f04b3cf040ea6b55f50 dirty_files=0
+name, memory.total [MiB], driver_version
+NVIDIA L4, 23034 MiB, 610.57.04
+torch 2.1.2 | cuda True | NVIDIA L4
+transformers 4.55.4 | peft 0.21.1
+=== A: minimal optimizer step (the thing the desktop never completed) ===
+step 0 loss 5.24
+step 1 loss 4.1218
+A_seconds 0.85
+A_PEAK_VRAM_GB 5.99
+=== B: batched vs sequential rollout benchmark (D1 numbers) ===
+compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
+Traceback (most recent call last):
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/bench_rollout.py", line 257, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/bench_rollout.py", line 202, in main
+    row = bench_one(timed, group=args.group, horizon=args.horizon,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/bench_rollout.py", line 134, in bench_one
+    timed.grpo_step(roll.prompts, roll.completions, roll.advantages)
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/bench_rollout.py", line 60, in grpo_step
+    return self.inner.grpo_step(*a, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_Policy' object has no attribute 'grpo_step'
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+360562           FAILED                       
+360562.batch     FAILED   1128880K   1128880K 
+360562.exte+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

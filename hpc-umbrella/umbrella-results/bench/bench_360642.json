@@ -1,0 +1,174 @@
+{
+  "baseline_rollout_batch": 1,
+  "curriculum": "poisson",
+  "generated_at": "2026-10-01T15:10:13+0200",
+  "gpu": "NVIDIA L4",
+  "group": 8,
+  "horizon": 36,
+  "host": "tue-gpuc001.cluster",
+  "model": "Qwen/Qwen3-0.6B",
+  "notes": "real model; harden_compile_path() applied before import torch",
+  "platform": "Linux-5.14.0-687.41.1.el9_8.x86_64-x86_64-with-glibc2.34",
+  "repeats": 2,
+  "runs": [
+    {
+      "collect_wall_s": 214.9118,
+      "decisions_per_step": 1152,
+      "episodes_per_step": 8,
+      "generate_calls": 1152.0,
+      "generate_wall_s": 214.8531,
+      "generated_tokens": 9216.0,
+      "peak_vram_gb": 5.341,
+      "repeats": [
+        {
+          "collect_wall_s": 189.8308,
+          "generate_calls": 1152,
+          "generate_wall_s": 189.7778,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 5.291,
+          "repeat": 0,
+          "step_wall_s": 249.8485,
+          "train_step_wall_s": 60.0177
+        },
+        {
+          "collect_wall_s": 239.9928,
+          "generate_calls": 1152,
+          "generate_wall_s": 239.9284,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 5.391,
+          "repeat": 1,
+          "step_wall_s": 299.5742,
+          "train_step_wall_s": 59.5815
+        }
+      ],
+      "rollout_batch": 1,
+      "step_wall_s": 274.7114,
+      "tokens_per_s": 42.9,
+      "train_step_wall_s": 59.7996,
+      "us_per_decision": 186504.4,
+      "us_per_generate_call": 186504.4
+    },
+    {
+      "collect_wall_s": 74.2586,
+      "decisions_per_step": 1152,
+      "episodes_per_step": 8,
+      "generate_calls": 288.0,
+      "generate_wall_s": 74.2244,
+      "generated_tokens": 9216.0,
+      "peak_vram_gb": 5.3825,
+      "repeats": [
+        {
+          "collect_wall_s": 74.267,
+          "generate_calls": 288,
+          "generate_wall_s": 74.2333,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 5.391,
+          "repeat": 0,
+          "step_wall_s": 133.8617,
+          "train_step_wall_s": 59.5947
+        },
+        {
+          "collect_wall_s": 74.2502,
+          "generate_calls": 288,
+          "generate_wall_s": 74.2155,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 5.374,
+          "repeat": 1,
+          "step_wall_s": 133.8625,
+          "train_step_wall_s": 59.6123
+        }
+      ],
+      "rollout_batch": 4,
+      "step_wall_s": 133.8621,
+      "tokens_per_s": 124.2,
+      "train_step_wall_s": 59.6035,
+      "us_per_decision": 64430.9,
+      "us_per_generate_call": 257723.6
+    },
+    {
+      "collect_wall_s": 42.1626,
+      "decisions_per_step": 1152,
+      "episodes_per_step": 8,
+      "generate_calls": 72.0,
+      "generate_wall_s": 42.136,
+      "generated_tokens": 9216.0,
+      "peak_vram_gb": 5.3294999999999995,
+      "repeats": [
+        {
+          "collect_wall_s": 42.1939,
+          "generate_calls": 72,
+          "generate_wall_s": 42.168,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 5.305,
+          "repeat": 0,
+          "step_wall_s": 102.4359,
+          "train_step_wall_s": 60.242
+        },
+        {
+          "collect_wall_s": 42.1313,
+          "generate_calls": 72,
+          "generate_wall_s": 42.1041,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 5.354,
+          "repeat": 1,
+          "step_wall_s": 102.4231,
+          "train_step_wall_s": 60.2918
+        }
+      ],
+      "rollout_batch": 16,
+      "step_wall_s": 102.4295,
+      "tokens_per_s": 218.7,
+      "train_step_wall_s": 60.2669,
+      "us_per_decision": 36576.4,
+      "us_per_generate_call": 585222.9
+    },
+    {
+      "collect_wall_s": 44.0134,
+      "decisions_per_step": 1152,
+      "episodes_per_step": 8,
+      "generate_calls": 36.0,
+      "generate_wall_s": 43.9909,
+      "generated_tokens": 9216.0,
+      "peak_vram_gb": 6.576,
+      "repeats": [
+        {
+          "collect_wall_s": 44.0855,
+          "generate_calls": 36,
+          "generate_wall_s": 44.0638,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 6.576,
+          "repeat": 0,
+          "step_wall_s": 104.0878,
+          "train_step_wall_s": 60.0024
+        },
+        {
+          "collect_wall_s": 43.9413,
+          "generate_calls": 36,
+          "generate_wall_s": 43.9179,
+          "generated_tokens": 9216,
+          "peak_vram_gb": 6.576,
+          "repeat": 1,
+          "step_wall_s": 104.1955,
+          "train_step_wall_s": 60.2543
+        }
+      ],
+      "rollout_batch": 32,
+      "step_wall_s": 104.1416,
+      "tokens_per_s": 209.5,
+      "train_step_wall_s": 60.1283,
+      "us_per_decision": 38186.5,
+      "us_per_generate_call": 1221968.1
+    }
+  ],
+  "skip_train_step": false,
+  "speedup_vs_baseline": {
+    "16": 2.68,
+    "32": 2.64,
+    "4": 2.05
+  },
+  "stub": false,
+  "tool": "bench_rollout.py",
+  "torch": "2.1.2",
+  "transformers": "4.55.4",
+  "user": "20234428"
+}

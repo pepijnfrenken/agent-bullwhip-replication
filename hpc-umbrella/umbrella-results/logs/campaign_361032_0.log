@@ -1,0 +1,34 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=17eb83b0f4cbf35d86c45eee453d89f53366c727 dirty_files=0
+=== task 0 -> pilot | group=8 horizon=36 curricula=poisson,truncnorm lr=1e-5 beta_kl=0.02 steps=4 rollout_batch=16 save_every=10 seed=<default 12345> (/vast.mnt/scratch/shared/20234428/bullwhip/kit/campaign.tsv) ===
+name, memory.total [MiB]
+NVIDIA L4, 23034 MiB
+compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
+resume drill: adapter results/grpo_pilot/checkpoint -> 112 trainable params
+resumed from step 4 (adapter + tokenizer + optimizer)
+run_info: {"beta_kl": 0.02, "compile_knobs": {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}, "curricula": "poisson,truncnorm", "git_dirty": false, "git_dirty_files": 0, "git_head": "17eb83b0f4cbf35d86c45eee453d89f53366c727", "group": 8, "horizon": 36, "lr": 1e-05, "model": "Qwen/Qwen3-0.6B", "resume": {"adapter_loaded": true, "checkpoint_dir": "results/grpo_pilot/checkpoint", "n_trainable": 112, "optimizer_loaded": true, "step": 4}, "rollout_batch": 16, "seed": 12345, "started_at": "2026-10-01T15:32:14+0200"}
+done: results/grpo_pilot
+=== pilot exit=0 at 2026-10-01T15:32:14+02:00 ===
+total 14
+drwxr-xr-x. 2 20234428 umbrella  4096 Oct  1 15:32 .
+drwxr-xr-x. 2 20234428 umbrella  4096 Oct  1 15:10 ..
+drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 21:17 checkpoint
+-rw-r--r--. 1 20234428 umbrella   630 Oct  1 15:32 run_info.json
+-rw-r--r--. 1 20234428 umbrella 11388 Sep 30 21:17 state.json
+-rw-r--r--. 1 20234428 umbrella   734 Sep 30 21:17 train_log.jsonl
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+361032_0      COMPLETED                       
+361032_0.ba+  COMPLETED    705856K    705856K 
+361032_0.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
