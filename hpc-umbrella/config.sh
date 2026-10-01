@@ -69,8 +69,8 @@ MODULE_PYTHON="Python/3.11.3-GCCcore-12.3.0"
 # probe: `sinfo -o "%P %a %D %l %G"` + node features
 CPU_PARTITION="tue.cpu3.q"            # 128 threads/node
 CPU_PARTITION_BIG="tue.default.q"     # 1056 threads/node
-GPU_PARTITION="tue.gpu3.q"            # gpuC: 8x L4 (target)
-GPU_PARTITION_ALT="tue.gpu2.q"        # gpuB: 4x L4 (fallback)
+GPU_PARTITION="tue.gpu.q"             # superset: gpua(A30-MIG)+gpub(4xL4)+gpuc(8xL4) — with -C l4 => 12x L4 (confirmed via scontrol 10-01)
+GPU_PARTITION_ALT="tue.gpu3.q"        # gpuc: 8x L4 (fallback when the superset must be avoided)
 GPU_PARTITION_AVOID="tue.gpu1.q"      # gpuA: 8x A30 MIG 1g.6gb (~6 GB, ~230 GB/s)
 L4_CONSTRAINT="l4"                    # probe: node FEATURE name for an L4 node
 GPU_GRES="gpu:1"

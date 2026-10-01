@@ -48,8 +48,8 @@ curl -sI https://github.com | head -1   # does the LOGIN node have internet? (ne
 ```
 
 Decision rule from the output:
-- **Target `tue.gpu2.q` (node gpuB: 4x L4) or `tue.gpu3.q` (node gpuC: 8x L4).**
-- **Avoid `tue.gpu1.q`** — node gpuA is 8x A30 **MIG 1g.6gb** slices: ~6 GB VRAM and roughly a
+- **Target `tue.gpu.q` WITH `--constraint=l4`** (superset of all GPU nodes: gpua A30-MIG + gpub 4xL4 + gpuc 8xL4 → the constraint leaves 8+4 = **12x L4**, one queue). Fallbacks: `tue.gpu3.q` (8x L4), then `tue.gpu2.q` (4x L4).
+- **Never `tue.gpu.q` without `-C l4`** (and never `tue.gpu1.q`)** — node gpuA (in both) is 8x A30 **MIG 1g.6gb** slices: ~6 GB VRAM and roughly a
   quarter of an A30's bandwidth (~230 GB/s) — *worse than Pino's desktop 3060 Ti* (8 GB, 448 GB/s).
 
 ## Step 2 — get the code and weights on

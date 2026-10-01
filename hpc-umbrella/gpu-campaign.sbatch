@@ -17,7 +17,7 @@
 # to python, which checkpoints and exits. Resubmit the same array task to continue.
 # =============================================================================
 #SBATCH --job-name=bw-campaign
-#SBATCH --partition=tue.gpu3.q
+#SBATCH --partition=tue.gpu.q
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=l4
 #SBATCH --time=18:00:00

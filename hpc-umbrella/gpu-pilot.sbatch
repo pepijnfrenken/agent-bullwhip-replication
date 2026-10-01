@@ -18,7 +18,7 @@
 # Watch:   squeue --me ; tail -f /scratch-shared/$USER/bullwhip/logs/gpu-pilot_*.log
 # =============================================================================
 #SBATCH --job-name=bw-pilot
-#SBATCH --partition=tue.gpu3.q
+#SBATCH --partition=tue.gpu.q
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=l4
 #SBATCH --time=02:00:00
