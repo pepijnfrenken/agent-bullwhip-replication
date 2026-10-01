@@ -54,6 +54,17 @@ BENCH_OUT="results/grpo_bench/bench_${JOB}.json"
 echo "=== bw-pilot ${JOB} on $(hostname) | $(date -Is) ==="
 echo "partition=${SLURM_JOB_PARTITION:-?} gres=${SLURM_JOB_GRES:-?} env_mode=${ENV_MODE}"
 echo "TORCHDYNAMO_DISABLE=${TORCHDYNAMO_DISABLE} HF_HOME=${HF_HOME}"
+# F6: stamp the exact code this pilot ran.
+REPO_HEAD="$(git -C "${REPO_DIR}" rev-parse HEAD 2>/dev/null || echo unknown)"
+REPO_DIRTY="$(git -C "${REPO_DIR}" status --porcelain 2>/dev/null | wc -l)"
+echo "repo ${REPO_DIR} HEAD=${REPO_HEAD} dirty_files=${REPO_DIRTY}"
+# D3 (audit §4 item 9 — the sbatch-side hard gate): stage.sh's EXPECTED_COMMIT
+# is the login-side gate; this is the job-side one. Empty (config.sh default)
+# keeps the stamp log-only; a full SHA makes a stale checkout FAIL the job.
+if [ -n "${EXPECTED_COMMIT:-}" ] && [ "${REPO_HEAD}" != "${EXPECTED_COMMIT}" ]; then
+  echo "FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but repo HEAD=${REPO_HEAD} (${REPO_DIR}) — refusing to run stale code" >&2
+  exit 1
+fi
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || true
 python3 -c "import torch; print('torch', torch.__version__, '| cuda', torch.cuda.is_available(), '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no gpu')"
 python3 -c "import transformers, peft; print('transformers', transformers.__version__, '| peft', peft.__version__)" 2>&1 || echo "WARN: transformers/peft import failed (see stage.sh ENV_MODE notes)"
@@ -64,7 +75,19 @@ run_py() {
   python3 -u "$@" &
   local pid=$! rc=0
   trap 'echo "[$(date -Is)] SIGTERM from Slurm -> forwarding to python ${pid}"; kill -TERM "${pid}" 2>/dev/null || true' TERM
-  wait "${pid}" || rc=$?
+  # F10: a trapped TERM makes the FIRST `wait` return at once; exiting then lets
+  # Slurm reap python mid-checkpoint. Loop until the child has fully exited.
+  # D2: that first `wait` reports 143 (the BATCH SHELL was signaled, not the
+  # child) and must not stick — the LAST wait's status is the child's REAL exit
+  # status, so a clean checkpointed exit-0 yields rc=0 (143 used to FAIL the
+  # pilot under `set -e`). rc=143 survives only if the child really died on TERM.
+  while kill -0 "${pid}" 2>/dev/null; do
+    if wait "${pid}"; then
+      rc=0
+    else
+      rc=$?
+    fi
+  done
   trap - TERM
   return "${rc}"
 }
@@ -98,10 +121,13 @@ echo "--- ${BENCH_OUT} ---"
 cat "${BENCH_OUT}"
 
 echo "=== C: GRPO pilot (${STEPS_PILOT} steps, batched rollouts, resumable) ==="
+# D5: --save-every reads SAVE_EVERY from config.sh (default 10), so checkpoint
+# dirs don't pile up 30-deep; a TERM still checkpoints regardless (the loop's
+# stop event triggers a save on its own).
 run_py -m agent_bullwhip.grpo_train --model "${MODEL_ID}" \
   --steps "${STEPS_PILOT}" --group "${GROUP}" --horizon "${HORIZON}" \
   --curricula "${CURRICULA}" --lr "${LR}" --beta-kl "${BETA_KL}" \
-  --rollout-batch "${ROLLOUT_BATCH}" --save-every 1 \
+  --rollout-batch "${ROLLOUT_BATCH}" --save-every "${SAVE_EVERY}" \
   --out "results/grpo_a0_pilot_${JOB}" --resume
 
 echo "=== pilot artifacts ==="

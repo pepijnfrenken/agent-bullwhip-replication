@@ -164,7 +164,8 @@ def test_batched_driver_matches_engine(chunk, delay, init_oh, init_b, init_o):
     ep = BeerGameEpisode(cfg)
     sequential = [ep.run(lambda a, t, p: _action_from_prompt(p), demand=d) for d in demands]
     batched = run_episodes_batched(
-        lambda prompts: [_action_from_prompt(p) for p in prompts], demands, cfg, chunk=chunk)
+        lambda prompts: [(_action_from_prompt(p), None, None) for p in prompts],
+        demands, cfg, chunk=chunk)
 
     assert len(batched) == len(sequential) == 3
     for seq, bat in zip(sequential, batched):
@@ -179,11 +180,41 @@ def test_batched_driver_matches_engine(chunk, delay, init_oh, init_b, init_o):
                for res in batched for r in res.records)
 
 
+def test_batched_driver_carries_ids_order_and_old_logprobs():
+    # F2: the batched driver must thread the SAMPLED identities (text, ids,
+    # per-token rollout logprobs) into every DecisionRecord, and keep the
+    # parsed order as a separate field — scoring must never re-tokenize text.
+    cfg = SimConfig(horizon=4)
+    rec = run_episodes_batched(
+        lambda ps: [(_action_from_prompt(p), [7, 8], [-1.0, -2.0]) for p in ps],
+        [make_demand(4, "step")], cfg, chunk=0)[0].records[0]
+    assert rec.completion == _action_from_prompt(rec.prompt)
+    assert rec.completion_ids == [7, 8]
+    assert rec.token_logprobs == [-1.0, -2.0]
+    assert rec.order == int(_action_from_prompt(rec.prompt))
+    # sync path: emitted text preserved verbatim (not the clamped str(order))
+    ep = BeerGameEpisode(cfg)
+    res = ep.run(lambda a, t, p: "Order -3 units!", demand=make_demand(4, "step"))
+    r0 = res.records[0]
+    assert r0.completion == "Order -3 units!"   # what the policy EMITTED
+    assert r0.order == -3                       # parsed order, pre-clamp
+    assert res.orders[0][0] == 0                # engine floored it for the game
+    assert r0.completion_ids is None and r0.token_logprobs is None
+
+
 def test_batched_driver_rejects_wrong_completion_count():
     # A desynced batch must fail loudly rather than silently misalign decisions
     # (the AUDIT2 silent-fallback lesson).
     with pytest.raises(ValueError, match="completions for"):
         run_episodes_batched(lambda prompts: prompts[:1],
+                             [make_demand(4, "step")], SimConfig(horizon=4))
+
+
+def test_batched_driver_rejects_non_triple_completions():
+    # F2 contract: every completion is a (text, ids, logprobs) triple; a caller
+    # that forgot the new shape must fail loudly, not zip into garbage.
+    with pytest.raises(ValueError, match="triples"):
+        run_episodes_batched(lambda prompts: ["8"] * len(prompts),
                              [make_demand(4, "step")], SimConfig(horizon=4))
 
 
@@ -203,8 +234,9 @@ def test_same_week_decisions_are_independent_of_each_other():
             if role == "retailer" and t == 1:
                 return str(order_at_week1)
             return _action_from_prompt(prompt)
-        res = run_episodes_batched(lambda prompts: [policy(p) for p in prompts],
-                                   [demand], cfg)[0]
+        res = run_episodes_batched(
+            lambda prompts: [(policy(p), None, None) for p in prompts],
+            [demand], cfg)[0]
         return {(r.agent_id, r.t): r.prompt for r in res.records}
 
     base = run_with_retailer_order(0)

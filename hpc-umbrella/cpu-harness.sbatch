@@ -92,8 +92,10 @@ class Stub:
         self.calls = 0
 
     def rollout(self, prompts, temperature=1.0, max_new=8):
+        # F2 contract: (texts, ids, old_logprobs) — ids/logps are None for
+        # stub runs, the env parses the text back into orders.
         self.calls += 1
-        return None, ["8"] * len(prompts)
+        return ["8"] * len(prompts), None, None
 
     def grpo_step(self, prompts, completions, advantages, **kw):
         if self.stop is not None:

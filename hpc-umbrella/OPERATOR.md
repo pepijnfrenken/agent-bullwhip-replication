@@ -132,7 +132,9 @@ Three parts, each useful on its own:
   `generate()` call and per decision, tokens/s, peak VRAM for `rollout_batch ∈ {1,4,16,32}`, plus
   `speedup_vs_baseline` (1 = sequential). Also printed to the log, and `cat`-ed by the sbatch.
 - **C — a 4-step GRPO pilot** (`results/grpo_a0_pilot_<job>/`): `train_log.jsonl`,
-  `checkpoint/`, `state.json`. `--save-every 1` so a kill costs at most one step.
+  `checkpoint/`, `state.json`. Step C reads `SAVE_EVERY` from config.sh (default
+  10; D5 — it no longer hardcodes `--save-every 1`); a TERM still checkpoints
+  regardless, and a kill costs at most one step of progress < SAVE_EVERY.
 
 **How to read the metrics file (this decides Snellius):**
 

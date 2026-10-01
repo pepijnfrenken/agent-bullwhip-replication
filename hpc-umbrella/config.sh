@@ -47,6 +47,12 @@ REPO_URL="https://github.com/pepijnfrenken/agent-bullwhip-replication.git"
 MODEL_ID="Qwen/Qwen3-0.6B"
 CAMPAIGN_TSV="${KIT_DIR}/campaign.tsv"
 
+# F6: pin the exact commit staging must serve. Empty (default) = stage.sh logs
+# HEAD + the dirty flag only; a full SHA makes stage.sh FAIL until the repo
+# checkout sits at that commit. Set this after the fixes land and before the
+# rerun sweep, so a stale deploy can never run silently again.
+EXPECTED_COMMIT="${EXPECTED_COMMIT:-}"
+
 # --- environment strategy ----------------------------------------------------
 # module (recommended): Umbrella's PyTorch 2.1.2 + a --system-site-packages venv
 # layered with peft/trl/pytest. Free, and it is an independent test of the parked

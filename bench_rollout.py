@@ -32,18 +32,8 @@ from pathlib import Path
 from agent_bullwhip.grpo_train import collect_step, harden_compile_path
 
 
-class _FakeSeqs:
-    """Minimal stand-in for the generated token tensor (counts tokens)."""
-
-    def __init__(self, n: int):
-        self._n = n
-
-    def numel(self) -> int:
-        return self._n
-
-
 class _TimedPolicy:
-    """Wraps a PolicyLike and instruments `rollout()` (calls, tokens, seconds)."""
+    """Wraps a PolicyLike and instruments `rollout()` (calls, prompts, tokens, seconds)."""
 
     def __init__(self, inner):
         self.inner = inner
@@ -57,14 +47,14 @@ class _TimedPolicy:
 
     def rollout(self, prompts, temperature: float = 1.0, max_new: int = 8):
         t0 = time.perf_counter()
-        seqs, texts = self.inner.rollout(prompts, temperature=temperature, max_new=max_new)
+        texts, ids, logps = self.inner.rollout(prompts, temperature=temperature,
+                                               max_new=max_new)
         self.generate_s += time.perf_counter() - t0
         self.calls += 1
         self.prompts_seen += len(prompts)
-        numel = getattr(seqs, "numel", None)
-        if callable(numel):
-            self.tokens += int(numel())
-        return seqs, texts
+        self.tokens += sum(len(i) for i in (ids or [])
+                           if i is not None)
+        return texts, ids, logps
 
     def grpo_step(self, *a, **kw):
         return self.inner.grpo_step(*a, **kw)
@@ -79,7 +69,11 @@ class _StubPolicy:
 
     def rollout(self, prompts, temperature: float = 1.0, max_new: int = 8):
         time.sleep(self.per_call_s + self.per_prompt_s * len(prompts))
-        return _FakeSeqs(len(prompts) * max_new), ["8"] * len(prompts)
+        # synthetic ids keep the benchmark's token counters alive; id 0 is the
+        # first vocab id, NOT a pad token — these are dummy completions that are
+        # never decoded (the bench counts ids only, which is the F2 path)
+        ids = [[0] * max_new for _ in prompts]
+        return ["8"] * len(prompts), ids, [None] * len(prompts)
 
     def grpo_step(self, batch_prompts, batch_completions, advantages, **kw):
         time.sleep(0.002)
@@ -129,7 +123,7 @@ def bench_one(timed: _TimedWithVRAM, *, group: int, horizon: int, curriculum: st
         timed.start_window()
         timed.sync()
         t0 = time.perf_counter()
-        prompts, completions, advs = collect_step(
+        roll = collect_step(
             timed, G=group, curriculum=curriculum, horizon=horizon,
             seed=seed + r, temperature=temperature, rollout_batch=chunk)
         timed.sync()
@@ -137,7 +131,7 @@ def bench_one(timed: _TimedWithVRAM, *, group: int, horizon: int, curriculum: st
         train_s = 0.0
         if not skip_train_step:
             t1 = time.perf_counter()
-            timed.grpo_step(prompts, completions, advs)
+            timed.grpo_step(roll.prompts, roll.completions, roll.advantages)
             timed.sync()
             train_s = time.perf_counter() - t1
         rows.append({

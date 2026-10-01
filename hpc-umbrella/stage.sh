@@ -50,9 +50,16 @@ fi
 
 say "repo -> ${REPO_DIR}"
 if [ -d "${REPO_DIR}/.git" ]; then
-  # no-egress tolerant: a failed fetch/pull must not abort staging on the cluster
-  doit "git -C '${REPO_DIR}' fetch --all --prune || echo '[stage] fetch failed (no egress?) — using the existing checkout'"
-  doit "git -C '${REPO_DIR}' checkout master && git -C '${REPO_DIR}' pull --ff-only || echo '[stage] pull failed — using the existing checkout'"
+  # F6: a failed fetch/pull must FAIL staging — the sweep once ran pre-fix code
+  # with nothing in any log saying so (stage.sh swallowed the pull failure and
+  # the array ran a stale checkout). The HEAD + dirty stamp goes into the stage
+  # log, and an EXPECTED_COMMIT pin (config.sh, empty = log only) becomes a hard
+  # gate: staging refuses to serve any other commit.
+  doit "git -C '${REPO_DIR}' fetch --all --prune || { echo '[stage] FATAL: git fetch failed (no egress?) — refusing to stage a possibly-stale checkout' >&2; exit 1; }"
+  doit "git -C '${REPO_DIR}' checkout master"
+  doit "git -C '${REPO_DIR}' pull --ff-only || { echo '[stage] FATAL: git pull failed — refusing to stage a possibly-stale checkout' >&2; exit 1; }"
+  doit "echo \"[stage] repo HEAD=\$(git -C '${REPO_DIR}' rev-parse HEAD) dirty_files=\$(git -C '${REPO_DIR}' status --porcelain | wc -l)\""
+  doit "if [ -n \"${EXPECTED_COMMIT:-}\" ] && [ \"\$(git -C '${REPO_DIR}' rev-parse HEAD)\" != \"${EXPECTED_COMMIT:-}\" ]; then echo '[stage] FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but HEAD is not that commit — refusing to stage' >&2; exit 1; fi"
 else
   doit "git clone '${REPO_URL}' '${REPO_DIR}'"
 fi
