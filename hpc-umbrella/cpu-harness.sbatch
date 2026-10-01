@@ -21,6 +21,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=/scratch-shared/%u/bullwhip/logs/cpu-harness_%j.log
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=umbrella-cluster@pepijnfrenken.nl
 
 set -euo pipefail
 

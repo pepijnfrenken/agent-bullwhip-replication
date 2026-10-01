@@ -27,6 +27,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --output=/scratch-shared/%u/bullwhip/logs/campaign_%A_%a.log
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=umbrella-cluster@pepijnfrenken.nl
 
 set -euo pipefail
 
