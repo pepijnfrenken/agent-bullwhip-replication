@@ -1,0 +1,18 @@
+/var/spool/slurmd/job350215/slurm_script: line 36: /var/spool/slurmd/job350215/config.sh: No such file or directory
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+350215           FAILED                       
+350215.batch     FAILED      2572K      2572K 
+350215.exte+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

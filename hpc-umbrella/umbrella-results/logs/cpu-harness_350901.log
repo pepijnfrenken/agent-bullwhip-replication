@@ -1,0 +1,31 @@
+=== bw-cpu 350901 on tue-computed001.cluster | 2026-09-30T19:17:20+02:00 ===
+python: /sw/rl8/zen/app/Python/3.11.3-GCCcore-12.3.0/bin/python3 Python 3.11.3
+/var/spool/slurmd/job350901/slurm_script: line 49: cd: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication: No such file or directory
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+350901           FAILED                       
+350901.batch     FAILED     15016K     15016K 
+350901.exte+     FAILED                       
+
+Job ID: 350901
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 1)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:00:01
+CPU Efficiency: 4.17% of 00:00:24 core-walltime
+Job Wall-clock time: 00:00:03
+Memory Utilized: 14.66 MB
+Memory Efficiency: 0.04% of 32.00 GB (4.00 GB/core)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

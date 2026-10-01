@@ -1,0 +1,93 @@
+=== bw-cpu 351112 on tue-computed005.cluster | 2026-09-30T19:40:01+02:00 ===
+python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+numpy        1.25.1
+pandas       2.0.3
+torch        2.1.2
+transformers 4.55.4
+peft         0.21.1
+=== pytest (expect all green) ===
+........................................................................ [ 29%]
+........................................................................ [ 59%]
+........................................................................ [ 89%]
+..........................                                               [100%]
+242 passed, 1 deselected in 9.26s
+=== walk-forward floors ===
+    step pass 0: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 1: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 2: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 3: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 4: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 5: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 6: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 7: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 8: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+    step pass 9: wf=(3.0,0.4)    3,206  untuned    3,681  oracle    3,206
+   noisy pass 0: wf=(2.0,0.6)    5,168  untuned    4,635  oracle    4,102
+   noisy pass 1: wf=(1.5,0.9)    6,014  untuned    5,996  oracle    5,376
+   noisy pass 2: wf=(3.0,0.3)    5,085  untuned    6,397  oracle    4,413
+   noisy pass 3: wf=(2.5,0.4)    5,079  untuned    5,634  oracle    4,652
+   noisy pass 4: wf=(1.5,0.7)    6,246  untuned    6,681  oracle    4,899
+   noisy pass 5: wf=(2.5,0.4)    5,329  untuned    6,211  oracle    5,118
+   noisy pass 6: wf=(3.0,0.4)    4,025  untuned    4,327  oracle    4,025
+   noisy pass 7: wf=(1.5,0.9)    5,362  untuned    4,922  oracle    4,420
+   noisy pass 8: wf=(4.0,0.2)    4,116  untuned    5,375  oracle    3,870
+   noisy pass 9: wf=(1.5,0.9)    5,713  untuned    5,035  oracle    4,565
+ chaotic pass 0: wf=(6.0,0.1)    3,848  untuned    5,950  oracle    3,848
+ chaotic pass 1: wf=(1.5,0.2)    6,735  untuned   12,042  oracle    5,142
+ chaotic pass 2: wf=(2.5,0.3)   12,545  untuned   20,571  oracle   12,545
+ chaotic pass 3: wf=(4.0,0.2)    8,012  untuned   11,708  oracle    6,907
+ chaotic pass 4: wf=(3.0,0.2)    6,809  untuned   10,206  oracle    6,332
+ chaotic pass 5: wf=(6.0,0.1)    8,673  untuned   14,628  oracle    8,148
+ chaotic pass 6: wf=(1.5,0.7)    6,113  untuned    7,514  oracle    5,886
+ chaotic pass 7: wf=(2.0,0.4)    9,189  untuned    9,292  oracle    6,387
+ chaotic pass 8: wf=(3.0,0.2)   10,741  untuned   21,238  oracle    9,951
+ chaotic pass 9: wf=(5.0,0.1)    4,111  untuned   13,439  oracle    4,111
+    wild pass 0: wf=(1.5,0.6)   12,518  untuned   21,455  oracle   11,478
+    wild pass 1: wf=(2.0,0.3)    8,233  untuned   14,508  oracle    6,027
+    wild pass 2: wf=(1.5,0.3)    4,183  untuned    9,036  oracle    3,431
+    wild pass 3: wf=(3.0,0.3)   26,200  untuned   29,102  oracle   19,435
+    wild pass 4: wf=(1.5,0.6)    9,718  untuned   11,277  oracle    6,938
+    wild pass 5: wf=(1.5,0.4)    6,166  untuned   11,404  oracle    5,668
+    wild pass 6: wf=(1.5,0.5)    6,682  untuned    9,102  oracle    5,021
+    wild pass 7: wf=(2.5,0.2)   24,431  untuned   22,410  oracle   19,290
+    wild pass 8: wf=(2.5,0.4)   15,639  untuned   24,210  oracle   15,639
+    wild pass 9: wf=(2.0,0.3)    7,341  untuned    9,088  oracle    5,286
+Traceback (most recent call last):
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/walkforward_paths.py", line 62, in <module>
+    main()
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/walkforward_paths.py", line 56, in main
+    with open("results/walkforward_paths.json", "w") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'results/walkforward_paths.json'
+
+real	0m1.510s
+user	0m1.312s
+sys	0m0.023s
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+351112           FAILED                       
+351112.batch     FAILED    397984K    397984K 
+351112.exte+  COMPLETED                       
+
+Job ID: 351112
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 1)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:00:05
+CPU Efficiency: 2.23% of 00:03:44 core-walltime
+Job Wall-clock time: 00:00:28
+Memory Utilized: 388.66 MB
+Memory Efficiency: 1.19% of 32.00 GB (4.00 GB/core)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
