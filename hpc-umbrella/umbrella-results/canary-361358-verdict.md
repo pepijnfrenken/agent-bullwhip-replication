@@ -26,7 +26,16 @@
 | n_nonfinite | - | 0 | 0 (all steps) | 0 (all steps) |
 
 The 44M-order attractor, entropy collapse (~1e-6), gradient death (~1e-5) and the frozen-loss
-plateau are all absent. Policy drift scales coherently with the swept knob (2x lr -> 2x KL drift,
+plateau are all absent.
+
+**361032_10 caveat:** that log is the Oct-1 resume drill — a *collapsed* a9_lr_low checkpoint
+(entropy ~4e-6, constant '44444444' on every prompt, advantage variance 0) resumed on the fixed
+code. It stayed pinned in the degenerate fixed point (identical samples -> zero advantage spread
+-> no learning signal), started escaping only after stochastic sampling produced a mutant
+('4 four444444') at ~s210 (grad revives to 0.25-0.9), and was scancelled at s220 while still deep
+in the hole. Takeaway: the fix prevents fresh runs from entering this regime (see canaries); it
+cannot quickly heal an already-collapsed adapter. Do not let a stale collapsed state.json under
+results/grpo_a9_lr_low/ silently auto-resume into the full sweep. Policy drift scales coherently with the swept knob (2x lr -> 2x KL drift,
 ~1.6x lora_norm drift) — the dynamics respond to lr the way they should.
 
 ## Watch items (carry into the full sweep)
