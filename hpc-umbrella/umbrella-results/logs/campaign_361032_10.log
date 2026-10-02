@@ -12,3 +12,25 @@ run_info: {"beta_kl": 0.02, "compile_knobs": {"TOKENIZERS_PARALLELISM": "false",
 {'step': 200, 'curriculum': 'poisson', 'loss': 0.035563151041666664, 'loss_pg': 0.0, 'loss_kl': 1.7782118055555556, 'policy_push': 0.0, 's_min': -1.811981201171875e-05, 's_mean': -5.096611049440172e-06, 'frac_s_gt_m001': 1.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 5.046966382198863e-06, 'grad_norm': 2.7502383090904914e-05, 'lora_norm': 17.619298934936523, 'max_abs_logratio': 7.82012939453125e-05, 'clip_frac': 0.0, 'n_nonfinite': 0, 'mean_adv': 0.0, 'min_adv': 0.0, 'max_adv': 0.0, 'n_unique_orders': 1, 'n_unique_completions': 1, 'parse_failure_rate': 0.0, 'order_mean': 44444444.0, 'order_std': 0.0, 'order_max': 44444444, 'mean_episode_cost': 54488883006.0, 'samples': [{'prompt_hash': '33ebe2c0062d', 'text': '44444444', 'order': 44444444, 'ids': [19, 19, 19, 19, 19, 19, 19, 19]}, {'prompt_hash': '483dae7cf795', 'text': '44444444', 'order': 44444444, 'ids': [19, 19, 19, 19, 19, 19, 19, 19]}, {'prompt_hash': '10ac52a0255b', 'text': '44444444', 'order': 44444444, 'ids': [19, 19, 19, 19, 19, 19, 19, 19]}], 'elapsed_s': 2716.2}
 {'step': 210, 'curriculum': 'poisson', 'loss': 0.03835871067389639, 'loss_pg': 4.38911786962611e-05, 'loss_kl': 1.915771484375, 'policy_push': 0.0010609065305118293, 's_min': -0.9609375, 's_mean': -0.0371535685327318, 'frac_s_gt_m001': 0.4965277777777778, 'frac_s_lt_m10': 0.0, 'entropy_first': 0.0004962867953711086, 'grad_norm': 0.2464969903230667, 'lora_norm': 17.620098114013672, 'max_abs_logratio': 0.75, 'clip_frac': 0.005316840277777778, 'n_nonfinite': 0, 'mean_adv': -1.0022846750088219e-16, 'min_adv': -1.9762134325558207, 'max_adv': 2.0716619889784984, 'n_unique_orders': 4, 'n_unique_completions': 6, 'parse_failure_rate': 0.0, 'order_mean': 40663580.597, 'order_std': 12399331.033, 'order_max': 44444444, 'mean_episode_cost': 41816661194.0, 'samples': [{'prompt_hash': 'a61e56c58958', 'text': '44444444', 'order': 44444444, 'ids': [19, 19, 19, 19, 19, 19, 19, 19]}, {'prompt_hash': '483dae7cf795', 'text': '4 four444444', 'order': 4, 'ids': [19, 3040, 19, 19, 19, 19, 19, 19]}, {'prompt_hash': '10ac52a0255b', 'text': '44444444', 'order': 44444444, 'ids': [19, 19, 19, 19, 19, 19, 19, 19]}], 'elapsed_s': 4005.0}
 {'step': 220, 'curriculum': 'poisson', 'loss': 0.06003293259871296, 'loss_pg': 0.0008373079876441301, 'loss_kl': 2.959228515625, 'policy_push': 0.0027747858236782325, 's_min': -0.984375, 's_mean': -0.06656916273964776, 'frac_s_gt_m001': 0.171875, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.2957363701942893e-05, 'grad_norm': 0.8961920738220215, 'lora_norm': 17.618389129638672, 'max_abs_logratio': 0.9375, 'clip_frac': 0.015516493055555556, 'n_nonfinite': 0, 'mean_adv': 1.6422048905913775e-16, 'min_adv': -1.9271857956968825, 'max_adv': 1.7571353738200868, 'n_unique_orders': 2, 'n_unique_completions': 4, 'parse_failure_rate': 0.0, 'order_mean': 19174384.799, 'order_std': 22012217.924, 'order_max': 44444444, 'mean_episode_cost': 18522226331.125, 'samples': [{'prompt_hash': 'd127c07f1798', 'text': '4 four444444', 'order': 4, 'ids': [19, 3040, 19, 19, 19, 19, 19, 19]}, {'prompt_hash': '483dae7cf795', 'text': '4 four444444', 'order': 4, 'ids': [19, 3040, 19, 19, 19, 19, 19, 19]}, {'prompt_hash': '10ac52a0255b', 'text': '4 four444444', 'order': 4, 'ids': [19, 3040, 19, 19, 19, 19, 19, 19]}], 'elapsed_s': 5261.4}
+[2026-10-01T17:07:58.073] error: *** JOB 361032 ON tue-gpuc001 CANCELLED AT 2026-10-01T17:07:58 DUE to SIGNAL Terminated ***
+[2026-10-01T17:07:58+02:00] SIGTERM from Slurm -> forwarding to python 2000793
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+361032_0      COMPLETED                       
+361032_0.ba+  COMPLETED    705856K    705856K 
+361032_0.ex+  COMPLETED                       
+361032_10    CANCELLED+                       
+361032_10.b+  CANCELLED   1687292K   1687292K 
+361032_10.e+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
