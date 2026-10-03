@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the noisy-demand robustness arm (Wave 3): does the reliability advantage
 # survive when the deterministic floor itself faces variance?
-# Run AFTER the verbal-gate ablation finishes (FreeInference concurrency = 2).
+# Run AFTER the verbal-gate ablation finishes (FreeInference concurrency = 1, re-probed 2026-09-30).
 set -uo pipefail
 cd "$(dirname "$0")"
 PY=.venv/bin/python
