@@ -1,0 +1,36 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=e1faf79df5308247b53e1287bd8d5b57e8526000 dirty_files=1
+=== task 0 -> pilot | group=8 horizon=36 curricula=poisson,truncnorm lr=1e-5 beta_kl=0.02 steps=4 rollout_batch=16 save_every=10 seed=<default 12345> (/vast.mnt/scratch/shared/20234428/bullwhip/kit/campaign.tsv) ===
+name, memory.total [MiB]
+NVIDIA L4, 23034 MiB
+compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
+--resume: no results/grpo_pilot/state.json; starting from step 0
+run_info: {"beta_kl": 0.02, "compile_knobs": {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}, "curricula": "poisson,truncnorm", "git_dirty": true, "git_dirty_files": 1, "git_head": "e1faf79df5308247b53e1287bd8d5b57e8526000", "group": 8, "horizon": 36, "lr": 1e-05, "model": "Qwen/Qwen3-0.6B", "resume": null, "rollout_batch": 16, "seed": 12345, "started_at": "2026-10-02T11:57:56+0200"}
+trainable params: 2,293,760 || all params: 598,343,680 || trainable%: 0.3834
+{'step': 0, 'curriculum': 'poisson', 'loss': 3.9452395867556334e-05, 'loss_pg': 3.9452395867556334e-05, 'loss_kl': 0.0, 'policy_push': 0.05220477937190379, 's_min': -7.9375, 's_mean': -2.4726392957899304, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.198377821180555, 'grad_norm': 0.29579490423202515, 'lora_norm': 17.28582763671875, 'max_abs_logratio': 0.546875, 'clip_frac': 0.0030381944444444445, 'n_nonfinite': 0, 'mean_adv': 4.0091387000352876e-16, 'min_adv': -1.8833113596540922, 'max_adv': 1.4042418717923244, 'n_unique_orders': 32, 'n_unique_completions': 1121, 'parse_failure_rate': 0.8298611111111112, 'order_mean': 2.891, 'order_std': 28.661, 'order_max': 646, 'mean_episode_cost': 34398.375, 'samples': [{'prompt_hash': 'a61e56c58958', 'text': ' Choose from 3 options: 0', 'order': 3, 'ids': [22201, 504, 220, 18, 2606, 25, 220, 15]}, {'prompt_hash': '483dae7cf795', 'text': ' Based on the information given, can you', 'order': 0, 'ids': [20205, 389, 279, 1995, 2661, 11, 646, 498]}, {'prompt_hash': '10ac52a0255b', 'text': ' To ensure the warehouse has optimal inventory cost', 'order': 0, 'ids': [2014, 5978, 279, 30112, 702, 22823, 15444, 2783]}], 'elapsed_s': 94.8}
+{'step': 3, 'curriculum': 'truncnorm', 'loss': -0.0006489693623734638, 'loss_pg': -0.0006670217052386659, 'loss_kl': 0.0009023878309461805, 'policy_push': -0.05040524704317148, 's_min': -7.9375, 's_mean': -2.477298312717014, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.200778537326389, 'grad_norm': 0.3089706301689148, 'lora_norm': 17.285797119140625, 'max_abs_logratio': 0.46875, 'clip_frac': 0.0026041666666666665, 'n_nonfinite': 0, 'mean_adv': 3.5889501247431275e-16, 'min_adv': -2.4721443504173557, 'max_adv': 1.1458922682034949, 'n_unique_orders': 38, 'n_unique_completions': 1125, 'parse_failure_rate': 0.8350694444444444, 'order_mean': 14.013, 'order_std': 130.815, 'order_max': 2020, 'mean_episode_cost': 93950.375, 'samples': [{'prompt_hash': '9f9fb58b9de3', 'text': ' Make sure to play with balance between holding', 'order': 0, 'ids': [7405, 2704, 311, 1486, 448, 8172, 1948, 9963]}, {'prompt_hash': '483dae7cf795', 'text': ' How many进货数量应为？\nYour', 'order': 0, 'ids': [2585, 1657, 117124, 81800, 50511, 17714, 94432, 7771]}, {'prompt_hash': '10ac52a0255b', 'text': ' Limited to 2 decimal places.\nAnswer', 'order': 2, 'ids': [18905, 311, 220, 17, 12122, 7482, 624, 16141]}], 'elapsed_s': 402.3}
+done: results/grpo_pilot
+=== pilot exit=0 at 2026-10-02T12:04:39+02:00 ===
+total 17
+drwxr-xr-x. 2 20234428 umbrella  4096 Oct  2 12:04 .
+drwxr-xr-x. 2 20234428 umbrella  4096 Oct  2 11:57 ..
+drwxr-xr-x. 2 20234428 umbrella  4096 Oct  2 12:04 checkpoint-3
+-rw-r--r--. 1 20234428 umbrella   477 Oct  2 11:57 run_info.json
+-rw-r--r--. 1 20234428 umbrella 11441 Oct  2 12:04 state.json
+-rw-r--r--. 1 20234428 umbrella  4888 Oct  2 12:04 train_log.jsonl
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+363909_0      COMPLETED                       
+363909_0.ba+  COMPLETED   1231196K   1231196K 
+363909_0.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
