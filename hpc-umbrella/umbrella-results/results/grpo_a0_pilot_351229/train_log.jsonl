@@ -1,0 +1,4 @@
+{"step": 0, "curriculum": "poisson", "loss": 0.45050081737442976, "mean_adv": 1.696174065399545e-17, "min_adv": -2.608857537750471, "max_adv": 0.7055474893283586, "elapsed_s": 75.4}
+{"step": 1, "curriculum": "truncnorm", "loss": 0.07954261626582593, "mean_adv": 4.446674510087215e-16, "min_adv": -1.7642614550246394, "max_adv": 1.3331224550866019, "elapsed_s": 166.0}
+{"step": 2, "curriculum": "poisson", "loss": -0.10061692896609505, "mean_adv": 9.184397070032762e-17, "min_adv": -1.90579413780056, "max_adv": 0.8863102348773979, "elapsed_s": 266.6}
+{"step": 3, "curriculum": "truncnorm", "loss": 0.036929556323836245, "mean_adv": -7.440036241411639e-17, "min_adv": -1.5687100989996015, "max_adv": 1.671511435574886, "elapsed_s": 369.5}

@@ -1,0 +1,20 @@
+{
+  "beta_kl": 0.005,
+  "compile_knobs": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "TORCHDYNAMO_DISABLE": "1",
+    "generation_config.compile": "absent"
+  },
+  "curricula": "poisson,truncnorm",
+  "git_dirty": true,
+  "git_dirty_files": 1,
+  "git_head": "e1faf79df5308247b53e1287bd8d5b57e8526000",
+  "group": 8,
+  "horizon": 36,
+  "lr": 1e-05,
+  "model": "Qwen/Qwen3-0.6B",
+  "resume": null,
+  "rollout_batch": 16,
+  "seed": 12345,
+  "started_at": "2026-10-03T00:31:10+0200"
+}
