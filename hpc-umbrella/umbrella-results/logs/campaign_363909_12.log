@@ -32,3 +32,93 @@ trainable params: 2,293,760 || all params: 598,343,680 || trainable%: 0.3834
 {'step': 230, 'curriculum': 'poisson', 'loss': 0.0006990385429364525, 'loss_pg': 0.0004233513318467885, 'loss_kl': 0.013784196641710069, 'policy_push': -0.013599043110540757, 's_min': -6.71875, 's_mean': -2.3903333875868054, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.137980143229167, 'grad_norm': 0.31519433856010437, 'lora_norm': 17.299470901489258, 'max_abs_logratio': 0.453125, 'clip_frac': 0.0026041666666666665, 'n_nonfinite': 0, 'mean_adv': -6.072495901183256e-16, 'min_adv': -2.159535692118069, 'max_adv': 1.590978860706148, 'n_unique_orders': 23, 'n_unique_completions': 1133, 'parse_failure_rate': 0.875, 'order_mean': 1.001, 'order_std': 10.202, 'order_max': 216, 'mean_episode_cost': 14011.375, 'samples': [{'prompt_hash': 'b6e1251ccf6a', 'text': ' Why is the number? (Reasoning', 'order': 0, 'ids': [8429, 374, 279, 1372, 30, 320, 25139, 287]}, {'prompt_hash': '483dae7cf795', 'text': ' \n\nConstraints:\nR1: Budget limit', 'order': 1, 'ids': [4710, 12925, 510, 49, 16, 25, 27269, 3930]}, {'prompt_hash': '10ac52a0255b', 'text': ' I must select exactly one possible integer (', 'order': 0, 'ids': [358, 1969, 3293, 6896, 825, 3204, 7546, 320]}], 'elapsed_s': 23392.3}
 {'step': 240, 'curriculum': 'poisson', 'loss': 0.0013571507814857694, 'loss_pg': 0.001040857078300582, 'loss_kl': 0.015812344021267362, 'policy_push': 0.020438999972409673, 's_min': -6.75, 's_mean': -2.4313557942708335, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.136732313368055, 'grad_norm': 0.3204817771911621, 'lora_norm': 17.300092697143555, 'max_abs_logratio': 0.3359375, 'clip_frac': 0.0028211805555555555, 'n_nonfinite': 0, 'mean_adv': -2.7948322668515226e-16, 'min_adv': -2.1461055536182014, 'max_adv': 0.6154696809106988, 'n_unique_orders': 21, 'n_unique_completions': 1135, 'parse_failure_rate': 0.8645833333333334, 'order_mean': 4.044, 'order_std': 84.296, 'order_max': 2024, 'mean_episode_cost': 33615.375, 'samples': [{'prompt_hash': '0513d2c2450a', 'text': ' Please provide an explanation of the reason (', 'order': 0, 'ids': [5209, 3410, 458, 16148, 315, 279, 2874, 320]}, {'prompt_hash': '483dae7cf795', 'text': ' Based on the scenario and the information provided', 'order': 0, 'ids': [20205, 389, 279, 15048, 323, 279, 1995, 3897]}, {'prompt_hash': '10ac52a0255b', 'text': " Let's get this week done.\n\nNow", 'order': 0, 'ids': [6771, 594, 633, 419, 2003, 2814, 382, 7039]}], 'elapsed_s': 24400.4}
 {'step': 250, 'curriculum': 'poisson', 'loss': 0.0008893338963389397, 'loss_pg': 0.0005569386606415113, 'loss_kl': 0.01661978827582465, 'policy_push': -0.012854731667579876, 's_min': -6.5625, 's_mean': -2.385769314236111, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.101359049479167, 'grad_norm': 0.33194518089294434, 'lora_norm': 17.300832748413086, 'max_abs_logratio': 0.78125, 'clip_frac': 0.0032552083333333335, 'n_nonfinite': 0, 'mean_adv': -1.5712739751292147e-15, 'min_adv': -2.630847800589553, 'max_adv': 0.5629869989760223, 'n_unique_orders': 17, 'n_unique_completions': 1132, 'parse_failure_rate': 0.8940972222222222, 'order_mean': 0.941, 'order_std': 16.492, 'order_max': 500, 'mean_episode_cost': 14084.625, 'samples': [{'prompt_hash': '748b6f74a5d3', 'text': ' \n\nHow many units should you order?\n\n', 'order': 0, 'ids': [4710, 4340, 1657, 8153, 1265, 498, 1973, 1939]}, {'prompt_hash': '483dae7cf795', 'text': ' What is the optimal strategy?\nAnswer:\n\n', 'order': 0, 'ids': [3555, 374, 279, 22823, 8282, 5267, 16141, 1447]}, {'prompt_hash': '10ac52a0255b', 'text': ' The days this week are (3)', 'order': 3, 'ids': [576, 2849, 419, 2003, 525, 320, 18, 8]}], 'elapsed_s': 25408.4}
+{'step': 260, 'curriculum': 'poisson', 'loss': 2.9893176866203754e-05, 'loss_pg': -0.0003350726858318214, 'loss_kl': 0.01824951171875, 'policy_push': -0.01181259605315669, 's_min': -6.78125, 's_mean': -2.4257303873697915, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.095323350694445, 'grad_norm': 0.3142496645450592, 'lora_norm': 17.301536560058594, 'max_abs_logratio': 0.5625, 'clip_frac': 0.003689236111111111, 'n_nonfinite': 0, 'mean_adv': 2.2088812260771343e-16, 'min_adv': -2.1677406073113965, 'max_adv': 1.279891833192888, 'n_unique_orders': 25, 'n_unique_completions': 1134, 'parse_failure_rate': 0.8940972222222222, 'order_mean': 0.993, 'order_std': 7.29, 'order_max': 100, 'mean_episode_cost': 30640.875, 'samples': [{'prompt_hash': '884752e7eed4', 'text': ' And the total cost (sum all the', 'order': 0, 'ids': [1597, 279, 2790, 2783, 320, 1242, 678, 279]}, {'prompt_hash': '483dae7cf795', 'text': ' To reduce costs, a scheme where the', 'order': 0, 'ids': [2014, 7949, 7049, 11, 264, 12859, 1380, 279]}, {'prompt_hash': '10ac52a0255b', 'text': ' because of T1, not known.\n\n', 'order': 1, 'ids': [1576, 315, 350, 16, 11, 537, 3881, 382]}], 'elapsed_s': 26416.2}
+{'step': 270, 'curriculum': 'poisson', 'loss': 0.00040952496864419017, 'loss_pg': 3.489156370051205e-05, 'loss_kl': 0.018730587429470487, 'policy_push': -0.030940901048274502, 's_min': -6.59375, 's_mean': -2.387298583984375, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.0693359375, 'grad_norm': 0.32898056507110596, 'lora_norm': 17.30181884765625, 'max_abs_logratio': 0.390625, 'clip_frac': 0.003363715277777778, 'n_nonfinite': 0, 'mean_adv': 3.784588383422734e-16, 'min_adv': -2.6377388143745684, 'max_adv': 0.5194980278009511, 'n_unique_orders': 14, 'n_unique_completions': 1136, 'parse_failure_rate': 0.8940972222222222, 'order_mean': 1.181, 'order_std': 29.613, 'order_max': 1000, 'mean_episode_cost': 25452.5, 'samples': [{'prompt_hash': 'e929bd72a682', 'text': ' Reason: well presented and clear.\n\nOkay', 'order': 0, 'ids': [26759, 25, 1632, 10449, 323, 2797, 382, 32313]}, {'prompt_hash': '483dae7cf795', 'text': ' To ensure that shipping appears correctly in the', 'order': 0, 'ids': [2014, 5978, 429, 11601, 7952, 12440, 304, 279]}, {'prompt_hash': '10ac52a0255b', 'text': " We don't need to change variables,", 'order': 0, 'ids': [1205, 1513, 944, 1184, 311, 2297, 7332, 11]}], 'elapsed_s': 27423.5}
+{'step': 280, 'curriculum': 'poisson', 'loss': 0.0005260505697353639, 'loss_pg': 0.00014433083480172273, 'loss_kl': 0.01908662584092882, 'policy_push': 0.022181172994250018, 's_min': -6.875, 's_mean': -2.36383056640625, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.060479058159722, 'grad_norm': 0.33465611934661865, 'lora_norm': 17.302318572998047, 'max_abs_logratio': 0.296875, 'clip_frac': 0.002495659722222222, 'n_nonfinite': 0, 'mean_adv': 1.117932906740609e-16, 'min_adv': -2.3807877056742806, 'max_adv': 0.9837524872095256, 'n_unique_orders': 22, 'n_unique_completions': 1136, 'parse_failure_rate': 0.8993055555555556, 'order_mean': 0.717, 'order_std': 6.715, 'order_max': 121, 'mean_episode_cost': 26224.5, 'samples': [{'prompt_hash': '9f9fb58b9de3', 'text': ' Will change if necessary.\n\nYour customer wants', 'order': 0, 'ids': [4841, 2297, 421, 5871, 382, 7771, 6002, 6801]}, {'prompt_hash': '483dae7cf795', 'text': ' And also, also include your reasoning quickly', 'order': 0, 'ids': [1597, 1083, 11, 1083, 2924, 697, 32711, 6157]}, {'prompt_hash': '10ac52a0255b', 'text': ' ?\nGame ends if you have zero inventory', 'order': 0, 'ids': [17607, 4868, 10335, 421, 498, 614, 7168, 15444]}], 'elapsed_s': 28428.0}
+{'step': 290, 'curriculum': 'poisson', 'loss': 0.0002813975766508116, 'loss_pg': -0.00012054137833830382, 'loss_kl': 0.020099639892578125, 'policy_push': -0.05035364291527205, 's_min': -6.0, 's_mean': -2.433956570095486, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.053534613715278, 'grad_norm': 0.35394230484962463, 'lora_norm': 17.302976608276367, 'max_abs_logratio': 0.40625, 'clip_frac': 0.0035807291666666665, 'n_nonfinite': 0, 'mean_adv': 1.0620362614035786e-16, 'min_adv': -2.0221873105458856, 'max_adv': 1.0281607077642196, 'n_unique_orders': 19, 'n_unique_completions': 1137, 'parse_failure_rate': 0.890625, 'order_mean': 0.53, 'order_std': 4.607, 'order_max': 100, 'mean_episode_cost': 21739.0, 'samples': [{'prompt_hash': 'd127c07f1798', 'text': ' Must include both starter and maturity dates.\n', 'order': 0, 'ids': [15465, 2924, 2176, 26697, 323, 47161, 12713, 624]}, {'prompt_hash': '483dae7cf795', 'text': ' Based on the choice, you must enter', 'order': 0, 'ids': [20205, 389, 279, 5754, 11, 498, 1969, 3725]}, {'prompt_hash': '10ac52a0255b', 'text': ' \n\nTo determine this, solve a linear', 'order': 0, 'ids': [4710, 1249, 8253, 419, 11, 11625, 264, 13482]}], 'elapsed_s': 29431.7}
+{'step': 299, 'curriculum': 'truncnorm', 'loss': 0.00012499863805714995, 'loss_pg': -0.00025320607851932035, 'loss_kl': 0.018909454345703125, 'policy_push': -0.007289973132881439, 's_min': -6.875, 's_mean': -2.3591512044270835, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.073703342013889, 'grad_norm': 0.3107738196849823, 'lora_norm': 17.30308723449707, 'max_abs_logratio': 0.375, 'clip_frac': 0.003146701388888889, 'n_nonfinite': 0, 'mean_adv': -1.0189091083202663e-16, 'min_adv': -2.5412835910424074, 'max_adv': 1.2173136319517845, 'n_unique_orders': 14, 'n_unique_completions': 1135, 'parse_failure_rate': 0.9088541666666666, 'order_mean': 0.218, 'order_std': 2.09, 'order_max': 50, 'mean_episode_cost': 23532.25, 'samples': [{'prompt_hash': 'd127c07f1798', 'text': ' The order needs to be delivered.\n\nSup', 'order': 0, 'ids': [576, 1973, 3880, 311, 387, 12600, 382, 10048]}, {'prompt_hash': '483dae7cf795', 'text': ' To \\boxed{X} the final', 'order': 0, 'ids': [2014, 1124, 79075, 90, 55, 92, 279, 1590]}, {'prompt_hash': '10ac52a0255b', 'text': ' Explain why, if there are multiple choices', 'order': 0, 'ids': [81917, 3170, 11, 421, 1052, 525, 5248, 11454]}], 'elapsed_s': 30333.8}
+done: results/grpo_a11_seed2
+=== a11_seed2 exit=0 at 2026-10-03T12:51:55+02:00 ===
+total 369
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:51 .
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:26 ..
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:32 checkpoint-109
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:49 checkpoint-119
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:06 checkpoint-129
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:23 checkpoint-139
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:39 checkpoint-149
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:56 checkpoint-159
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:13 checkpoint-169
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:30 checkpoint-179
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:47 checkpoint-189
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:00 checkpoint-19
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:04 checkpoint-199
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:20 checkpoint-209
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:37 checkpoint-219
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:54 checkpoint-229
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:11 checkpoint-239
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:28 checkpoint-249
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:44 checkpoint-259
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:01 checkpoint-269
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:18 checkpoint-279
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:35 checkpoint-289
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:17 checkpoint-29
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:51 checkpoint-299
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:34 checkpoint-39
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:51 checkpoint-49
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:07 checkpoint-59
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:24 checkpoint-69
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:41 checkpoint-79
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:58 checkpoint-89
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:43 checkpoint-9
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:15 checkpoint-99
+-rw-r--r--. 1 20234428 umbrella    473 Oct  3 04:26 run_info.json
+-rw-r--r--. 1 20234428 umbrella  11442 Oct  3 12:51 state.json
+-rw-r--r--. 1 20234428 umbrella 364969 Oct  3 12:51 train_log.jsonl
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+363909_0      COMPLETED                       
+363909_0.ba+  COMPLETED   1231196K   1231196K 
+363909_0.ex+  COMPLETED                       
+363909_2      COMPLETED                       
+363909_2.ba+  COMPLETED   2624560K   2624560K 
+363909_2.ex+  COMPLETED                       
+363909_3      COMPLETED                       
+363909_3.ba+  COMPLETED   2416732K   2416732K 
+363909_3.ex+  COMPLETED                       
+363909_4      COMPLETED                       
+363909_4.ba+  COMPLETED   2809688K   2809688K 
+363909_4.ex+  COMPLETED                       
+363909_5      COMPLETED                       
+363909_5.ba+  COMPLETED   2632164K   2632164K 
+363909_5.ex+  COMPLETED                       
+363909_6      COMPLETED                       
+363909_6.ba+  COMPLETED   2645652K   2645652K 
+363909_6.ex+  COMPLETED                       
+363909_7      COMPLETED                       
+363909_7.ba+  COMPLETED   2639952K   2639952K 
+363909_7.ex+  COMPLETED                       
+363909_8      COMPLETED                       
+363909_8.ba+  COMPLETED   2665872K   2665872K 
+363909_8.ex+  COMPLETED                       
+363909_9      COMPLETED                       
+363909_9.ba+  COMPLETED   2812676K   2812676K 
+363909_9.ex+  COMPLETED                       
+363909_10     COMPLETED                       
+363909_10.b+  COMPLETED   2627488K   2627488K 
+363909_10.e+  COMPLETED                       
+363909_12     COMPLETED                       
+363909_12.b+  COMPLETED   2655712K   2655712K 
+363909_12.e+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

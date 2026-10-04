@@ -32,3 +32,63 @@ trainable params: 2,293,760 || all params: 598,343,680 || trainable%: 0.3834
 {'step': 230, 'curriculum': 'poisson', 'loss': 0.0002947161119664088, 'loss_pg': 0.00022049197933584865, 'loss_kl': 0.003711700439453125, 'policy_push': 0.043013610480152745, 's_min': -8.0, 's_mean': -2.4801194932725696, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.217203776041667, 'grad_norm': 0.3034602701663971, 'lora_norm': 17.289554595947266, 'max_abs_logratio': 0.34375, 'clip_frac': 0.0035807291666666665, 'n_nonfinite': 0, 'mean_adv': 4.1758649007819474e-16, 'min_adv': -2.539294853324057, 'max_adv': 0.9124689907476955, 'n_unique_orders': 24, 'n_unique_completions': 1134, 'parse_failure_rate': 0.8611111111111112, 'order_mean': 1.592, 'order_std': 29.971, 'order_max': 1000, 'mean_episode_cost': 16681.25, 'samples': [{'prompt_hash': '0513d2c2450a', 'text': ' Your choice explicitly -----------\nAnswer:\nThe', 'order': 0, 'ids': [4615, 5754, 20975, 220, 25910, 16141, 510, 785]}, {'prompt_hash': '483dae7cf795', 'text': ' Your decisions must be based on which strategy', 'order': 0, 'ids': [4615, 11181, 1969, 387, 3118, 389, 892, 8282]}, {'prompt_hash': '10ac52a0255b', 'text': ' \n\nAssume no other costs except these', 'order': 0, 'ids': [4710, 5615, 3885, 902, 1008, 7049, 3650, 1493]}], 'elapsed_s': 23862.0}
 {'step': 240, 'curriculum': 'poisson', 'loss': 0.0004469116619374189, 'loss_pg': 0.0003644476010878053, 'loss_kl': 0.004123687744140625, 'policy_push': 0.033530626345762156, 's_min': -7.125, 's_mean': -2.4973856608072915, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.214762369791667, 'grad_norm': 0.3223596513271332, 'lora_norm': 17.289892196655273, 'max_abs_logratio': 0.4375, 'clip_frac': 0.0037977430555555555, 'n_nonfinite': 0, 'mean_adv': 3.970589289458025e-17, 'min_adv': -2.2043316506858086, 'max_adv': 1.193075265217739, 'n_unique_orders': 24, 'n_unique_completions': 1135, 'parse_failure_rate': 0.8428819444444444, 'order_mean': 0.968, 'order_std': 8.52, 'order_max': 201, 'mean_episode_cost': 23373.5, 'samples': [{'prompt_hash': 'd127c07f1798', 'text': " Why?\n\nOkay, let's figure out", 'order': 0, 'ids': [8429, 1939, 32313, 11, 1077, 594, 7071, 700]}, {'prompt_hash': '483dae7cf795', 'text': ' Explain why.\n\nYou are given unlimited supply', 'order': 0, 'ids': [81917, 3170, 382, 2610, 525, 2661, 26764, 8149]}, {'prompt_hash': '10ac52a0255b', 'text': ' \n\nNote: You can always reorder from', 'order': 0, 'ids': [4710, 9112, 25, 1446, 646, 2677, 83184, 504]}], 'elapsed_s': 24893.9}
 {'step': 250, 'curriculum': 'poisson', 'loss': 0.00018816844708958847, 'loss_pg': 0.00010010755148768012, 'loss_kl': 0.004402584499782986, 'policy_push': -0.03150602334385945, 's_min': -7.84375, 's_mean': -2.5376756456163196, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.219048394097222, 'grad_norm': 0.35382214188575745, 'lora_norm': 17.290239334106445, 'max_abs_logratio': 0.359375, 'clip_frac': 0.001736111111111111, 'n_nonfinite': 0, 'mean_adv': -2.9875793197378345e-16, 'min_adv': -1.9351487739280626, 'max_adv': 1.0772715711543879, 'n_unique_orders': 24, 'n_unique_completions': 1140, 'parse_failure_rate': 0.859375, 'order_mean': 2.228, 'order_std': 35.357, 'order_max': 997, 'mean_episode_cost': 31165.0, 'samples': [{'prompt_hash': '9f9fb58b9de3', 'text': " What's the minimal cost? Continue with", 'order': 0, 'ids': [3555, 594, 279, 17377, 2783, 30, 15003, 448]}, {'prompt_hash': '483dae7cf795', 'text': ' So that you will have sufficient inventory to', 'order': 0, 'ids': [2055, 429, 498, 686, 614, 14016, 15444, 311]}, {'prompt_hash': '10ac52a0255b', 'text': ' Why is it not 50%', 'order': 50, 'ids': [8429, 374, 432, 537, 220, 20, 15, 4]}], 'elapsed_s': 25926.4}
+{'step': 260, 'curriculum': 'poisson', 'loss': 9.836587640974257e-05, 'loss_pg': 3.972815142737494e-06, 'loss_kl': 0.004719628228081597, 'policy_push': -0.0110721362547742, 's_min': -7.9375, 's_mean': -2.5121256510416665, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.216579861111111, 'grad_norm': 0.3015178143978119, 'lora_norm': 17.290508270263672, 'max_abs_logratio': 0.5703125, 'clip_frac': 0.003146701388888889, 'n_nonfinite': 0, 'mean_adv': -6.245004513516506e-17, 'min_adv': -2.4573376112359906, 'max_adv': 0.8283204235253968, 'n_unique_orders': 25, 'n_unique_completions': 1136, 'parse_failure_rate': 0.859375, 'order_mean': 2.332, 'order_std': 34.403, 'order_max': 1000, 'mean_episode_cost': 20873.5, 'samples': [{'prompt_hash': 'd0f82c231f79', 'text': "  \n\nIt's possible that during discharge of", 'order': 0, 'ids': [18611, 2132, 594, 3204, 429, 2337, 31543, 315]}, {'prompt_hash': '483dae7cf795', 'text': ' (Include the "total supply chain cost', 'order': 0, 'ids': [320, 22283, 279, 330, 5035, 8149, 8781, 2783]}, {'prompt_hash': '10ac52a0255b', 'text': '  \nSo, I enter zero zero three', 'order': 0, 'ids': [2303, 4416, 11, 358, 3725, 7168, 7168, 2326]}], 'elapsed_s': 26957.7}
+{'step': 270, 'curriculum': 'poisson', 'loss': 0.0007542519726687007, 'loss_pg': 0.0006493896038995849, 'loss_kl': 0.005243089463975694, 'policy_push': 0.006564597288767497, 's_min': -6.46875, 's_mean': -2.5274420844184027, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.2255859375, 'grad_norm': 0.33670392632484436, 'lora_norm': 17.290943145751953, 'max_abs_logratio': 0.421875, 'clip_frac': 0.0037977430555555555, 'n_nonfinite': 0, 'mean_adv': -3.7248367970279776e-16, 'min_adv': -2.637202162562728, 'max_adv': 1.0559262774014986, 'n_unique_orders': 20, 'n_unique_completions': 1146, 'parse_failure_rate': 0.8559027777777778, 'order_mean': 3.476, 'order_std': 88.82, 'order_max': 3000, 'mean_episode_cost': 30100.875, 'samples': [{'prompt_hash': 'e929bd72a682', 'text': ' You must choose between 1 and ', 'order': 1, 'ids': [1446, 1969, 5157, 1948, 220, 16, 323, 220]}, {'prompt_hash': '483dae7cf795', 'text': ' When you decide, prioritizing higher priority', 'order': 0, 'ids': [3197, 498, 10279, 11, 44677, 4849, 5080, 10619]}, {'prompt_hash': '10ac52a0255b', 'text': ' This.order must be placed by 2', 'order': 2, 'ids': [1096, 14041, 1969, 387, 9099, 553, 220, 17]}], 'elapsed_s': 27989.7}
+{'step': 280, 'curriculum': 'poisson', 'loss': 0.0005220061995916896, 'loss_pg': 0.0004038673101199998, 'loss_kl': 0.005907270643446181, 'policy_push': 0.008515118310848871, 's_min': -8.0, 's_mean': -2.521389431423611, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.213460286458333, 'grad_norm': 0.3360855281352997, 'lora_norm': 17.291486740112305, 'max_abs_logratio': 0.40625, 'clip_frac': 0.0028211805555555555, 'n_nonfinite': 0, 'mean_adv': -2.9307189391363726e-16, 'min_adv': -2.645751310956859, 'max_adv': 0.37798114149911916, 'n_unique_orders': 26, 'n_unique_completions': 1138, 'parse_failure_rate': 0.8498263888888888, 'order_mean': 21667.14, 'order_std': 735046.558, 'order_max': 24959144, 'mean_episode_cost': 224650027.75, 'samples': [{'prompt_hash': 'd127c07f1798', 'text': ' To be considered for receipt, same as', 'order': 0, 'ids': [2014, 387, 6509, 369, 22567, 11, 1852, 438]}, {'prompt_hash': '483dae7cf795', 'text': " \ufeff\nFin\nNow, let's", 'order': 0, 'ids': [220, 61519, 9134, 198, 7039, 11, 1077, 594]}, {'prompt_hash': '10ac52a0255b', 'text': " \n\nOkay, let's see. The", 'order': 0, 'ids': [4710, 32313, 11, 1077, 594, 1490, 13, 576]}], 'elapsed_s': 29021.0}
+{'step': 290, 'curriculum': 'poisson', 'loss': 8.957451306438695e-05, 'loss_pg': -3.308563706620286e-05, 'loss_kl': 0.006133185492621528, 'policy_push': 0.011444463666218022, 's_min': -7.6875, 's_mean': -2.5060289171006946, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.214328342013889, 'grad_norm': 0.31677916646003723, 'lora_norm': 17.291791915893555, 'max_abs_logratio': 0.75, 'clip_frac': 0.002387152777777778, 'n_nonfinite': 0, 'mean_adv': 2.28019763564507e-16, 'min_adv': -2.2441301574432777, 'max_adv': 1.020414166512634, 'n_unique_orders': 25, 'n_unique_completions': 1136, 'parse_failure_rate': 0.8524305555555556, 'order_mean': 2.006, 'order_std': 19.146, 'order_max': 450, 'mean_episode_cost': 17304.75, 'samples': [{'prompt_hash': '0513d2c2450a', 'text': ' To ensure that the value is correct,', 'order': 0, 'ids': [2014, 5978, 429, 279, 897, 374, 4396, 11]}, {'prompt_hash': '483dae7cf795', 'text': ' YOUR FINAL ANSWER IS ONE INTEGER,', 'order': 0, 'ids': [20922, 66959, 96704, 640, 3424, 24038, 30381, 11]}, {'prompt_hash': '10ac52a0255b', 'text': ' For the last case, you select the', 'order': 0, 'ids': [1752, 279, 1537, 1142, 11, 498, 3293, 279]}], 'elapsed_s': 30050.5}
+{'step': 299, 'curriculum': 'truncnorm', 'loss': 0.00015392583898372122, 'loss_pg': 1.748666788140933e-05, 'loss_kl': 0.006821950276692708, 'policy_push': 0.038041333538583584, 's_min': -6.6875, 's_mean': -2.5478346082899304, 'frac_s_gt_m001': 0.0, 'frac_s_lt_m10': 0.0, 'entropy_first': 4.207600911458333, 'grad_norm': 0.3227766454219818, 'lora_norm': 17.292112350463867, 'max_abs_logratio': 0.4375, 'clip_frac': 0.004123263888888889, 'n_nonfinite': 0, 'mean_adv': 5.270668161176199e-16, 'min_adv': -2.640375004002151, 'max_adv': 0.48853927395407276, 'n_unique_orders': 22, 'n_unique_completions': 1139, 'parse_failure_rate': 0.8611111111111112, 'order_mean': 2.768, 'order_std': 60.294, 'order_max': 2024, 'mean_episode_cost': 27326.625, 'samples': [{'prompt_hash': 'd0f82c231f79', 'text': ' The optimal values for this year’s supply', 'order': 0, 'ids': [576, 22823, 2750, 369, 419, 1042, 748, 8149]}, {'prompt_hash': '483dae7cf795', 'text': ' Let me see... The optimal solution for', 'order': 0, 'ids': [6771, 752, 1490, 1112, 576, 22823, 6291, 369]}, {'prompt_hash': '10ac52a0255b', 'text': " Let me think... So, here's", 'order': 0, 'ids': [6771, 752, 1744, 1112, 2055, 11, 1588, 594]}], 'elapsed_s': 30976.7}
+done: results/grpo_a9_lr_low
+=== a9_lr_low exit=0 at 2026-10-03T12:50:09+02:00 ===
+total 368
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:50 .
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:26 ..
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:23 checkpoint-109
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:40 checkpoint-119
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:57 checkpoint-129
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:14 checkpoint-139
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:31 checkpoint-149
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 08:49 checkpoint-159
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:06 checkpoint-169
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:23 checkpoint-179
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:41 checkpoint-189
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:48 checkpoint-19
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 09:58 checkpoint-199
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:15 checkpoint-209
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:32 checkpoint-219
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 10:49 checkpoint-229
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:07 checkpoint-239
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:24 checkpoint-249
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:41 checkpoint-259
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 11:58 checkpoint-269
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:15 checkpoint-279
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:32 checkpoint-289
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:05 checkpoint-29
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 12:50 checkpoint-299
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:22 checkpoint-39
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:39 checkpoint-49
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:57 checkpoint-59
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:14 checkpoint-69
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:31 checkpoint-79
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 06:48 checkpoint-89
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:31 checkpoint-9
+drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 07:05 checkpoint-99
+-rw-r--r--. 1 20234428 umbrella    477 Oct  3 04:13 run_info.json
+-rw-r--r--. 1 20234428 umbrella  11447 Oct  3 12:50 state.json
+-rw-r--r--. 1 20234428 umbrella 364542 Oct  3 12:50 train_log.jsonl
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+363909_10     COMPLETED                       
+363909_10.b+  COMPLETED   2627488K   2627488K 
+363909_10.e+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
