@@ -32,7 +32,9 @@ fi
 # 2) base GGUF for both arms (official build; no conversion needed for the base)
 mkdir -p "$ROOT/models"
 if [ ! -s "$ROOT/models/Qwen3-0.6B-Q4_K_M.gguf" ]; then
-  hf download Qwen/Qwen3-0.6B-GGUF Qwen3-0.6B-Q4_K_M.gguf --local-dir "$ROOT/models"
+  # official Qwen GGUF repo ships only Q8_0 for 0.6B; the standard Q4_K_M comes from
+  # unsloth's GGUF build (same weights file serves both eval arms)
+  hf download unsloth/Qwen3-0.6B-GGUF Qwen3-0.6B-Q4_K_M.gguf --local-dir "$ROOT/models"
 fi
 ls -la "$ROOT/models"
 echo "=== DONE $(date -u +%FT%TZ) ==="

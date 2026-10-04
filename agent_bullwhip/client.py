@@ -43,6 +43,11 @@ import requests
 # FREEINFERENCE_RATE_LIMIT_DELAY if needed. CommandCode has no such limit.
 RATE_LIMIT_DELAY = float(os.environ.get("FREEINFERENCE_RATE_LIMIT_DELAY", "2.0"))
 
+# Wave 6: local-serve mode — llama.cpp /completion with the raw prompt (no chat
+# template), matching how the GRPO policy was trained/scored. See chat().
+# Module-level so tests can monkeypatch; read from env at import.
+_COMPLETIONS_MODE = os.environ.get("BULLWHIP_COMPLETIONS_API") == "1"
+
 # Provider selection: CommandCode (higher concurrency, full tool support) or
 # FreeInference (default). Set COMMANDCODE_API_KEY to use CommandCode.
 COMMANDCODE_KEY = os.environ.get("COMMANDCODE_API_KEY", "")
@@ -107,7 +112,7 @@ def chat(
     hash of the concatenated messages each call, so a post-hoc analysis can detect
     whether identical prompts were sent repeatedly (cache-collision risk).
     """
-    global last_usage
+    global last_usage, last_reasoning
     model = model or DEFAULT_MODEL
     # Reasoning-heavy models (GLM) need headroom: their THINKING burns tokens
     # before the answer. Default 64 is fine for DeepSeek/Qwen but starves GLM.
@@ -133,16 +138,37 @@ def chat(
         "max_tokens": max_tokens,
         "n": n,
     }
+    # Wave 6 local-serve mode (llama.cpp, CPU): raw continuation via /completion.
+    # The GRPO policy was trained on raw prompt continuations — grpo_train._Policy
+    # tokenizes the prompt string directly (add_special_tokens, no chat template),
+    # so the local eval arm must serve it the same way. Gated by env
+    # BULLWHIP_COMPLETIONS_API=1; default off, earlier-wave behaviour unchanged.
+    # Sampling mirrors the training rollout (full softmax: top_k=0, top_p=1.0);
+    # temperature stays the harness value. n>1 unsupported here (no wave-6 arm uses it).
+    if _COMPLETIONS_MODE:
+        if n != 1:
+            raise NotImplementedError("BULLWHIP_COMPLETIONS_API mode supports n=1 only")
     # collision check: record a fingerprint of the exact prompt (cheap, no PII)
     import hashlib
     _fp = hashlib.sha256(
         ("\x1f".join(m.get("content", "") for m in messages)).encode()
     ).hexdigest()[:16]
     prompt_hashes.append(_fp)
+    if _COMPLETIONS_MODE:
+        # raw continuation: prompt text only; sampling shape mirrors the
+        # training rollout (full softmax); n is guarded above.
+        _last_user = next((m.get("content", "") for m in reversed(messages)
+                           if m.get("role") == "user"), "")
+        req_url = f"{BASE}/completion"
+        req_payload = {"prompt": _last_user, "temperature": temperature,
+                       "n_predict": max_tokens, "top_k": 0, "top_p": 1.0, "min_p": 0.0}
+    else:
+        req_url = f"{BASE}/chat/completions"
+        req_payload = body
     last_err: Exception | None = None
     for attempt in range(retries):
         try:
-            resp = requests.post(f"{BASE}/chat/completions", headers=headers, json=body, timeout=(10, 60))
+            resp = requests.post(req_url, headers=headers, json=req_payload, timeout=(10, 60))
             if resp.status_code == 429:
                 # limit-1 endpoints: back off exponentially with jitter so our own
                 # retries don't collide with each other (3s, 6s, 12s, 24s, ...)
@@ -156,6 +182,11 @@ def chat(
                 continue
             resp.raise_for_status()
             data = resp.json()
+            if _COMPLETIONS_MODE:
+                last_usage = {"prompt": data.get("tokens_evaluated", 0),
+                              "completion": data.get("tokens_predicted", 0)}
+                last_reasoning = [None]
+                return [data.get("content") or ""]
             usage = data.get("usage", {})
             last_usage = {"prompt": usage.get("prompt_tokens", 0),
                           "completion": usage.get("completion_tokens", 0)}
@@ -166,7 +197,6 @@ def chat(
                 msg = ch.get("message", {})
                 r = msg.get("reasoning_content") or msg.get("reasoning") or None
                 reasons.append(r if r else None)
-            global last_reasoning
             last_reasoning = reasons
             return [ch["message"]["content"] for ch in data.get("choices", [])]
         except requests.exceptions.Timeout:
