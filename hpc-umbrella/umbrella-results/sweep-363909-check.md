@@ -122,6 +122,6 @@ every row (no collapse); parse_failure_rate ~0.84-0.91 baseline-wide.
 
 - [x] Resume task 3 (job 374875_3) — done.
 - [x] Final re-pull + read — done.
-- [ ] Pull full results off scratch (train_log.jsonl + adapters) — 14-day deletion clock.
+- [x] Full results pulled off scratch — **verified COMPLETE 2026-10-04** with `hpc-umbrella/verify_pull.py` (run on tue-login001): 13/13 runs, all final artifacts, ~16.3 GB total. a2_group16 shows 31 checkpoints (9..244 then 249..299, the walltime-split provenance) and 301 train_log records (one extra resume-boundary line; dedupe by step when analyzing). Pilot ckpt-3 ok; extras (351229/360642 pilots, bench, dryrun_cpu) as expected.
 - [ ] llama.cpp serve + eval arms (untrained vs trained vs floors).
 - [ ] WAVE6.md + AUDIT6 before any post material.
