@@ -42,21 +42,33 @@ entropy -> ~1e-6), frozen loss plateaus, the 44 M order attractor, nonfinite val
 
 | task | loss range (full run) | loss_kl end | entropy end | grad end | lora_norm end | n_unique end | order_max | nonfinite |
 |---|---|---|---|---|---|---|---|---|
-| 1 a0_base | -7.7e-4 .. 1.2e-3 | 0.0186 | 4.19 | 0.36 | 17.2959 | 17 | 5e3 | 0 |
-| 2 a1_group4 | -2.2e-3 .. 1.6e-3 | 0.0181 | 3.94 | 0.49 | 17.2913 | 12 | 2.8e4 | 0 |
-| 3 a2_group16 (300) | -1.0e-3 .. 8.8e-4 | 0.0140 | 4.04 | 0.23 | 17.3003 | 19 | 1.7e4 | 0 |
-| 4 a3_horizon24 | -1.2e-3 .. 1.4e-3 | 0.0222 | 3.96 | 0.39 | 17.2948 | 12 | 2.0e4 | 0 |
-| 5 a4_horizon52 | -8.9e-4 .. 1.2e-3 | 0.0134 | 4.04 | 0.27 | 17.2911 | 27 | 6.6e4 | 0 |
-| 6 a5_poisson | -5.7e-4 .. 1.0e-3 | 0.0167 | 4.18 | 0.35 | 17.2954 | 17 | 5.6e3 | 0 |
-| 7 a6_truncnorm | -1.3e-3 .. 9.7e-4 | 0.0154 | 3.97 | 0.33 | 17.2944 | 18 | 2.0e4 | 0 |
-| 8 a7_kl_low | -1.4e-3 .. 1.2e-3 | 0.0333 | 4.09 | 0.37 | 17.3003 | 17 | 5e3 | 0 |
-| 9 a8_kl_high | -1.1e-3 .. 1.6e-3 | 0.0046 | 4.25 | 0.29 | 17.2878 | 25 | 2.5e7 * | 0 |
-| 10 a9_lr_low (300) | -1.2e-3 .. 1.1e-3 | 0.0068 | 4.21 | 0.32 | 17.2921 | 22 | 4.0e3 | 0 |
-| 11 a10_lr_high | -7.3e-4 .. 1.2e-3 | 0.0379 | 4.14 | 0.30 | 17.3022 | 12 | 2.0e4 | 0 |
-| 12 a11_seed2 (300) | -1.4e-3 .. 1.4e-3 | 0.0189 | 4.07 | 0.31 | 17.3031 | 14 | 3.5e4 | 0 |
+| 1 a0_base | -1.4e-03 .. 1.6e-03 | 0.0186 | 4.19 | 0.36 | 17.2959 | 17 | 6.6e+06 | 0 |
+| 2 a1_group4 | -2.2e-03 .. 2.6e-03 | 0.0181 | 3.94 | 0.49 | 17.2913 | 12 | 2.0e+05 | 0 |
+| 3 a2_group16 (300) | -1.1e-03 .. 1.4e-03 | 0.0140 | 4.04 | 0.23 | 17.3003 | 19 | 2.0e+06 | 0 |
+| 4 a3_horizon24 | -1.4e-03 .. 2.1e-03 | 0.0222 | 3.96 | 0.39 | 17.2948 | 12 | 5.5e+05 | 0 |
+| 5 a4_horizon52 | -1.1e-03 .. 1.4e-03 | 0.0134 | 4.04 | 0.27 | 17.2911 | 27 | 6.4e+06 | 0 |
+| 6 a5_poisson | -1.3e-03 .. 1.8e-03 | 0.0167 | 4.18 | 0.35 | 17.2954 | 17 | 2.0e+06 | 0 |
+| 7 a6_truncnorm | -1.3e-03 .. 1.7e-03 | 0.0154 | 3.97 | 0.33 | 17.2944 | 18 | 2.0e+06 | 0 |
+| 8 a7_kl_low | -1.4e-03 .. 1.7e-03 | 0.0333 | 4.09 | 0.37 | 17.3003 | 17 | 2.0e+06 | 0 |
+| 9 a8_kl_high | -1.4e-03 .. 1.7e-03 | 0.0046 | 4.25 | 0.29 | 17.2878 | 25 | 2.5e+07 | 0 |
+| 10 a9_lr_low (300) | -1.4e-03 .. 1.7e-03 | 0.0068 | 4.21 | 0.32 | 17.2921 | 22 | 2.5e+07 | 0 |
+| 11 a10_lr_high | -1.4e-03 .. 2.2e-03 | 0.0379 | 4.14 | 0.30 | 17.3022 | 12 | 2.0e+05 | 0 |
+| 12 a11_seed2 (300) | -1.5e-03 .. 1.8e-03 | 0.0189 | 4.07 | 0.31 | 17.3031 | 14 | 2.2e+06 | 0 |
 
-\* single step (s280), one rogue sample — see below. Nothing here is a failure regime: no collapse,
+\* isolated rogue samples, see the revision note below. Nothing here is a failure regime: no collapse,
 no freeze, no attractor, no nonfinite, gradients alive (0.2-0.5), LoRA drifting on every row.
+
+### Revision note (2026-10-04)
+
+The first pass of this table was parsed from the job stdout logs, which sample every 10th step. The
+committed per-run `train_log.jsonl` files (light artifacts, commit `3d49b14`, 4.6 MB) carry EVERY
+step: all numbers above now come from those files. The `order_max` column is materially larger than
+the sampled first pass for several runs (2-9 steps per run have order_max >= 1e5, up to 4 >= 1e6).
+Those spikes are isolated (no adjacent steps), and several land on the SAME steps across different
+configs (step 46 -> 2.02e6 in six runs; step 280 -> 2.5e7 in both a8 and a9), so they are shared
+seeded episode paths rather than run instability. No persistence, order_mean recovers the next step,
+n_unique stays high. Distinct from the legacy constant 4.44e7 attractor. a2's train_log carries
+step 244 twice (SIGTERM save + resume boundary): dedupe by step when aggregating.
 
 ## Knob coherence
 
@@ -69,12 +81,11 @@ no freeze, no attractor, no nonfinite, gradients alive (0.2-0.5), LoRA drifting 
 
 ## Anomalies & watch items (carry to the final read)
 
-1. **a8_kl_high s280: single-step order_max 2.50e7** (order_mean 21667, std 735k; n_unique 25, KL and
-   entropy unaffected). One rogue sample with a giant parsed integer — NOT the legacy constant
-   4.44e7 attractor. Fold into the parse/reward look (canary watch item 3).
-2. **Order-diversity decline is systematic**: every row loses diversity late (n_unique ~32 -> 12-27,
-   order_mean drifting low). Not collapse (legacy floor was 1-4). Eval-side question: does it cost
-   performance vs the floors?
+1. **Rogue parsed orders are systemic-but-isolated:** full per-step data shows 2-9 steps per run with
+   order_max >= 1e5 (up to 4 >= 1e6; max 2.5e7 in a8 and a9, both at step 280; ~2.02e6 repeats at step
+   46 across six runs). Same seeded paths across configs, never persistent, means recover. NOT the
+   legacy constant 4.44e7 attractor. Fold into the parse/reward look (canary watch item 3); consider
+   filtering rogue parses before scoring eval episodes.
 3. **parse_failure_rate ~0.84-0.87 on every row** — same as the canary baseline; the dedicated look
    at what the reward does with unparsed samples is still owed.
 4. Sibling job id 363918 appears only in task 3's cancel notice (same second). No double-runs
@@ -114,14 +125,18 @@ python3 ~/.hermes/scripts/bw-log-trajectory.py campaign_363909_*.log
   adapter + tokenizer + optimizer all restored, no re-run of earlier steps, no gap. The split+resume
   design is now demonstrated on a real campaign row, not just a drill.
 
-Standing anomalies carried into the final read (unchanged): a8_kl_high single-step 2.5e7 rogue
-parsed order (one sample, not the attractor regime); systematic late order-diversity decline on
-every row (no collapse); parse_failure_rate ~0.84-0.91 baseline-wide.
+Standing anomalies carried into the final read: rogue parsed orders up to 2.5e7 on isolated steps
+across most runs (systemic-but-isolated, see the revision note); systematic late order-diversity
+decline on every row (no collapse); parse_failure_rate ~0.84-0.91 baseline-wide.
 
 ## Actions (updated)
 
 - [x] Resume task 3 (job 374875_3) — done.
 - [x] Final re-pull + read — done.
 - [x] Full results pulled off scratch — **verified COMPLETE 2026-10-04** with `hpc-umbrella/verify_pull.py` (run on tue-login001): 13/13 runs, all final artifacts, ~16.3 GB total. a2_group16 shows 31 checkpoints (9..244 then 249..299, the walltime-split provenance) and 301 train_log records (one extra resume-boundary line; dedupe by step when analyzing). Pilot ckpt-3 ok; extras (351229/360642 pilots, bench, dryrun_cpu) as expected.
-- [ ] llama.cpp serve + eval arms (untrained vs trained vs floors).
+- [x] Light artifacts committed (3d49b14) and verified against train_log.jsonl on the hub, 2026-10-04
+      (all headline numbers reproduce; order_max column revised upward from full-step data).
+- [ ] llama.cpp serve + eval arms (untrained vs trained vs floors) — hub-side env setup started
+      (`hpc-umbrella/eval-cpu-setup.sh`: llama.cpp build + Qwen3-0.6B Q4_K_M; needs the a0_base
+      adapter file to serve the trained arm).
 - [ ] WAVE6.md + AUDIT6 before any post material.
