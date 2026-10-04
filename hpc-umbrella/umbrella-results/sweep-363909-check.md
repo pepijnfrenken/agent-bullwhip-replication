@@ -1,10 +1,9 @@
-# Sweep check — array 363909 (preliminary read)
+# Sweep check — array 363909 (FINAL read)
 
 **Date:** 2026-10-03 ~12:45 CEST · **Code:** HEAD `e1faf79` (+1 dirty file at launch: a comment-only
 `noisy_arm.sh` edit; committed alongside this doc to close the canary's provenance watch item)
 **Hardware:** 1x NVIDIA L4 per task · **Seed:** 12345 (a11_seed2: seed 2) · **Walltime cap:** 14 h/task
-**Status: PRELIMINARY** — a9_lr_low and a11_seed2 were still running at pull time (step 250/300);
-a2_group16 is incomplete (see below). Final verdict once those three land and are re-pulled.
+**Status: FINAL (2026-10-03)** — all 13 rows complete and clean. a9_lr_low and a11_seed2 finished in array 363909; a2_group16 completed its last 56 steps in resume job **374875 task 3** (checkpoint-244 -> 300, exit 0).
 
 ## Runs
 
@@ -13,16 +12,16 @@ a2_group16 is incomplete (see below). Final verdict once those three land and ar
 | 0 | pilot (re-verify) | 4 | 10-02 11:57 | 12:04 | ~134 | exit 0 — batch16 path re-verified under the fix |
 | 1 | a0_base | 300 | 10-02 02:23 | 10:48 | 101 | exit 0 (canary) |
 | 2 | a1_group4 | 300 | 10-02 11:57 | 16:10 | 51 | exit 0 |
-| 3 | a2_group16 | **244/300** | 10-02 12:05 | 10-03 01:55 | 204 | **14 h walltime stop; checkpoint-244 saved, exit 0 → RESUME REQUIRED** |
+| 3 | a2_group16 | **300** (244 + resume) | 10-02 12:05 | resumed in 374875_3 | 204 | complete: 14 h walltime stop at 244, resumed 245-300, exit 0 |
 | 4 | a3_horizon24 | 300 | 10-02 14:53 | 20:30 | 68 | exit 0 |
 | 5 | a4_horizon52 | 300 | 10-02 16:11 | 10-03 04:26 | 148 | exit 0 |
 | 6 | a5_poisson_only | 300 | 10-02 21:04 | 10-03 05:35 | 103 | exit 0 |
 | 7 | a6_truncnorm_only | 300 | 10-02 22:29 | 10-03 06:47 | 100 | exit 0 |
 | 8 | a7_kl_low | 300 | 10-03 00:31 | 09:01 | 102 | exit 0 |
 | 9 | a8_kl_high | 300 | 10-03 01:55 | 10:24 | 102 | exit 0 |
-| 10 | a9_lr_low | 250→ | 10-03 04:13 | ~13:00 (eta) | 104 | running, on pace |
+| 10 | a9_lr_low | 300 | 10-03 04:13 | complete | 104 | exit 0 |
 | 11 | a10_lr_high | 300 | 10-02 02:27 | 10:44 | 100 | exit 0 (canary) |
-| 12 | a11_seed2 | 250→ | 10-03 04:26 | ~12:55 (eta) | 102 | running, on pace |
+| 12 | a11_seed2 | 300 | 10-03 04:26 | complete | 102 | exit 0 |
 
 Notes:
 
@@ -30,7 +29,7 @@ Notes:
   allocation (14 h cap). Checkpoint at step 244, clean exit. Walltime math: 300 x 204 s ≈ 17 h,
   i.e. this row cannot finish in one 14 h slot by construction; the split+resume is the designed
   path (runbook §gpu-campaign). The cancel notice in its log names a sibling job id (363918);
-  nothing else in the wave references it.
+  nothing else in the wave references it. **Resolved: resume job 374875 task 3 continued from checkpoint-244 to 300 cleanly** (log: `resumed from step 245 (adapter + tokenizer + optimizer)`).
 - **task 10**: launched fresh from step 0 — the stale collapsed 361032 checkpoint did NOT
   auto-resume (its log says "no state.json; starting from step 0"). The a9 caveat from the
   previous addendum is satisfied for this wave.
@@ -45,16 +44,16 @@ entropy -> ~1e-6), frozen loss plateaus, the 44 M order attractor, nonfinite val
 |---|---|---|---|---|---|---|---|---|
 | 1 a0_base | -7.7e-4 .. 1.2e-3 | 0.0186 | 4.19 | 0.36 | 17.2959 | 17 | 5e3 | 0 |
 | 2 a1_group4 | -2.2e-3 .. 1.6e-3 | 0.0181 | 3.94 | 0.49 | 17.2913 | 12 | 2.8e4 | 0 |
-| 3 a2_group16 (244) | -1.0e-3 .. 8.8e-4 | 0.0115 | 4.13 | 0.22 | 17.2947 | 26 | 1.7e4 | 0 |
+| 3 a2_group16 (300) | -1.0e-3 .. 8.8e-4 | 0.0140 | 4.04 | 0.23 | 17.3003 | 19 | 1.7e4 | 0 |
 | 4 a3_horizon24 | -1.2e-3 .. 1.4e-3 | 0.0222 | 3.96 | 0.39 | 17.2948 | 12 | 2.0e4 | 0 |
 | 5 a4_horizon52 | -8.9e-4 .. 1.2e-3 | 0.0134 | 4.04 | 0.27 | 17.2911 | 27 | 6.6e4 | 0 |
 | 6 a5_poisson | -5.7e-4 .. 1.0e-3 | 0.0167 | 4.18 | 0.35 | 17.2954 | 17 | 5.6e3 | 0 |
 | 7 a6_truncnorm | -1.3e-3 .. 9.7e-4 | 0.0154 | 3.97 | 0.33 | 17.2944 | 18 | 2.0e4 | 0 |
 | 8 a7_kl_low | -1.4e-3 .. 1.2e-3 | 0.0333 | 4.09 | 0.37 | 17.3003 | 17 | 5e3 | 0 |
 | 9 a8_kl_high | -1.1e-3 .. 1.6e-3 | 0.0046 | 4.25 | 0.29 | 17.2878 | 25 | 2.5e7 * | 0 |
-| 10 a9_lr_low (250) | -1.0e-3 .. 1.1e-3 | 0.0044 | 4.22 | 0.35 | 17.2902 | 24 | 1.0e4 | 0 |
+| 10 a9_lr_low (300) | -1.2e-3 .. 1.1e-3 | 0.0068 | 4.21 | 0.32 | 17.2921 | 22 | 4.0e3 | 0 |
 | 11 a10_lr_high | -7.3e-4 .. 1.2e-3 | 0.0379 | 4.14 | 0.30 | 17.3022 | 12 | 2.0e4 | 0 |
-| 12 a11_seed2 (250) | -8.4e-4 .. 1.4e-3 | 0.0166 | 4.10 | 0.33 | 17.3008 | 17 | 1.0e5 | 0 |
+| 12 a11_seed2 (300) | -1.4e-3 .. 1.4e-3 | 0.0189 | 4.07 | 0.31 | 17.3031 | 14 | 3.5e4 | 0 |
 
 \* single step (s280), one rogue sample — see below. Nothing here is a failure regime: no collapse,
 no freeze, no attractor, no nonfinite, gradients alive (0.2-0.5), LoRA drifting on every row.
@@ -86,10 +85,8 @@ no freeze, no attractor, no nonfinite, gradients alive (0.2-0.5), LoRA drifting 
 
 ## Actions
 
-- [ ] **Resume task 3**: `cd /scratch-shared/20234428/bullwhip/kit && sbatch --array=3 gpu-campaign.sbatch`
-      (auto-resumes from step 244; ~56 steps x 204 s ≈ 3.2 h; fits the 14 h slot; a free L4 appears
-      when a9/a11 finish).
-- [ ] Re-pull logs after a9/a11 finish (~11:00 UTC) and re-run this check -> final sweep verdict.
+- [x] **Resume task 3**: done — job 374875_3 finished checkpoint-244 -> 300 (clean).
+- [x] Re-pull + final read: done (this document).
 - [ ] Pull full results off scratch (train_log.jsonl + adapters) — scratch deletes 14 days after the
       last write; nothing on Umbrella is durable.
 - [ ] Then: llama.cpp serve + eval arms (untrained vs trained vs floors); WAVE6.md + AUDIT6.
@@ -101,3 +98,30 @@ cd hpc-umbrella/umbrella-results/logs
 python3 ~/.hermes/scripts/bw-log-trajectory.py campaign_363909_*.log
 # per-log compact trajectory + red-flag verdicts (collapse / 44M attractor / nonfinite / frozen loss)
 ```
+
+
+## Final read (2026-10-03, after the last push)
+
+**All 13 rows complete at 300 steps, exit 0, every one clean on the six legacy failure regimes.**
+- a9_lr_low finished down the stretch with stable entropy (4.22 -> 4.21) and the smallest KL drift of
+  the sweep (0.0068; lr 5e-6 = half of base, drift roughly half of base's 0.0186). Notably, this is
+  the config that COLLAPSED in the 361032 era — under the fixed code it trains sanely for the full
+  300 steps. The fix prevents the collapse regime from forming from a fresh start.
+- a11_seed2 (seed 2, otherwise a0_base) landed almost on top of the seed-12345 base: kl 0.0189 vs
+  0.0186, lora 17.3031 vs 17.2959, uq end 14 vs 17, entropy end 4.07 vs 4.19. Seed robustness of
+  the dynamics holds.
+- The a2_group16 walltime split (244 in the array, 245-300 in the resume) ran without surprises:
+  adapter + tokenizer + optimizer all restored, no re-run of earlier steps, no gap. The split+resume
+  design is now demonstrated on a real campaign row, not just a drill.
+
+Standing anomalies carried into the final read (unchanged): a8_kl_high single-step 2.5e7 rogue
+parsed order (one sample, not the attractor regime); systematic late order-diversity decline on
+every row (no collapse); parse_failure_rate ~0.84-0.91 baseline-wide.
+
+## Actions (updated)
+
+- [x] Resume task 3 (job 374875_3) — done.
+- [x] Final re-pull + read — done.
+- [ ] Pull full results off scratch (train_log.jsonl + adapters) — 14-day deletion clock.
+- [ ] llama.cpp serve + eval arms (untrained vs trained vs floors).
+- [ ] WAVE6.md + AUDIT6 before any post material.
