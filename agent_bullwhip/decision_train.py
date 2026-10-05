@@ -392,6 +392,12 @@ def main(argv: list[str] | None = None) -> int:
                             "git": _git_stamp()}, sort_keys=True) + "\n")
     run_loop(policy, args, log_path, ckpt_path, start_step=start_step,
              labels_sha=labels_sha, stop=stop)
+    # AUDIT-2 P1-1: a SIGTERM'd run checkpoints and returns early — it must
+    # not look complete to the sbatch (which only stops on non-zero). 75 =
+    # EX_TEMPFAIL: resubmit to continue.
+    _, final = load_resume_state(outdir)
+    if final is None or int(final["step"]) < args.steps - 1:
+        return 75
     return 0
 
 

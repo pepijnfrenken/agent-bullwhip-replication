@@ -475,3 +475,65 @@ class TestEvalArmsHub:
         assert de.main(base + ["--adapter", str(tmp_path / "ad")]) == 0
         summ = json.loads((tmp_path / "t.summary.json").read_text())
         assert summ["min_mass"] == 0.95 and summ["require_mass"] == 0.0
+
+
+# --------------------------------------------------------------------------- #
+# main(): exit status + resume refusals (AUDIT-2), stub policy, no torch
+# --------------------------------------------------------------------------- #
+class _MainStub(RecorderStub):
+    """_Policy replacement for main(): constructor signature of _Policy,
+    save_pretrained writes a file, optional SIGTERM to self at a given step."""
+    sigterm_at: int | None = None
+    instances: list = []
+
+    class _M:
+        def save_pretrained(self, p):
+            from pathlib import Path as _P
+            _P(p, "adapter_model.safetensors").write_text("x")
+
+    def __init__(self, model_name, **kw):
+        super().__init__()
+        self.kw = kw
+        self.model = self._M()
+        _MainStub.instances.append(self)
+
+    def sft_step(self, rows, targets, lr, seed, epoch, step=None):
+        if step == self.sigterm_at:
+            import os
+            import signal
+            os.kill(os.getpid(), signal.SIGTERM)   # handler installed by main()
+        return super().sft_step(rows, targets, lr, seed, epoch, step)
+
+
+@pytest.fixture
+def main_stub(monkeypatch):
+    import signal
+    import agent_bullwhip.decision_train as dt
+    monkeypatch.setattr(dt, "_Policy", _MainStub)
+    monkeypatch.setattr(_MainStub, "sigterm_at", None)
+    monkeypatch.setattr(_MainStub, "instances", [])
+    old = signal.getsignal(signal.SIGTERM)
+    yield dt
+    signal.signal(signal.SIGTERM, old)
+
+
+def _main_argv(labels, out, steps=10, *extra):
+    return ["--labels", labels, "--steps", str(steps), "--batch", "4",
+            "--save-every", "3", "--seed", "1", "--out", str(out),
+            "--resume", *extra]
+
+
+class TestMainExitStatus:
+    def test_sigtermed_run_exits_75_then_resume_completes_0(self, tmp_path,
+                                                             main_stub):
+        """AUDIT-2 P1-1 (probe D1): a SIGTERM'd SFT must not exit 0, or the
+        sbatch runs round 2 + RLCD on the partial adapter."""
+        labels = write_labels(tmp_path / "l.jsonl", synth_rows(48))
+        out = tmp_path / "sft"
+        _MainStub.sigterm_at = 4
+        assert main_stub.main(_main_argv(labels, out)) == 75
+        st = json.loads((out / "state.json").read_text())
+        assert st["step"] == 4                 # stopped at the SIGTERM boundary
+        _MainStub.sigterm_at = None
+        assert main_stub.main(_main_argv(labels, out)) == 0
+        assert json.loads((out / "state.json").read_text())["step"] == 9
