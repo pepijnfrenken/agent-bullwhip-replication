@@ -179,6 +179,48 @@ def save_checkpoint(policy: DecisionPolicy, ckpt_path: Path, state_path: Path,
     return payload
 
 
+def pi_sft_key(row: dict) -> str:
+    """Stable identity of a label row across processes (not id())."""
+    return f"{row['episode']}:{row['week']}:{row['role']}"
+
+
+def prepare_pi_sft(policy, rows: list[dict], outdir: Path, *, labels_sha: str,
+                   batch: int, resuming: bool, log_path: Path
+                   ) -> dict[str, list[float]]:
+    """The RLCD KL anchor, frozen (AUDIT-2 P1-4). Fresh start: computed once
+    from the policy as loaded (= the SFT adapter, before any update) and
+    persisted to outdir/pi_sft.json with the labels sha. Resume: loaded from
+    that file — rebuilding it from the live (RLCD-trained) adapter would make
+    the anchor follow the policy, so a missing or mismatched file is fatal."""
+    path = outdir / "pi_sft.json"
+    if resuming:
+        if not path.exists():
+            raise SystemExit(f"RLCD resume: {path} missing — the frozen pi_sft "
+                             f"anchor cannot be rebuilt from the trained "
+                             f"adapter; refusing to resume")
+        saved = json.loads(path.read_text())
+        if saved.get("labels_sha") != labels_sha:
+            raise SystemExit(f"RLCD resume: {path} labels_sha "
+                             f"{str(saved.get('labels_sha'))[:12]} != "
+                             f"{labels_sha[:12]} — refusing to resume")
+        table = saved["pi"]
+        missing = [pi_sft_key(r) for r in rows if pi_sft_key(r) not in table]
+        if missing:
+            raise SystemExit(f"RLCD resume: {path} lacks {len(missing)} rows "
+                             f"(e.g. {missing[0]}) — refusing to resume")
+        source = "loaded"
+    else:
+        table = policy.compute_pi_sft(rows, batch)
+        _atomic_write_json(path, {"labels_sha": labels_sha, "n": len(table),
+                                  "pi": table})
+        source = "computed"
+    with log_path.open("a") as f:
+        f.write(json.dumps({"event": "pi_sft", "source": source,
+                            "n": len(table), "labels_sha": labels_sha},
+                           sort_keys=True) + "\n")
+    return table
+
+
 def load_resume_state(outdir: Path) -> tuple[int, dict | None]:
     path = outdir / "state.json"
     if not path.exists():
@@ -384,6 +426,12 @@ def main(argv: list[str] | None = None) -> int:
         opt = Path(adapter_dir) / "optimizer.pt"
         if opt.exists():
             policy.load_optimizer(opt, args.lr)
+    if args.phase == "rlcd" and args.beta_kl > 0:
+        resuming = args.resume and payload is not None
+        policy.set_pi_sft(prepare_pi_sft(policy, rows, outdir,
+                                         labels_sha=labels_sha,
+                                         batch=args.batch, resuming=resuming,
+                                         log_path=log_path))
     with log_path.open("a") as f:
         f.write(json.dumps({"event": "resume" if args.resume else "begin",
                             "phase": args.phase, "seed": seed,
@@ -461,7 +509,7 @@ class _Policy:
         self.seed = seed
         self.max_length = max_length
         self._permute_options = permute_options
-        self._pi_sft_cache: dict[int, list[float]] = {}
+        self._pi_sft: dict[str, list[float]] | None = None   # set_pi_sft()
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         if dtype is None:
             dtype = "float32" if self.device == "cpu" else "bfloat16"
@@ -621,17 +669,40 @@ class _Policy:
         return {k: v.to(self.device) for k, v in inputs.items()}
 
     # -- stage 2: RLCD ------------------------------------------------------ #
-    def _sft_ref_logprobs(self, rows: list[dict]) -> list[list[float]]:
-        """Frozen pi_sft per state (computed once from the SFT adapter)."""
-        missing = [i for i, r in enumerate(rows) if id(r) not in self._pi_sft_cache]
-        if missing:
-            prompts = [render_prompt(rows[i]["ctx"], self.tok) for i in missing]
+    def compute_pi_sft(self, rows: list[dict], batch: int
+                       ) -> dict[str, list[float]]:
+        """pi_sft for EVERY row, once, from the adapter as loaded (the SFT
+        anchor at a fresh RLCD start): eval mode (no dropout), no_grad,
+        chunked by `batch`. Keyed by pi_sft_key (AUDIT-2 P1-4)."""
+        table: dict[str, list[float]] = {}
+        self.model.eval()
+        try:
             with self._torch.no_grad():
-                logits = self._label_logits(self._tokenize(prompts))
-                probs = logits.softmax(-1).tolist()
-            for i, p in zip(missing, probs):
-                self._pi_sft_cache[id(rows[i])] = p
-        return [self._pi_sft_cache[id(r)] for r in rows]
+                for lo in range(0, len(rows), max(1, batch)):
+                    chunk = rows[lo:lo + max(1, batch)]
+                    prompts = [render_prompt(r["ctx"], self.tok) for r in chunk]
+                    probs = self._label_logits(self._tokenize(prompts)
+                                               ).softmax(-1).tolist()
+                    for r, p in zip(chunk, probs):
+                        k = pi_sft_key(r)
+                        if k in table:
+                            raise ValueError(f"duplicate label row {k} — "
+                                             f"pi_sft key must be unique")
+                        table[k] = p
+        finally:
+            self.model.train()
+        return table
+
+    def set_pi_sft(self, table: dict[str, list[float]]) -> None:
+        self._pi_sft = table
+
+    def _sft_ref_logprobs(self, rows: list[dict]) -> list[list[float]]:
+        """Frozen pi_sft per state: a lookup in the table built once at RLCD
+        start (or loaded from pi_sft.json on resume) — never the live policy."""
+        if self._pi_sft is None:
+            raise RuntimeError("pi_sft reference not set — call set_pi_sft() "
+                               "(main() does this before RLCD step 0)")
+        return [self._pi_sft[pi_sft_key(r)] for r in rows]
 
     def rlcd_step(self, rows: list[dict], j_vals: list[list[float]],
                   lr: float, beta_kl: float, sample_k: int, seed: int,
@@ -639,8 +710,6 @@ class _Policy:
         import torch
         if self.phase != "rlcd":
             raise ValueError("rlcd_step called in sft phase")
-        if not self._pi_sft_cache:
-            self._sft_ref_logprobs(rows)          # warm the SFT reference
         prompts = [render_prompt(r["ctx"], self.tok) for r in rows]
         logits = self._label_logits(self._tokenize(prompts))
         log_probs = logits.log_softmax(-1)

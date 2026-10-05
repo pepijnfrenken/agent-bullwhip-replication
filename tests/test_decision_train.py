@@ -295,11 +295,10 @@ class TestSftTorch:
             j = [100.0 + (20 - i) * 5] * 21
             j[0] = 30.0 + i * 10          # action A (order 0) is cheapest
             r["J"] = j
-        # run rlcd on a bare SFT-initialized policy (pi_sft warm from itself).
+        # run rlcd on a bare SFT-initialized policy (beta_kl=0: no anchor).
         pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
                       max_length=1024, seed=5, permute_options=False)
         pol.phase = "rlcd"
-        pol._pi_sft_cache = {}
         import torch
         with torch.no_grad():
             prompts = [render_prompt(r["ctx"], pol.tok) for r in rows]
@@ -326,11 +325,21 @@ class TestSftTorch:
         pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
                       max_length=1024, seed=5, permute_options=False)
         pol.phase = "rlcd"
-        pol._pi_sft_cache = {}
+        ref = pol.compute_pi_sft(rows, batch=1)
+        # eval mode (no dropout): batching/repeat cannot change the anchor
+        again = pol.compute_pi_sft(rows, batch=2)
+        assert again.keys() == ref.keys()
+        assert all(again[k] == pytest.approx(ref[k], abs=1e-5) for k in ref)
+        assert pol.model.training                # train mode restored
+        pol.set_pi_sft(ref)
         out = pol.rlcd_step(rows, [r["J"] for r in rows], lr=1e-3,
                             beta_kl=0.01, sample_k=8, seed=5, step=0)
         assert math.isfinite(out.loss) and math.isfinite(out.loss_kl)
         assert out.grad_norm >= 0
+        # the anchor is frozen: the update moved the policy, not pi_sft
+        from agent_bullwhip.decision_train import pi_sft_key
+        assert pol._sft_ref_logprobs(rows) == [ref[pi_sft_key(r)] for r in rows]
+        assert pol.compute_pi_sft(rows, batch=2) != ref
 
 
 # --------------------------------------------------------------------------- #
@@ -504,6 +513,26 @@ class _MainStub(RecorderStub):
             os.kill(os.getpid(), signal.SIGTERM)   # handler installed by main()
         return super().sft_step(rows, targets, lr, seed, epoch, step)
 
+    computed = 0
+
+    def compute_pi_sft(self, rows, batch):
+        from agent_bullwhip.decision_train import pi_sft_key
+        _MainStub.computed += 1
+        return {pi_sft_key(r): [1 / 21] * 21 for r in rows}
+
+    def set_pi_sft(self, table):
+        self.pi = table
+
+    def rlcd_step(self, rows, j_vals, lr, beta_kl, sample_k, seed, step):
+        from agent_bullwhip.decision_train import pi_sft_key
+        assert all(pi_sft_key(r) in self.pi for r in rows)
+        if step == self.sigterm_at:
+            import os
+            import signal
+            os.kill(os.getpid(), signal.SIGTERM)
+        return super().rlcd_step(rows, j_vals, lr, beta_kl, sample_k, seed,
+                                 step)
+
 
 @pytest.fixture
 def main_stub(monkeypatch):
@@ -512,6 +541,7 @@ def main_stub(monkeypatch):
     monkeypatch.setattr(dt, "_Policy", _MainStub)
     monkeypatch.setattr(_MainStub, "sigterm_at", None)
     monkeypatch.setattr(_MainStub, "instances", [])
+    monkeypatch.setattr(_MainStub, "computed", 0)
     old = signal.getsignal(signal.SIGTERM)
     yield dt
     signal.signal(signal.SIGTERM, old)
@@ -537,3 +567,45 @@ class TestMainExitStatus:
         _MainStub.sigterm_at = None
         assert main_stub.main(_main_argv(labels, out)) == 0
         assert json.loads((out / "state.json").read_text())["step"] == 9
+
+
+class TestPiSftAnchor:
+    """AUDIT-2 P1-4: pi_sft computed ONCE at RLCD start, persisted with the
+    labels sha, reloaded (never rebuilt from the live adapter) on resume."""
+
+    def _rlcd(self, tmp_path, main_stub, **kw):
+        labels = write_labels(tmp_path / "l.jsonl", synth_rows(48))
+        return labels, _main_argv(labels, tmp_path / "rlcd", 10, "--phase",
+                                  "rlcd", "--base-adapter",
+                                  str(tmp_path / "sft-ck"))
+
+    def test_persisted_once_and_reloaded_on_resume(self, tmp_path, main_stub):
+        labels, argv = self._rlcd(tmp_path, main_stub)
+        _, sha = load_labels(labels)
+        _MainStub.sigterm_at = 3
+        assert main_stub.main(argv) == 75
+        saved = json.loads((tmp_path / "rlcd" / "pi_sft.json").read_text())
+        assert saved["labels_sha"] == sha and saved["n"] == 48 == len(saved["pi"])
+        assert _MainStub.computed == 1
+        _MainStub.sigterm_at = None
+        assert main_stub.main(argv) == 0
+        assert _MainStub.computed == 1          # resume LOADED, did not rebuild
+        assert _MainStub.instances[-1].pi == saved["pi"]
+
+    @pytest.mark.parametrize("damage", ["missing", "sha"])
+    def test_resume_refuses_without_matching_anchor(self, tmp_path, main_stub,
+                                                    damage):
+        labels, argv = self._rlcd(tmp_path, main_stub)
+        _MainStub.sigterm_at = 3
+        assert main_stub.main(argv) == 75
+        path = tmp_path / "rlcd" / "pi_sft.json"
+        if damage == "missing":
+            path.unlink()
+        else:
+            saved = json.loads(path.read_text())
+            saved["labels_sha"] = "0" * 64
+            path.write_text(json.dumps(saved))
+        _MainStub.sigterm_at = None
+        with pytest.raises(SystemExit, match="pi_sft|refusing to resume"):
+            main_stub.main(argv)
+        assert _MainStub.computed == 1
