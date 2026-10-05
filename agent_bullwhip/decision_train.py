@@ -273,7 +273,8 @@ def run_loop(policy: DecisionPolicy, args: argparse.Namespace, log_path: Path,
     rows, _ = load_labels(args.labels)
     val_idx = train_val_split(rows, args.val_frac)
     val_rows = [rows[i] for i in val_idx]
-    train_rows = [r for i, r in enumerate(rows) if i not in set(val_idx)]
+    vset = set(val_idx)        # hoisted: per-row set() cost 11.8 s at 95k rows
+    train_rows = [r for i, r in enumerate(rows) if i not in vset]
     n_batches = (len(train_rows) + args.batch - 1) // args.batch
     seed = args.seed if args.seed is not None else 12345
     t0 = time.time()
@@ -405,8 +406,9 @@ def main(argv: list[str] | None = None) -> int:
                 f"refusing to resume (AUDIT-2 P2-4)")
         if payload is not None and payload.get("labels_sha") != labels_sha:
             raise SystemExit(
-                f"labels hash changed since checkpoint ({payload.get('labels_sha')[:12]} "
-                f"vs {labels_sha[:12]}) — refusing to resume on different data")
+                f"labels hash changed since checkpoint "
+                f"({str(payload.get('labels_sha'))[:12]} vs {labels_sha[:12]}) "
+                f"— refusing to resume on different data")
         seed = payload.get("seed") if payload is not None else \
             (args.seed if args.seed is not None else 12345)
         if payload is not None and payload.get("phase") != args.phase:
@@ -460,8 +462,8 @@ def main(argv: list[str] | None = None) -> int:
 def _enable_grad_checkpointing(model) -> None:
     """Recompute activations instead of retaining all layers' worth.
 
-    Batch 32 x ~700-token prompts keeps ~21 GiB of activations alive on a
-    0.6B model: the L4 target (22 GiB) OOMs in the first SFT step without
+    Batch 32 x 408-440-token prompts (measured) kept ~21.5 GiB allocated on
+    a 0.6B model: the L4 target (22 GiB) OOMs in the first SFT step without
     this. `use_reentrant=False` is required so the frozen base still feeds
     gradients to the first checkpointed block; `enable_input_require_grads`
     makes the embedding outputs require grad for the same reason.
@@ -715,6 +717,10 @@ class _Policy:
         import torch
         if self.phase != "rlcd":
             raise ValueError("rlcd_step called in sft phase")
+        # per-step torch seeding (as sft_step): LoRA dropout masks depend only
+        # on (seed, step), so a resumed RLCD reproduces every forward exactly
+        torch.manual_seed(int(hashlib.sha256(
+            f"{seed}:rlcd-dropout:{step}".encode()).hexdigest()[:8], 16))
         prompts = [render_prompt(r["ctx"], self.tok) for r in rows]
         logits = self._label_logits(self._tokenize(prompts))
         log_probs = logits.log_softmax(-1)

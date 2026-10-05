@@ -334,6 +334,25 @@ class TestSftTorch:
         after = logits.softmax(-1)[:, 0].tolist()
         assert all(a > b for a, b in zip(after, before)), (before, after)
 
+    def test_rlcd_step_dropout_is_resume_exact(self, torch_ok):
+        """AUDIT-2 P3-7: rlcd_step reseeds torch per (seed, step) like
+        sft_step, so the LoRA dropout masks (and the step) do not depend on
+        whatever consumed the global RNG before — a resume reproduces it."""
+        import torch
+        from agent_bullwhip.decision_train import _Policy
+        rows = synth_rows(4)
+        pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
+                      max_length=1024, seed=5, permute_options=False)
+        pol.phase = "rlcd"
+        losses = []
+        for noise in (1, 2):
+            torch.manual_seed(noise)            # unrelated prior RNG use
+            # lr=0: weights unchanged, so only the dropout draw can differ
+            losses.append(pol.rlcd_step(rows, [r["J"] for r in rows], lr=0.0,
+                                        beta_kl=0.0, sample_k=0, seed=5,
+                                        step=3).loss)
+        assert losses[0] == losses[1]
+
     def test_rlcd_sampled_arm_loo_runs_and_is_finite(self, torch_ok, tmp_path):
         """The K-sampling LOO arm (public recipe) must run and stay finite on
         the same data. Its v1 (self-included baseline) would shrink the
@@ -594,6 +613,16 @@ class TestMainExitStatus:
         _MainStub.sigterm_at = None
         assert main_stub.main(_main_argv(labels, out)) == 0
         assert json.loads((out / "state.json").read_text())["step"] == 9
+
+    def test_labels_changed_message_without_old_sha(self, tmp_path, main_stub):
+        """AUDIT-2 P3-8: a state with no labels_sha gets the intended refusal,
+        not a TypeError from slicing None."""
+        labels = write_labels(tmp_path / "l.jsonl", synth_rows(48))
+        out = tmp_path / "sft"
+        out.mkdir()
+        (out / "state.json").write_text(json.dumps({"step": 3, "phase": "sft"}))
+        with pytest.raises(SystemExit, match="labels hash changed.*None"):
+            main_stub.main(_main_argv(labels, out))
 
     def test_aborted_state_is_not_resumed(self, tmp_path, main_stub):
         """AUDIT-2 P2-4: a non-finite abort (exit 3, state.aborted) must not
