@@ -16,12 +16,15 @@ Wave-6 evidence (all on disk, hub-verified):
   (`reward-unparsed-findings.md`, 866f336), and the parse rate never improves over 300 steps.
 - The a0_base eval aggregate is null by the §4 gates, tail-carried by digit-run rogues
   (`eval-a0-report.md`); the robust read (median, log-space) is positive but far from floors.
-- Hub probes (2026-10-05): **stock Qwen3-0.6B, asked as a closed choice over 21 order options
-  (single-token letters A..U, one forward pass, read the label logits), produces coherent order
-  distributions zero-shot on real game states** (retailer w6 → order 14, p=0.29; factory w12 →
-  order 14, p=0.58; ≥99.8% of next-token mass on option letters). The same checkpoint rambles in
-  free-form. A generic 79M System-1 model (Byrne-Jev) on our domain is flat noise zero-shot →
-  domain training is the missing ingredient, and it is ours to supply (we own the simulator).
+- Hub probes (2026-10-05), **corrected by AUDIT-1**: stock Qwen3-0.6B follows the option FORMAT
+  (≥99.8% of next-token mass on option letters, one forward pass, no parse failures) but the
+  zero-shot argmax is a **letter prior, not a state-driven judgment** — permuting the option→value
+  map moves the chosen VALUE (ascending → 14; descending → 40; rotations/shuffles → 8..34), state
+  counterfactuals (flooded/starved) barely move it, and an EMPTY state still yields `L`=22 at p=0.50
+  (`probe_bias.py`). So: the interface fixes format/parse; **value-sensitivity is what training must
+  put in**. The C1 control (untrained readout) is expected to be near-constant; the new
+  permutation-invariance gate (AUDIT-1 risk 1) measures what training bought. A generic 79M
+  System-1 model (Byrne-Jev) on our domain is flat noise zero-shot → domain training is ours to supply.
 
 **Headline question:** can a decision-native policy (no generation; the answer is a probability
 distribution over the allowed orders) trained primarily from **our own simulator's outcome labels**
@@ -187,8 +190,45 @@ generated on-cluster).
   `tue.cpu3.q`; train + evals on `tue.gpu.q -C l4`. The "pull" ping comes from the operator once
   build + audits are green, with exact commands.
 
+## AUDIT-1 amendments (2026-10-05) — required before the first cluster job
+
+The adversarial design audit `WAVE7-AUDIT-1.md` (complete; probes in `/tmp/w7audit/`) requires the
+following changes. The build treats the audit as its fix-list and notes each fix in its commit
+messages; this section amends §1–§7 by reference (the audit's checklist is the pre-flight gate).
+
+1. **§0 premise corrected** (letter prior, not coherent readout; edit above). NEW GATE: after
+   training, the argmax *value* is invariant under ≥3 option permutations on ≥90% of validation
+   states; permuted-option augmentation in training; shuffle control arm retained.
+2. **D2 interface:** renderer derives from `observations()` only (golden prompt-SHA at pinned
+   revision `c1899de289a04d12100db370d81485cdf75e47ca`); `dtype=` forbidden on 4.55.4 →
+   `torch_dtype` + TypeError fallback; left-padding + `logits_to_keep=1`; batch-vs-single equality
+   test; mass ≥0.99 stays fatal.
+3. **D3 labels:** E[J] over M≥16 common-random-number futures (not single-draw; 32% argmin
+   disagreement); continuation forecast-replayed from week 0 (stateful `_forecast`; 47%); fix
+   (θ,λ) once tuned out-of-sample and record the values here when frozen (current walkforward
+   machinery self-tunes on the same path = leakage); grid edge-rate gate (widen or state-relative;
+   42% of argmins at the edge); mask t ≥ H−lead flat states; τ chosen by closed-loop cost on
+   curriculum validation, rule pre-registered.
+4. **D4 RLCD:** advantage A = −(J−b)/std (J is a cost — spec draft had the sign wrong); baseline
+   excludes self; score all 21 actions exactly (exact expectation gradient, zero variance);
+   RLCD states from current-policy rollouts; explicit epochs/lr/KL-anchor to SFT.
+5. **D5 eval:** step arm is n=1 (unseeded demand + deterministic argmax) → report as a single
+   labeled cost; ADD a sampled-readout arm (seeded 1000+i) as the counterpart of wave-6's T=0.7;
+   gates (C1/C3/C4) move to noisy n=30; regenerate `walkforward_paths.json` for 30 passes;
+   C2 thresholds written: 12.8k = strong (4× wf_tuned), 6.4k = headline (2×).
+6. **Reuse seams to fix:** eval-analyze adaptations (failures dict, tie handling — false p≈1.9e-9
+   on identical policies, arm naming); paired_analysis mtime pattern; verify_pull EXPECT;
+   save_checkpoint args + torch RNG + data cursor/epoch; `config.sh --check` CPU rule →
+   `cpu-*.sbatch`; `HF_HUB_OFFLINE=1` in job env; stage.sh master fast-forward + EXPECTED_COMMIT +
+   weight-revision pin.
+7. **Mandatory relabel round** on learned-policy states before reading C1–C3 (closed-loop shift
+   is 8's label flaw, no longer merely monitored).
+
 ## Changes log
 
 - 2026-10-05: draft written (post-wave-6 a0 eval + reward findings; hub readout probes; Clef/RLCD
   references reviewed).
 - 2026-10-05: approved by Pino; decisions recorded; status → approved.
+- 2026-10-05: AUDIT-1 amendments recorded (above) after the adversarial design audit falsified the
+  zero-shot premise (letter prior) and the step-n=30 assumption, and pinned the first-cluster-job
+  crash causes. Spec §0 corrected inline; all other changes tracked in the amendments section.
