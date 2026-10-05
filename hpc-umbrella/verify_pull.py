@@ -15,12 +15,13 @@ import pathlib
 import sys
 
 EXPECT = {
-    # Wave 7 (decision-native): SFT(+RLCD) per training seed, batches logged in
-    # train_log.jsonl. Step totals must match the gpu-wave7-train.sbatch knobs
-    # (W7_SFT_STEPS + W7_RLCD_STEPS); adjust here if you override them.
-    "wave7_sft_seed0": 159,
-    "wave7_sft_seed1": 159,
-    "wave7_sft_seed2": 159,
+    # Wave 7 (decision-native): one SFT dir and one RLCD dir per training seed
+    # (RLCD writes its own wave7_rlcd_seed*/, so the SFT dir ends at
+    # W7_SFT_STEPS). Value = total optimizer steps (last logged step = value-1);
+    # must match the gpu-wave7-train.sbatch knobs — adjust if you override them.
+    "wave7_sft_seed0": 120,
+    "wave7_sft_seed1": 120,
+    "wave7_sft_seed2": 120,
     "wave7_rlcd_seed0": 39,
     "wave7_rlcd_seed1": 39,
     "wave7_rlcd_seed2": 39,
