@@ -640,3 +640,7 @@ class _Policy:
         finally:
             self.model.train()
 
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

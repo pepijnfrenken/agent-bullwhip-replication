@@ -116,7 +116,9 @@ if [ "${RC}" -ne 0 ]; then
 fi
 
 # final SFT adapter = highest checkpoint dir (resume-safe lookup)
-SFT_FINAL="$(ls -d "${SFT_OUT}"/checkpoint-* 2>/dev/null | sort -t- -k2 -n | tail -1)"
+# NB: keep the `|| true` — under `set -euo pipefail` a failing `ls` (no matches,
+# exit 2) would otherwise kill the script silently, before the FATAL below.
+SFT_FINAL="$(ls -d "${SFT_OUT}"/checkpoint-* 2>/dev/null | sort -t- -k2 -n | tail -1 || true)"
 if [ -z "${SFT_FINAL}" ]; then
   echo "FATAL: no sft checkpoint dirs under ${SFT_OUT}" >&2
   exit 1
