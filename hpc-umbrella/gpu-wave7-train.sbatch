@@ -85,17 +85,27 @@ fi
 
 # Record which label set is being trained on (canonical hub hash:
 # 45d9f40d6ffc4ce93b0caaf7e9233c1e22e6b726efc980d92ffd8dc13e41f51b).
-# Warn-only by default; set W7_EXPECT_LABEL_HASH=<hash> to make a mismatch fatal.
+# The manifest `hash` covers only the FIRST 2000 ROWS (--hash-rows 2000, ~2% of
+# the set); the sha256 of the whole file below equals the trainer's
+# `labels_sha` in train_log.jsonl (AUDIT-2 P2-3). Warn-only by default; set
+# W7_EXPECT_LABEL_HASH=<first-2000-rows hash> and/or
+# W7_EXPECT_LABEL_SHA256=<full-file sha256> to make a mismatch fatal.
 LABEL_MANIFEST="${RESULTS_DIR}/wave7_labels/labels.manifest.json"
 if [ -f "${LABEL_MANIFEST}" ]; then
   LABEL_HASH="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('hash','? '))" "${LABEL_MANIFEST}")"
-  echo "labels: ${LABELS_JSONL} hash=${LABEL_HASH}"
+  echo "labels: ${LABELS_JSONL} hash(first 2000 rows)=${LABEL_HASH}"
   if [ -n "${W7_EXPECT_LABEL_HASH:-}" ] && [ "${LABEL_HASH}" != "${W7_EXPECT_LABEL_HASH}" ]; then
-    echo "FATAL: label hash ${LABEL_HASH} != expected ${W7_EXPECT_LABEL_HASH}" >&2
+    echo "FATAL: label hash (first 2000 rows) ${LABEL_HASH} != expected ${W7_EXPECT_LABEL_HASH}" >&2
     exit 1
   fi
 else
-  echo "WARN: no label manifest at ${LABEL_MANIFEST} — cannot report the label hash" >&2
+  echo "WARN: no label manifest at ${LABEL_MANIFEST} — cannot report the 2000-row label hash" >&2
+fi
+LABEL_SHA256="$(sha256sum "${LABELS_JSONL}" | cut -d' ' -f1)"
+echo "labels: ${LABELS_JSONL} sha256(full file)=${LABEL_SHA256}"
+if [ -n "${W7_EXPECT_LABEL_SHA256:-}" ] && [ "${LABEL_SHA256}" != "${W7_EXPECT_LABEL_SHA256}" ]; then
+  echo "FATAL: label sha256 ${LABEL_SHA256} != expected ${W7_EXPECT_LABEL_SHA256}" >&2
+  exit 1
 fi
 
 echo "=== wave7-train seed=${SEED} | sft_steps=${W7_SFT_STEPS} rlcd_steps=${W7_RLCD_STEPS} lr=${W7_LR} at $(date -Is) ==="

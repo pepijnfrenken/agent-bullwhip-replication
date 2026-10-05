@@ -533,9 +533,13 @@ class _MainStub(RecorderStub):
             import os
             import signal
             os.kill(os.getpid(), signal.SIGTERM)   # handler installed by main()
-        return super().sft_step(rows, targets, lr, seed, epoch, step)
+        out = super().sft_step(rows, targets, lr, seed, epoch, step)
+        if step == self.nonfinite_at:
+            out.n_nonfinite = 1
+        return out
 
     computed = 0
+    nonfinite_at: int | None = None
 
     def compute_pi_sft(self, rows, batch):
         from agent_bullwhip.decision_train import pi_sft_key
@@ -564,6 +568,7 @@ def main_stub(monkeypatch):
     monkeypatch.setattr(_MainStub, "sigterm_at", None)
     monkeypatch.setattr(_MainStub, "instances", [])
     monkeypatch.setattr(_MainStub, "computed", 0)
+    monkeypatch.setattr(_MainStub, "nonfinite_at", None)
     old = signal.getsignal(signal.SIGTERM)
     yield dt
     signal.signal(signal.SIGTERM, old)
@@ -589,6 +594,22 @@ class TestMainExitStatus:
         _MainStub.sigterm_at = None
         assert main_stub.main(_main_argv(labels, out)) == 0
         assert json.loads((out / "state.json").read_text())["step"] == 9
+
+    def test_aborted_state_is_not_resumed(self, tmp_path, main_stub):
+        """AUDIT-2 P2-4: a non-finite abort (exit 3, state.aborted) must not
+        be silently continued from the pre-NaN weights on resubmit."""
+        labels = write_labels(tmp_path / "l.jsonl", synth_rows(48))
+        out = tmp_path / "sft"
+        _MainStub.nonfinite_at = 2
+        with pytest.raises(SystemExit) as e:
+            main_stub.main(_main_argv(labels, out))
+        assert e.value.code == 3
+        assert json.loads((out / "state.json").read_text())["aborted"] == "nonfinite"
+        _MainStub.nonfinite_at = None
+        n_policies = len(_MainStub.instances)
+        with pytest.raises(SystemExit, match="aborted.*refusing to resume"):
+            main_stub.main(_main_argv(labels, out))
+        assert len(_MainStub.instances) == n_policies   # refused before loading
 
 
 class TestPiSftAnchor:

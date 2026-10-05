@@ -214,3 +214,19 @@ def test_sigtermed_sft_exits_nonzero_before_round2(harness):
     assert kinds == ["train-sft"], kinds
     st = json.loads((log.parent / "state.json").read_text())
     assert 3 <= st["step"] < 199
+
+
+def test_full_file_label_sha256_gate(harness):
+    """AUDIT-2 P2-3: the full-file sha256 (== trainer labels_sha) is printed
+    and gates the run when W7_EXPECT_LABEL_SHA256 is set."""
+    import hashlib
+    labels = harness.repo / "results" / "wave7_labels" / "labels.jsonl"
+    sha = hashlib.sha256(labels.read_bytes()).hexdigest()
+    bad = harness.run(W7_EXPECT_LABEL_SHA256="0" * 64)
+    assert bad.returncode != 0 and "FATAL: label sha256" in bad.stderr, _info(bad)
+    assert harness.calls() == []                  # stopped before SFT
+    ok = harness.run(W7_EXPECT_LABEL_SHA256=sha)
+    assert ok.returncode == 0, _info(ok)
+    assert f"sha256(full file)={sha}" in ok.stdout
+    log = harness.repo / "results" / "wave7_sft_seed0" / "train_log.jsonl"
+    assert f'"labels_sha": "{sha}"' in log.read_text()

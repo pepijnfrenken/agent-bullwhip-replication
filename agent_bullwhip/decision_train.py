@@ -398,6 +398,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.resume:
         start_step, payload = load_resume_state(outdir)
+        if payload is not None and payload.get("aborted"):
+            raise SystemExit(
+                f"run aborted ({payload['aborted']} at step {payload.get('step')}, "
+                f"{payload.get('checkpoint_dir')}) — inspect before resuming; "
+                f"refusing to resume (AUDIT-2 P2-4)")
         if payload is not None and payload.get("labels_sha") != labels_sha:
             raise SystemExit(
                 f"labels hash changed since checkpoint ({payload.get('labels_sha')[:12]} "
