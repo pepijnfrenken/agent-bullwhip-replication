@@ -14,9 +14,10 @@ from agent_bullwhip.engine import ROLES, GameStepper, SimConfig, run_game
 from agent_bullwhip.agents import OrderUpToAgent
 from agent_bullwhip.grpo_env import sample_curriculum_demand
 from agent_bullwhip.decision_labeler import (
-    EVAL_SEED_MAX, EVAL_SEED_MIN, BehaviorConfig, branch_cost,
+    EVAL_SEED_MAX, EVAL_SEED_MIN, BehaviorConfig, _seeded_rng, branch_cost,
     draw_future_demand, enumerate_states, make_continuation,
-    sample_curriculum_demand_ex, run_labeler, score_candidates,
+    sample_curriculum_demand_ex, run_labeler, run_labeler_from_states,
+    score_candidates,
     softmax_minus_j, warm_forecast,
 )
 from agent_bullwhip.decision_readout import ORDER_GRID
@@ -276,3 +277,106 @@ class TestPipeline:
             assert r["ctx"]["role"] == r["role"]
             if r["role"] != "retailer":
                 assert r["ctx"]["incoming_now"] is None
+
+# --------------------------------------------------------------------------- #
+# Round-2 relabeling: --states-jsonl (DAgger close-the-loop, audit fix 8)
+# --------------------------------------------------------------------------- #
+class TestStatesRelabel:
+    def _collect_dump(self, seed: int = 31, n_eps: int = 1, horizon: int = 8):
+        """Fabricate a decision_eval --collect-states dump from a replay."""
+        from agent_bullwhip.decision_labeler import (
+            _replay_to_week, BehaviorConfig, sample_curriculum_demand_ex)
+        from agent_bullwhip.engine import ROLES as R
+        import random as _r
+        rows = []
+        for ep in range(n_eps):
+            cur = "poisson" if ep % 2 == 0 else "truncnorm"
+            rng = _seeded_rng(f"{seed}:ep:{ep}")
+            params, demand = sample_curriculum_demand_ex(rng, cur, horizon)
+            from agent_bullwhip.engine import GameStepper
+            step = GameStepper(demand, SimConfig(horizon=horizon))
+            pol = BehaviorConfig(1.0, 0.0)
+            il_hist = {r: [] for r in R}
+            w = 0
+            while not step.done() and w < horizon - 2:
+                obs = step.observations()
+                for r in R:
+                    il_hist[r].append(obs[r]["incoming_last"])
+                for r in R:
+                    rows.append({
+                        "episode": ep, "week": w, "role": r,
+                        "curriculum": cur, "params": params, "ctx": obs[r],
+                        "il_hist": {r2: list(il_hist[r2]) for r2 in R},
+                        "state": {
+                            "t": w,
+                            "tiers": {r2: [step.state[r2].oh, step.state[r2].b,
+                                           step.state[r2].o] for r2 in R},
+                            "inbound": {r2: list(step.inbound[r2]) for r2 in R},
+                            "prev_incoming": dict(step.prev_incoming),
+                            "order_history": {r2: list(step.order_history[r2])
+                                              for r2 in R},
+                        },
+                        "order": 8,
+                    })
+                step.advance({r: 8 for r in R})
+                w += 1
+        return rows
+
+    def test_stepper_reconstruction_matches_live_branch(self):
+        """A stepper rebuilt from a collected state must branch identically to
+        the live engine at that week (same candidate, same future -> same J)."""
+        from agent_bullwhip.decision_labeler import (
+            _replay_to_week, BehaviorConfig, branch_cost, make_continuation,
+            stepper_from_state, warm_forecast)
+        from agent_bullwhip.decision_readout import ORDER_GRID as G
+        from agent_bullwhip.engine import ROLES as R
+
+        behavior = BehaviorConfig(0.75, 0.25)
+        step, il_hist, params = _replay_to_week(7, 0, 3, "poisson", 8, behavior)
+        st = {
+            "t": 3,
+            "tiers": {r: [step.state[r].oh, step.state[r].b, step.state[r].o]
+                      for r in R},
+            "inbound": {r: list(step.inbound[r]) for r in R},
+            "prev_incoming": dict(step.prev_incoming),
+            "order_history": {r: list(step.order_history[r]) for r in R},
+        }
+        rebuilt = stepper_from_state(st, horizon=8)
+        cont = make_continuation(3.5, 0.2, il_hist, 3)
+        cand_warm = warm_forecast(3.5, 0.2, il_hist["retailer"][:4])
+        future = [8, 8, 8, 8, 8]
+        for cand in (0, 20, 40):
+            j_live = branch_cost(step, 3, "retailer", cand, cont, future,
+                                 candidate_warm=cand_warm)
+            j_rebuilt = branch_cost(rebuilt, 3, "retailer", cand, cont, future,
+                                    candidate_warm=cand_warm)
+            assert j_live == pytest.approx(j_rebuilt, abs=1e-9)
+
+    def test_run_labeler_from_states_deterministic(self, tmp_path):
+        rows = self._collect_dump()
+        src = tmp_path / "states.jsonl"
+        with open(src, "w") as f:
+            for r in rows:
+                f.write(json.dumps(r, sort_keys=True) + "\n")
+        m1 = run_labeler_from_states(src, seed=6001, horizon=8, m_futures=4,
+                                     out_prefix=str(tmp_path / "a"))
+        m2 = run_labeler_from_states(src, seed=6001, horizon=8, m_futures=4,
+                                     out_prefix=str(tmp_path / "b"))
+        assert m1["hash"] == m2["hash"]
+        assert m1["n_collected"] == len(rows)
+        # late weeks (t >= H-2 = 6,7) excluded by construction of _collect_dump
+        assert m1["n_states"] == len(rows)
+        assert (tmp_path / "a.jsonl").read_bytes() == \
+            (tmp_path / "b.jsonl").read_bytes()
+        for r in m1["rows"]:
+            assert set(r) >= {"episode", "week", "role", "J", "p", "flat",
+                              "argmin_order"}
+
+    def test_states_relabel_eval_seed_guard(self, tmp_path):
+        rows = self._collect_dump()
+        src = tmp_path / "s.jsonl"
+        with open(src, "w") as f:
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
+        with pytest.raises(ValueError):
+            run_labeler_from_states(src, seed=1005, horizon=8, m_futures=2)

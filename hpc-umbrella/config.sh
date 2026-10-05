@@ -45,6 +45,11 @@ VENV_DIR="${BULLWHIP_ROOT}/venv"
 BBOX_TMP="${BULLWHIP_ROOT}/tmp"
 REPO_URL="git@github.com:pepijnfrenken/agent-bullwhip-replication.git"   # private repo → SSH (login-node key is authorized)
 MODEL_ID="Qwen/Qwen3-0.6B"
+# AUDIT-1 3a P2: pin the hub snapshot the wave-7 readout numbers were verified
+# on (tokenizer/template bytes come from the snapshot). stage.sh downloads this
+# revision; readout/train pass it to from_pretrained and the prompt-hash
+# fixture (b96fb847...) asserts the same template bytes.
+MODEL_REVISION="c1899de289a04d12100db370d81485cdf75e47ca"
 CAMPAIGN_TSV="${KIT_DIR}/campaign.tsv"
 
 # F6: pin the exact commit staging must serve. Empty (default) = stage.sh logs
@@ -186,6 +191,11 @@ bw_load_env() {
   fi
   export HF_HOME PIP_CACHE_DIR TORCHINDUCTOR_CACHE_DIR
   export TOKENIZERS_PARALLELISM=false
+  # compute nodes have no egress (OPERATOR.md): never let transformers/hf hit
+  # the network — any missing-cache error surfaces loudly instead of a silent
+  # download stall (AUDIT-1 §6 P3)
+  export HF_HUB_OFFLINE="${HF_HUB_OFFLINE:-1}"
+  export TRANSFORMERS_OFFLINE="${TRANSFORMERS_OFFLINE:-1}" 
   # compile-path hardening (D2): belt to the code's braces, so even a stale
   # checkout or a helper process inherits the disabled compile path.
   export TORCHDYNAMO_DISABLE="${TORCHDYNAMO_DISABLE:-1}"
@@ -300,7 +310,7 @@ bw_check() {
     [ -e "$f" ] || continue
     hdr="$(grep -E '^#SBATCH --partition=' "$f" | head -1 | cut -d= -f2 | tr -d ' \r')"
     case "$(basename "$f")" in
-      cpu-harness.sbatch) [ "$hdr" = "$CPU_PARTITION" ] \
+      cpu-*.sbatch) [ "$hdr" = "$CPU_PARTITION" ] \
         && ok "header matches pins: $(basename "$f") (${hdr})" \
         || bad "header/pin mismatch in $(basename "$f"): --partition=${hdr} vs CPU_PARTITION=${CPU_PARTITION}" ;;
       *) [ "$hdr" = "$GPU_PARTITION" ] \

@@ -217,3 +217,58 @@ on Umbrella for €0, or must the 4B/Snellius escalation happen first?** The ans
 `bench_<job>.json` (per-step wall-clock, µs per `generate()`, batched-vs-sequential speedup,
 tokens/s, peak VRAM) plus the pilot's `train_log.jsonl`. Nothing else in this kit is allowed to be
 the reason for that decision.
+
+## Wave 7 — decision-native policy (labeler on CPU, SFT+RLCD on GPU)
+
+Wave 7 is a new lane (see `WAVE7_SPEC.md`, approved 2026-10-05; binding audit in
+`WAVE7-AUDIT-1.md`). It does not touch the wave-6 machinery: same kit roots
+(config.sh pins, `SLURM_SUBMIT_DIR` block, TERM forwarding, `EXPECTED_COMMIT`
+gate), two new sbatch files. Sequence (with Pino):
+
+1. **Alpha gate — config.sh --check on the login node** (the CPU-partition rule
+   now covers `cpu-*.sbatch`):
+   `bash kit/config.sh --check`
+2. **Labels on CPU** (`tue.cpu3.q`, no GPU, ~minutes):
+   `cd /scratch-shared/$USER/bullwhip/kit && sbatch cpu-wave7-label.sbatch`
+   → `results/wave7_labels/labels.{jsonl,npz,manifest.json}`. The job prints the
+   manifest hash; **compare it with a hub run of the same knobs** (command in
+   the sbatch header): byte-identical labels are the C4 determinism proof.
+   Guard rails built in: labeler seed 6000 (eval band 1000–1029 rejected by the
+   code), CRN E[J] over M=16 futures, fixed continuation floor (3.5, 0.2),
+   late-week states (t ≥ 34) excluded, edge-argmin/flat rates reported.
+3. **Train + round-2 relabel on GPU** (3-seed array on `tue.gpu.q -C l4`, ~4 h):
+   `sbatch gpu-wave7-train.sbatch`
+   Per seed: SFT on the labels → `results/wave7_sft_seed<N>/`; on-policy state
+   collection + relabel → `results/wave7_labels/policy_*_seed<N>.*`; RLCD from
+   the SFT checkpoint on those states → `results/wave7_rlcd_seed<N>/`.
+   Knobs (`W7_SFT_STEPS`, `W7_RLCD_STEPS`, `W7_LR`, …) can be overridden per
+   submit; if you change step totals, update the matching `verify_pull.py`
+   EXPECT entries.
+4. **Evals** (GPU, batched readout; the wave-1–6 JSONL schema so the analysis
+   stack is unchanged):
+   ```
+   python -m agent_bullwhip.decision_eval --adapter results/wave7_sft_seed0/checkpoint-119 \
+       --pattern step --mode argmax        # n=1 (deterministic, AUDIT-1 P0)
+   python -m agent_bullwhip.decision_eval --adapter results/wave7_sft_seed0/checkpoint-119 \
+       --pattern step --mode sampled       # n=30 (seeded 1000+i)
+   python -m agent_bullwhip.decision_eval --adapter results/wave7_sft_seed0/checkpoint-119 \
+       --pattern noisy --mode argmax       # n=30 (seeded paths)
+   ```
+   Same three for `--mode argmax`/`--pattern step` without `--adapter`
+   (untrained readout = the C1 control) and with the `wave7_rlcd_seed0`
+   adapter. parse-fail is asserted 0; `eval-analyze.py` needs the untrained/trained
+   naming split — point --untrained/--trained at the matching tags.
+5. **Pull + verify** (`pull_results.sh` on the laptop covers `results/`):
+   `python3 hpc-umbrella/verify_pull.py <pull-dest> --size` — wave-7 dirs are in
+   EXPECT now.
+6. **Revision pin**: the model snapshot is pinned to
+   `c1899de289a04d12100db370d81485cdf75e47ca` everywhere (config.sh
+   `MODEL_REVISION`, `stage.sh`, `decision_readout`/`decision_train` defaults);
+   the rendered-prompt hash fixture (`b96fb847…`) fails loudly if the cluster
+   template bytes drift. `HF_HUB_OFFLINE=1` is exported by `bw_load_env` and
+   both wave-7 sbatch files.
+
+Failure playbook additions: labels hash ≠ hub → different code/knobs, do not
+train on them; `--resume` refuses a changed labels file (`labels_sha`); RLCD
+needs `--base-adapter` (an sft `checkpoint-*` dir — the sbatch picks the final
+one automatically).

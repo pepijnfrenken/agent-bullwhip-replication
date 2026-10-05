@@ -59,7 +59,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .engine import ROLES, GameStepper, SimConfig
+from .engine import ROLES, GameStepper, SimConfig, TierState
 from .agents import OrderUpToAgent
 from .decision_readout import ORDER_GRID, LABELS
 
@@ -235,6 +235,7 @@ def branch_cost(snapshot: GameStepper, t: int, role: str, candidate: int,
     import copy as _copy
     snap = _copy.deepcopy(snapshot)
     snap.demand = list(snapshot.demand[:t]) + list(future)
+    base_len = len(snap.weeks)                       # pre-branch week records
     cont = {r: _copy.deepcopy(a) for r, a in cont_template.items()}
     if candidate_warm is not None:
         cont[role]._forecast = candidate_warm   # post-update warm, then NO week-t call
@@ -247,7 +248,7 @@ def branch_cost(snapshot: GameStepper, t: int, role: str, candidate: int,
         obs = snap.observations()
         snap.advance({r: cont[r](obs[r]) for r in ROLES})
     log = snap.log()
-    return float(sum(w.cost for w in log.weeks[t:]))
+    return float(sum(w.cost for w in log.weeks[base_len:]))
 
 
 def score_candidates(snapshot: GameStepper, t: int, role: str,
@@ -340,6 +341,116 @@ def _row_hash(rows: list[dict], n: int) -> str:
     return h.hexdigest()
 
 
+# --------------------------------------------------------------------------- #
+# Round-2 relabeling: label PRE-COLLECTED states (DAgger-style, audit fix 8).
+# decision_eval --collect-states dumps them with full engine internals +
+# curriculum params; --states-jsonl scores them with the same CRN machinery.
+# --------------------------------------------------------------------------- #
+def stepper_from_state(st: dict, horizon: int) -> GameStepper:
+    """Rebuild a branchable engine stepper at week t from a collected state."""
+    from collections import deque
+    step = GameStepper([0] * horizon, SimConfig(horizon=horizon))
+    step.t = int(st["t"])
+    step.state = {r: TierState(*st["tiers"][r]) for r in ROLES}
+    step.inbound = {r: deque(st["inbound"][r]) for r in ROLES}
+    step.prev_incoming = {r: int(v) for r, v in st["prev_incoming"].items()}
+    step.order_history = {r: list(st["order_history"][r]) for r in ROLES}
+    step.weeks = []
+    return step
+
+
+def _label_collected_task(task: dict) -> dict:
+    """Score one pre-collected state (mirrors _label_state_task)."""
+    seed = task["seed"]; st = task["state_row"]; M = task["m_futures"]
+    theta = task["theta"]; lam = task["lam"]; tau_scale = task["tau_scale"]
+    week = st["week"]; role = st["role"]; cur = st["curriculum"]
+    params = st["params"]
+    step = stepper_from_state(st["state"], task["horizon"])
+    cont = make_continuation(theta, lam, st["il_hist"], week)
+    rng_f = _seeded_rng(f"{seed}:states:{st['episode']}:{week}:{role}")
+    futures = [draw_future_demand(rng_f, cur, params,
+                                  task["horizon"] - week) for _ in range(M)]
+    j = score_candidates(step, week, role, ORDER_GRID, cont, futures,
+                         theta, lam, st["il_hist"])
+    p, tau, flat = softmax_minus_j(j, tau_scale)
+    argmin = min(range(len(j)), key=j.__getitem__)
+    return {"episode": st["episode"], "week": week, "role": role,
+            "curriculum": cur, "params": params, "ctx": st["ctx"], "J": j,
+            "p": p, "tau": tau, "flat": flat, "argmin_idx": argmin,
+            "argmin_order": ORDER_GRID[argmin]}
+
+
+def run_labeler_from_states(states_path: str | Path, *, seed: int = 6000,
+                            horizon: int = 36, m_futures: int = 16,
+                            theta: float = CONTINUATION_THETA,
+                            lam: float = CONTINUATION_LAM,
+                            tau_scale: float = 0.5, processes: int = 1,
+                            out_prefix: str | None = None,
+                            hash_rows: int = 2000) -> dict:
+    """Label pre-collected (policy-visited) states. Same seed-band guard, same
+    late-week exclusion (t >= H - 2), same CRN E[J] and tau rule as the main
+    labeler. Deterministic from (seed, file rows)."""
+    if EVAL_SEED_MIN <= seed < EVAL_SEED_MAX:
+        raise ValueError(f"labeler seed {seed} is in the reserved eval band")
+    t0 = time.time()
+    with open(states_path) as f:
+        rows = [json.loads(line) for line in f if line.strip()]
+    tasks = []
+    for i, st in enumerate(rows):
+        if st["week"] >= horizon - 2:
+            continue
+        tasks.append({"seed": seed, "state_row": st, "m_futures": m_futures,
+                      "theta": theta, "lam": lam, "tau_scale": tau_scale,
+                      "horizon": horizon})
+    if processes > 1:
+        from multiprocessing import Pool
+        with Pool(processes) as pool:
+            out_rows = list(pool.imap(_label_collected_task, tasks, chunksize=8))
+    else:
+        out_rows = [_label_collected_task(t) for t in tasks]
+    out_rows.sort(key=lambda r: (r["episode"], r["week"], ROLES.index(r["role"])))
+    n = len(out_rows)
+    n_flat = sum(1 for r in out_rows if r["flat"])
+    edge = [r for r in out_rows if r["argmin_idx"] in (0, len(ORDER_GRID) - 1)]
+    ent = sum(-sum(pi * math.log(pi) for pi in r["p"] if pi > 0)
+              for r in out_rows) / n if n else float("nan")
+    manifest = {
+        "seed": seed, "source": str(states_path), "n_collected": len(rows),
+        "n_excluded_late": len(rows) - len(tasks),
+        "m_futures": m_futures, "processes": processes, "grid": ORDER_GRID,
+        "labels": LABELS, "continuation_theta": theta, "continuation_lam": lam,
+        "continuation_tuning": CONTINUATION_TUNING_NOTE,
+        "tau_rule": ("tau_s = tau_scale * max(std_a(E[J]), 1e-3); "
+                     f"tau_scale={tau_scale}"),
+        "n_states": n, "n_flat": n_flat,
+        "flat_rate": n_flat / n if n else float("nan"),
+        "edge_argmin_rate": len(edge) / n if n else float("nan"),
+        "mean_target_entropy_nats": ent, "wall_sec": time.time() - t0,
+    }
+    if out_prefix:
+        out_prefix = str(out_prefix)
+        Path(out_prefix).parent.mkdir(parents=True, exist_ok=True)
+        with open(out_prefix + ".jsonl", "w") as f:
+            for r in out_rows:
+                f.write(json.dumps(r, sort_keys=True) + "\n")
+        try:
+            import numpy as np
+            np.savez(out_prefix + ".npz",
+                     p=np.array([r["p"] for r in out_rows], dtype=np.float32),
+                     J=np.array([r["J"] for r in out_rows], dtype=np.float32),
+                     argmin=np.array([r["argmin_idx"] for r in out_rows],
+                                     dtype=np.uint8))
+        except ImportError:
+            manifest["npz"] = "skipped (numpy unavailable)"
+        if hash_rows:
+            manifest["hash"] = _row_hash(out_rows, hash_rows)
+            manifest["hash_rows"] = min(hash_rows, n)
+        with open(out_prefix + ".manifest.json", "w") as f:
+            json.dump(manifest, f, indent=2, sort_keys=True)
+    manifest["rows"] = out_rows
+    return manifest
+
+
 def run_labeler(seed: int, n_episodes: int, *, horizon: int = 36,
                 curricula: list[str] | None = None, m_futures: int = 16,
                 theta: float = CONTINUATION_THETA, lam: float = CONTINUATION_LAM,
@@ -428,6 +539,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--seed", type=int, default=6000,
                     help="labeler seed; MUST stay out of the reserved eval band "
                          f"[{EVAL_SEED_MIN}, {EVAL_SEED_MAX})")
+    ap.add_argument("--states-jsonl", default=None,
+                    help="relabel PRE-COLLECTED states (decision_eval "
+                         "--collect-states output; DAgger round-2) instead of "
+                         "rolling new behavior-policy episodes")
     ap.add_argument("--episodes", type=int, default=400)
     ap.add_argument("--horizon", type=int, default=36)
     ap.add_argument("--curricula", default="poisson,truncnorm")
@@ -443,7 +558,14 @@ def main(argv: list[str] | None = None) -> int:
                     help="out prefix (writes .jsonl + .npz + .manifest.json)")
     ap.add_argument("--hash-rows", type=int, default=2000)
     args = ap.parse_args(argv)
-    out = run_labeler(
+    if args.states_jsonl:
+        out = run_labeler_from_states(
+            args.states_jsonl, seed=args.seed, horizon=args.horizon,
+            m_futures=args.m_futures, theta=args.theta, lam=args.lam,
+            tau_scale=args.tau_scale, processes=args.processes,
+            out_prefix=args.out, hash_rows=args.hash_rows)
+    else:
+        out = run_labeler(
         args.seed, args.episodes, horizon=args.horizon,
         curricula=args.curricula.split(","), m_futures=args.m_futures,
         theta=args.theta, lam=args.lam, tau_scale=args.tau_scale,

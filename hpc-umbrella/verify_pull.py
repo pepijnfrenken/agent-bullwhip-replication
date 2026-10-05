@@ -15,6 +15,15 @@ import pathlib
 import sys
 
 EXPECT = {
+    # Wave 7 (decision-native): SFT(+RLCD) per training seed, batches logged in
+    # train_log.jsonl. Step totals must match the gpu-wave7-train.sbatch knobs
+    # (W7_SFT_STEPS + W7_RLCD_STEPS); adjust here if you override them.
+    "wave7_sft_seed0": 159,
+    "wave7_sft_seed1": 159,
+    "wave7_sft_seed2": 159,
+    "wave7_rlcd_seed0": 39,
+    "wave7_rlcd_seed1": 39,
+    "wave7_rlcd_seed2": 39,
     "grpo_pilot": 4,
     "grpo_a0_base": 300,
     "grpo_a1_group4": 300,
@@ -126,7 +135,7 @@ def main():
         for p in problems:
             print("  -", p)
         sys.exit(1)
-    print("VERDICT: COMPLETE - all 13 runs present with final artifacts")
+    print("VERDICT: COMPLETE - all runs present with final artifacts")
 
 
 if __name__ == "__main__":

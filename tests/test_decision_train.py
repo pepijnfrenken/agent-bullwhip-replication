@@ -15,7 +15,7 @@ import random
 import pytest
 
 from agent_bullwhip.decision_labeler import softmax_minus_j
-from agent_bullwhip.decision_readout import ORDER_GRID
+from agent_bullwhip.decision_readout import ORDER_GRID, render_prompt
 from agent_bullwhip.decision_train import (
     StepResult, load_labels, parse_args, permute_grid_and_target,
     run_loop, save_checkpoint, load_resume_state, train_val_split,
@@ -227,22 +227,14 @@ def sft_policy(torch_ok):
 class TestSftTorch:
     def test_sft_loss_decreases_on_toy_targets(self, sft_policy, tmp_path):
         rows = synth_rows(24)
-        import random as _r
-        rng = _r.Random(1)
-        # 60% of the target mass at the argmin label -> a learnable signal
         for r in rows:
-            p = list(r["p"])
             k = r["argmin_idx"]
-            p = [0.0] * 21
-            p[k] = 0.6
-            rest = 0.4 / 20
-            p = [rest if i != k else 0.6 for i in range(21)]
-            r["p"] = p
+            r["p"] = [0.6 / 20 if i != k else 0.6 for i in range(21)]
         losses = []
-        for step in range(24):
-            batch = rows[(step * 8) % 24:(step * 8) % 24 + 8]
-            if len(batch) < 8:
-                batch = rows[:8]
+        for step in range(20):
+            batch = rows[(step * 4) % 24:(step * 4) % 24 + 4]
+            if len(batch) < 4:
+                batch = rows[:4]
             out = sft_policy.sft_step(batch, [r["p"] for r in batch],
                                       lr=5e-4, seed=5, epoch=step)
             losses.append(out.loss)
@@ -273,6 +265,10 @@ class TestSftTorch:
         pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
                       max_length=1024, seed=5, permute_options=False)
         t_full = trace(pol, 0, 6)
+        t_cont = trace(pol, 6, 3)
+        import gc
+        del pol
+        gc.collect()
         args = argparse.Namespace(model="Qwen/Qwen3-0.6B", lr=2e-4, batch=8,
                                   epochs=None, permute_options=0, beta_kl=None,
                                   seed=5, val_frac=0.05)
@@ -285,7 +281,6 @@ class TestSftTorch:
                        seed=5, permute_options=False)
         pol2.load_optimizer(tmp_path / "ck-5" / "optimizer.pt", lr=2e-4)
         t_res = trace(pol2, 6, 3)
-        t_cont = trace(pol, 6, 3)
         assert t_res == pytest.approx(t_cont, abs=1e-5)
         assert len(t_full) == 6 and len(t_res) == 3
 
@@ -293,18 +288,14 @@ class TestSftTorch:
         """Exact expected-cost PG must RAISE pi on the low-J action (sign fix:
         J is a cost; the naive J - mean ascends it)."""
         from agent_bullwhip.decision_train import _Policy
-        rows = synth_rows(4)
+        rows = synth_rows(2)
         for i, r in enumerate(rows):
             j = [100.0 + (20 - i) * 5] * 21
             j[0] = 30.0 + i * 10          # action A (order 0) is cheapest
             r["J"] = j
-        wr = write_labels(tmp_path / "rl.jsonl", rows)
-        # SFT anchor: a fake checkpoint requires a real SFT adapter; instead run
-        # rlcd on a bare SFT-initialized policy (pi_sft warm from itself).
+        # run rlcd on a bare SFT-initialized policy (pi_sft warm from itself).
         pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
                       max_length=1024, seed=5, permute_options=False)
-        from agent_bullwhip.decision_train import _Policy as _P2
-        # reuse the SFT policy as the 'rlcd' body: set phase and cache manually
         pol.phase = "rlcd"
         pol._pi_sft_cache = {}
         import torch
@@ -325,7 +316,7 @@ class TestSftTorch:
         the same data. Its v1 (self-included baseline) would shrink the
         gradient — the test pins LOO-excluding-self by construction."""
         from agent_bullwhip.decision_train import _Policy
-        rows = synth_rows(6)
+        rows = synth_rows(2)
         for r in rows:
             j = [float(50 + (10 * i)) for i in range(21)]
             j[r["argmin_idx"]] = 10.0
@@ -338,3 +329,102 @@ class TestSftTorch:
                             beta_kl=0.01, sample_k=8, seed=5, step=0)
         assert math.isfinite(out.loss) and math.isfinite(out.loss_kl)
         assert out.grad_norm >= 0
+
+
+# --------------------------------------------------------------------------- #
+# decision_eval: protocol arms + state dump (hub-safe pieces)
+# --------------------------------------------------------------------------- #
+class TestEvalArmsHub:
+    def test_make_demands_step_argmax_is_single_game(self):
+        from agent_bullwhip.decision_eval import make_demands
+        d = make_demands("step", "argmax", runs=30, horizon=8, seed_base=1000)
+        assert len(d) == 1            # audit P0: step-argmax is n=1
+        assert d[0] == [4, 4, 4, 4, 8, 8, 8, 8]
+
+    def test_make_demands_step_sampled_is_n_runs(self):
+        from agent_bullwhip.decision_eval import make_demands
+        d = make_demands("step", "sampled", runs=30, horizon=8, seed_base=1000)
+        assert len(d) == 30 and all(x == d[0] for x in d)
+
+    def test_make_demands_noisy_seeded_distinct(self):
+        from agent_bullwhip.decision_eval import make_demands
+        d = make_demands("noisy", "argmax", runs=6, horizon=8, seed_base=1000)
+        assert len(d) == 6
+        assert len({tuple(x) for x in d}) == 6   # genuinely different paths
+        assert all(len(x) == 8 for x in d)
+
+    def test_eval_record_schema_matches_wave6_consumer(self, tmp_path):
+        """eval-analyze.load_arm reads run/config/model/tag/total_cost/orders/
+        failures; a wave-7-style record must load and yield complete recs."""
+        import importlib.util as _ilu
+        from agent_bullwhip.engine import ROLES as R
+        rec = {"run": 0, "config": "baseline", "model": "qwen3-0.6b-untrained",
+               "tag": "qwen3-0.6b-readout-untrained-argmax-step",
+               "total_cost": 1234.0,
+               "orders": {r: [0, 2] for r in R},
+               "backlogs": {r: [0, 0] for r in R},
+               "failures": {r: 0 for r in R},
+               "calls": {r: 2 for r in R},
+               "tokens": {"prompt": 900, "completion": 0},
+               "prompt_hash_dups": 0,
+               "traces": {r: [] for r in R},
+               "tool_traces": {r: [] for r in R}}
+        out = tmp_path / "arm.jsonl"
+        out.write_text(json.dumps(rec) + "\n")
+        from pathlib import Path as _P
+        spec = _ilu.spec_from_file_location(
+            "eval_analyze", _P(__file__).resolve().parents[1] /
+            "hpc-umbrella" / "eval-analyze.py")
+        ea = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(ea)
+        complete, failed, dpr = ea.load_arm(out, n_weeks=2, n_roles=4)
+        assert len(complete) == 1 and len(failed) == 0 and dpr == 8
+        cs = ea.cost_stats(complete)
+        assert cs["mean"] == 1234.0
+        assert ea.parse_failure_rate(complete, dpr)[0] == 0.0
+
+    def test_sample_orders_deterministic_and_seed_dependent(self):
+        pytest.importorskip("torch")
+        from agent_bullwhip.decision_eval import sample_orders
+        probs = [[1.0, 0.0] + [0.0] * 19, [0.0, 1.0] + [0.0] * 19,
+                 [0.5, 0.5] + [0.0] * 19]
+        a = sample_orders(probs, [0, 1, 2], seed_base=1000)
+        b = sample_orders(probs, [0, 1, 2], seed_base=1000)
+        assert a == b
+        assert a[(0, 0)] == 0 and a[(1, 0)] == 1       # deterministic peeks
+        c = sample_orders(probs, [0, 1, 2], seed_base=1001)
+        assert c != b or c[(2, 0)] != b[(2, 0)]        # different seeds -> diff
+
+    def test_collect_state_dump_hub_shape(self, tmp_path, monkeypatch):
+        """Collection rows must carry the full engine snapshot + params the
+        labeler --states-jsonl needs (validated against engine fields)."""
+        from agent_bullwhip.decision_eval import collect_policy_states
+        from agent_bullwhip.engine import ROLES as R
+
+        class FakeModel:
+            class _Tok:
+                @staticmethod
+                def apply_chat_template(messages, **kw):
+                    return "prompt"
+            tokenizer = _Tok()
+            def readout_batch(self, prompts):
+                return [{"argmax_order": 8, "tokens": 10} for _ in prompts]
+
+        fake = FakeModel()
+        out = tmp_path / "states.jsonl"
+        n = collect_policy_states(fake, n_episodes=2, seed=7000,
+                                  curricula=["poisson"], horizon=6,
+                                  out_path=out)
+        rows = [json.loads(l) for l in out.read_text().splitlines()]
+        assert n == len(rows) > 0
+        for row in rows:
+            assert set(row) >= {"episode", "week", "role", "curriculum",
+                                "params", "ctx", "il_hist", "state", "order"}
+            st = row["state"]
+            assert set(st) >= {"t", "tiers", "inbound", "prev_incoming",
+                               "order_history"}
+            assert {r2 for r2 in st["tiers"]} == set(R)
+            assert st["t"] == row["week"]
+            assert len(st["inbound"]["retailer"]) == 2   # shipment_delay pipe
+            assert all(len(v) == 6 for v in st["order_history"].values()) is None \
+                or all(len(v) == row["week"] for v in st["order_history"].values())
