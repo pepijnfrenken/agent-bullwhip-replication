@@ -97,6 +97,11 @@ class StepResult:
     n_nonfinite: int = 0
     mean_target_entropy: float | None = None   # nats over the batch targets
     train_top1: float | None = None            # fraction argmax(pi) == argmin(J)
+    # full-vocab probability mass on the 21 option letters (WAVE7_SPEC A1:
+    # the untrained-readout >= 0.99 invariant erodes under SFT; logged, not
+    # asserted, for trained adapters)
+    min_label_mass: float | None = None
+    mean_label_mass: float | None = None
 
 
 class DecisionPolicy(Protocol):
@@ -261,7 +266,8 @@ def run_loop(policy: DecisionPolicy, args: argparse.Namespace, log_path: Path,
                                   seed=seed, epoch=epoch, step=step)
         rec = {"step": step, "phase": args.phase, "epoch": epoch,
                "loss": out.loss, "wall": round(time.time() - t0, 1)}
-        for k in ("loss_kl", "grad_norm", "mean_target_entropy", "train_top1"):
+        for k in ("loss_kl", "grad_norm", "mean_target_entropy", "train_top1",
+                  "min_label_mass", "mean_label_mass"):
             v = getattr(out, k)
             if v is not None:
                 rec[k] = round(v, 6)
@@ -496,7 +502,10 @@ class _Policy:
     def _trainable(self) -> bool:
         return any(p.requires_grad for p in self.model.parameters())
 
-    def _label_logits(self, inputs) -> "object":
+    def _label_logits(self, inputs, *, with_mass: bool = False) -> "object":
+        """Label-letter logits [B, 21] at the last position. `with_mass=True`
+        also returns the detached full-vocab mass on those letters [B]
+        (the quantity readout_batch asserts >= 0.99 on the untrained base)."""
         fwd = {"use_cache": False}
         if self._use_logits_to_keep:
             fwd["logits_to_keep"] = 1
@@ -505,7 +514,12 @@ class _Policy:
             last = logits[:, 0, :].float()
         else:
             last = logits[:, -1, :].float()
-        return last[:, list(self.label_ids.values())]
+        cand = last[:, list(self.label_ids.values())]
+        if not with_mass:
+            return cand
+        with self._torch.no_grad():
+            mass = (cand.logsumexp(-1) - last.logsumexp(-1)).exp()
+        return cand, mass
 
     # -- optimizer ---------------------------------------------------------- #
     def _ensure_optimizer(self, lr: float):
@@ -561,7 +575,7 @@ class _Policy:
                 prompts.append(render_prompt(r["ctx"], self.tok))
                 tgt.append(t)
         inputs = self._tokenize(prompts)
-        logits = self._label_logits(inputs)
+        logits, mass = self._label_logits(inputs, with_mass=True)
         probs = logits.softmax(-1)
         t = torch.tensor(tgt, dtype=torch.float32, device=self.device)
         loss = -(t * (probs + 1e-9).log()).sum(-1).mean()
@@ -577,7 +591,9 @@ class _Policy:
                           grad_norm=float(gn),
                           mean_target_entropy=float(
                               -(t * (t + 1e-9).log()).sum(-1).mean().detach()),
-                          train_top1=top1)
+                          train_top1=top1,
+                          min_label_mass=float(mass.min()),
+                          mean_label_mass=float(mass.mean()))
 
     def _tokenize(self, prompts: list[str]):
         inputs = self.tok(prompts, return_tensors="pt", padding=True,

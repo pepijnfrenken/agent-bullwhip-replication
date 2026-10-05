@@ -72,3 +72,5 @@ def test_policy_sft_step_with_grad_ckpt():
     out = pol.sft_step(rows, [r["p"] for r in rows], lr=1e-4, seed=5,
                        epoch=0, step=0)
     assert out.loss == out.loss and out.loss > 0, f"non-finite loss {out.loss}"
+    # WAVE7_SPEC A1: the per-step label-mass drift curve (train_log)
+    assert 0.0 < out.min_label_mass <= out.mean_label_mass <= 1.0 + 1e-6

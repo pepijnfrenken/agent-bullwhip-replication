@@ -258,3 +258,22 @@ messages; this section amends §1–§7 by reference (the audit's checklist is t
 - Eval: step-argmax is the single deterministic game (n=1, labeled as such —
   AUDIT-1 §5 P0); the n=30 distributional step arm samples from the readout
   (seeds 1000+i); inferential gates move to noisy n=30.
+
+## AMENDMENTS
+
+### A1 (2026-10-05) — label-mass invariant narrowed to the untrained readout
+
+- **Why.** WAVE7-AUDIT-2 P0-1: the SFT loss is a softmax over the 21 label logits only, so nothing
+  holds up the full-vocab mass on the option letters. Measured on the real `sft_step` at lr 1e-5:
+  min mass 0.99835 → 0.99622 in 10 steps, extrapolating below 0.99 around step ~40 of 120. The
+  fatal `mass >= 0.99` assert therefore killed every array task in the round-2 collect right after
+  SFT, and would have stopped every trained-adapter eval.
+- **What stays fatal.** `readout_batch(require_mass=0.99)` remains the default: it is the format proof
+  for the **untrained** readout. `decision_eval` without `--adapter` keeps the fatal assert.
+- **What changed.** For trained adapters the mass is recorded, not asserted:
+  - `collect_policy_states` reads out with `require_mass=0.0`, writes a per-row `mass` into each state
+    row, and records `min_mass`/`median_mass` in `<states>.notes.json`;
+  - `decision_eval --adapter …` records/prints `min_mass` (summary json) instead of asserting;
+  - `sft_step` logs `min_label_mass` and `mean_label_mass` per step in `train_log.jsonl` (the drift
+    curve for the writeup).
+- The argmax over the 21 letters is well defined either way; the relabel never reads mass.

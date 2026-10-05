@@ -67,10 +67,13 @@ def make_demands(pattern: str, mode: str, runs: int, horizon: int,
 
 def run_batched_eval(model: ReadoutModel, demands: list[list[int]],
                      mode: str, seed_base: int, horizon: int,
-                     tag: str, model_name: str) -> list[dict]:
+                     tag: str, model_name: str, *, require_mass: float = 0.99,
+                     masses: list[float] | None = None) -> list[dict]:
     """R episodes in lockstep; one batched readout per week across runs x roles.
     Returns the wave-1-6 schema records. Raises if any failures (parse-fail
-    ==0 assertion) — the readout cannot fail by construction."""
+    ==0 assertion) — the readout cannot fail by construction. `require_mass`
+    is forwarded to readout_batch (WAVE7_SPEC A1: 0.99 fatal for the untrained
+    readout, 0.0 for trained adapters); per-readout masses go to `masses`."""
     R = len(demands)
     steppers = [GameStepper(d, SimConfig(horizon=horizon)) for d in demands]
     orders: list[dict[str, list[int]]] = [
@@ -83,7 +86,9 @@ def run_batched_eval(model: ReadoutModel, demands: list[list[int]],
             for r in ROLES:
                 ctx_rows.append((ri, r, obs[r]))
         prompts = [render_prompt(ctx, model.tokenizer) for _, _, ctx in ctx_rows]
-        recs = model.readout_batch(prompts)
+        recs = model.readout_batch(prompts, require_mass=require_mass)
+        if masses is not None:
+            masses.extend(rec["mass"] for rec in recs)
         if mode == "sampled":
             picks = sample_orders([r["probs"] for r in recs],
                                   [ri for ri, _, _ in ctx_rows], seed_base)
@@ -133,8 +138,13 @@ def collect_policy_states(model: ReadoutModel, n_episodes: int, seed: int,
     every visited decision state with full engine internals + curriculum params
     (round-2 relabel input for decision_labeler --states-jsonl). Uses the
     labeler's call-identical curriculum samplers; per-episode rng is a stable
-    SHA seed, so the dump is reproducible."""
+    SHA seed, so the dump is reproducible.
+
+    The policy is a trained adapter, so the label-mass invariant is recorded,
+    not asserted (WAVE7_SPEC A1): each row carries its `mass`, and
+    `<out>.notes.json` records min/median over the whole collect."""
     n = 0
+    masses: list[float] = []
     with open(out_path, "w") as f:
         for ep in range(n_episodes):
             cur = curricula[ep % len(curricula)]
@@ -148,9 +158,11 @@ def collect_policy_states(model: ReadoutModel, n_episodes: int, seed: int,
                     il_hist[r].append(obs[r]["incoming_last"])
                 prompts = [render_prompt(obs[r], model.tokenizer)
                            for r in ROLES]
-                recs = model.readout_batch(prompts)
+                recs = model.readout_batch(prompts, require_mass=0.0)
                 chosen = {r: int(rec["argmax_order"]) for r, rec
                           in zip(ROLES, recs)}
+                mass_of = {r: float(rec["mass"]) for r, rec in zip(ROLES, recs)}
+                masses.extend(mass_of.values())
                 for r in ROLES:
                     row = {
                         "episode": ep, "week": step.t, "role": r,
@@ -169,10 +181,19 @@ def collect_policy_states(model: ReadoutModel, n_episodes: int, seed: int,
                                               for r2 in ROLES},
                         },
                         "order": chosen[r],
+                        "mass": mass_of[r],
                     }
                     f.write(json.dumps(row, sort_keys=True) + "\n")
                     n += 1
                 step.advance(chosen)
+    masses.sort()
+    notes = {"n_states": n, "require_mass": 0.0,
+             "min_mass": masses[0] if masses else None,
+             "median_mass": masses[len(masses) // 2] if masses else None,
+             "note": "trained-adapter collect: label mass recorded per row, "
+                     "not asserted (WAVE7_SPEC A1)"}
+    notes_path = out_path.with_name(out_path.name + ".notes.json")
+    notes_path.write_text(json.dumps(notes, indent=2, sort_keys=True))
     return n
 
 
@@ -211,7 +232,8 @@ def main(argv: list[str] | None = None) -> int:
         n = collect_policy_states(model, args.n_collect, args.collect_seed,
                                   args.collect_curricula.split(","),
                                   args.horizon, Path(args.collect_states))
-        print(f"collected {n} policy states -> {args.collect_states}")
+        print(f"collected {n} policy states -> {args.collect_states} "
+              f"(label mass recorded, not asserted; see .notes.json)")
         return 0
 
     n_runs = 1 if (args.pattern == "step" and args.mode == "argmax") \
@@ -219,8 +241,13 @@ def main(argv: list[str] | None = None) -> int:
     demands = make_demands(args.pattern, args.mode, n_runs, args.horizon,
                            args.seed_base)
     t0 = time.time()
+    # WAVE7_SPEC A1: mass >= 0.99 is the format proof of the UNTRAINED readout
+    # (fatal); an SFT'd adapter erodes it, so a trained eval records min_mass.
+    require_mass = 0.0 if args.adapter else 0.99
+    masses: list[float] = []
     records = run_batched_eval(model, demands, args.mode, args.seed_base,
-                               args.horizon, tag, model_name)
+                               args.horizon, tag, model_name,
+                               require_mass=require_mass, masses=masses)
     costs = [r["total_cost"] for r in records]
     stats = {
         "n_runs": len(records), "runs": n_runs, "config": "baseline",
@@ -230,6 +257,8 @@ def main(argv: list[str] | None = None) -> int:
         "failure_rate": 0.0, "parse_fail": 0,
         "completed": len(records), "failed": 0,
         "wall_sec": time.time() - t0,
+        "require_mass": require_mass,
+        "min_mass": min(masses) if masses else None,
     }
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -240,6 +269,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dump(stats, f, indent=2, sort_keys=True, default=float)
     print(f"{tag}: runs={len(records)} mean={stats['mean_cost']:,.0f} "
           f"min={min(costs):,.0f} max={max(costs):,.0f} parse_fail=0 "
+          f"min_mass={stats['min_mass']:.5f} "
           f"wall={stats['wall_sec']:.1f}s -> {outdir / (tag + '.jsonl')}")
     return 0
 

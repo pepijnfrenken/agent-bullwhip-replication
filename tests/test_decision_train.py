@@ -406,13 +406,23 @@ class TestEvalArmsHub:
         from agent_bullwhip.engine import ROLES as R
 
         class FakeModel:
+            """readout_batch with the real require_mass contract; masses sit
+            BELOW 0.99 like an SFT'd adapter's (WAVE7_SPEC A1)."""
             class _Tok:
                 @staticmethod
                 def apply_chat_template(messages, **kw):
                     return "prompt"
             tokenizer = _Tok()
-            def readout_batch(self, prompts):
-                return [{"argmax_order": 8, "tokens": 10} for _ in prompts]
+            calls = 0
+            def readout_batch(self, prompts, *, require_mass=0.99):
+                out = []
+                for _ in prompts:
+                    self.calls += 1
+                    mass = 0.90 + (self.calls % 7) * 0.01
+                    if mass < require_mass:
+                        raise AssertionError(f"label mass {mass} < {require_mass}")
+                    out.append({"argmax_order": 8, "tokens": 10, "mass": mass})
+                return out
 
         fake = FakeModel()
         out = tmp_path / "states.jsonl"
@@ -423,7 +433,8 @@ class TestEvalArmsHub:
         assert n == len(rows) > 0
         for row in rows:
             assert set(row) >= {"episode", "week", "role", "curriculum",
-                                "params", "ctx", "il_hist", "state", "order"}
+                                "params", "ctx", "il_hist", "state", "order",
+                                "mass"}
             st = row["state"]
             assert set(st) >= {"t", "tiers", "inbound", "prev_incoming",
                                "order_history"}
@@ -432,3 +443,35 @@ class TestEvalArmsHub:
             assert len(st["inbound"]["retailer"]) == 2   # shipment_delay pipe
             assert all(len(v) == 6 for v in st["order_history"].values()) is None \
                 or all(len(v) == row["week"] for v in st["order_history"].values())
+        masses = sorted(r["mass"] for r in rows)
+        notes = json.loads((tmp_path / "states.jsonl.notes.json").read_text())
+        assert notes["n_states"] == n
+        assert notes["min_mass"] == masses[0] < 0.99
+        assert notes["median_mass"] == masses[len(masses) // 2]
+
+    def test_eval_mass_assert_only_for_untrained(self, tmp_path, monkeypatch):
+        """WAVE7_SPEC A1: the eval CLI keeps mass >= 0.99 fatal without
+        --adapter and records min_mass with one."""
+        import agent_bullwhip.decision_eval as de
+
+        class FakeReadout:
+            class _Tok:
+                @staticmethod
+                def apply_chat_template(messages, **kw):
+                    return "prompt"
+            tokenizer = _Tok()
+            def __init__(self, *a, **k):
+                pass
+            def readout_batch(self, prompts, *, require_mass=0.99):
+                if 0.95 < require_mass:
+                    raise AssertionError("label mass 0.95 < 0.99")
+                return [{"argmax_order": 4, "tokens": 10, "mass": 0.95,
+                         "probs": [1 / 21] * 21} for _ in prompts]
+
+        monkeypatch.setattr(de, "ReadoutModel", FakeReadout)
+        base = ["--horizon", "4", "--outdir", str(tmp_path), "--tag", "t"]
+        with pytest.raises(AssertionError, match="label mass"):
+            de.main(base)
+        assert de.main(base + ["--adapter", str(tmp_path / "ad")]) == 0
+        summ = json.loads((tmp_path / "t.summary.json").read_text())
+        assert summ["min_mass"] == 0.95 and summ["require_mass"] == 0.0
