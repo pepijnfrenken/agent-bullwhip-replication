@@ -600,7 +600,7 @@ class _Policy:
         else:
             # exact expected-cost gradient: loss = sum_a pi(a) J(a)/std (J const)
             pg = (probs * jn).sum(-1).mean()
-        kl = 0.0
+        kl = torch.tensor(0.0, device=self.device)
         if beta_kl > 0:
             ref = torch.tensor(self._sft_ref_logprobs(rows),
                                dtype=torch.float32, device=self.device)
