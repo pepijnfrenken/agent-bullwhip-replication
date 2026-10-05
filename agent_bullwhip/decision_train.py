@@ -113,7 +113,7 @@ class DecisionPolicy(Protocol):
     def rlcd_step(self, rows: list[dict], j_vals: list[list[float]],
                   lr: float, beta_kl: float, sample_k: int, seed: int,
                   step: int) -> StepResult: ...
-    def evaluate(self, rows: list[dict]) -> dict: ...   # val: nll/top1/regret
+    def evaluate(self, rows: list[dict], batch: int) -> dict: ...   # val metrics
     def check_finite(self) -> bool: ...
     def save_optimizer(self, path: Path) -> bool: ...
     def load_optimizer(self, path: Path, lr: float) -> bool: ...
@@ -339,7 +339,7 @@ def run_loop(policy: DecisionPolicy, args: argparse.Namespace, log_path: Path,
                 return
         # validation at each epoch boundary
         if (epoch + 1) * n_batches - 1 == step and val_rows:
-            v = policy.evaluate(val_rows)
+            v = policy.evaluate(val_rows, batch=args.batch)
             rec = {"event": "val", "epoch": epoch, "step": step,
                    "n_val": len(val_rows)}
             for k, val in v.items():
@@ -750,19 +750,27 @@ class _Policy:
                           grad_norm=float(gn))
 
     # -- validation --------------------------------------------------------- #
-    def evaluate(self, rows: list[dict]) -> dict:
+    def evaluate(self, rows: list[dict], batch: int) -> dict:
+        """Val nll/top1/regret. no_grad + chunks of `batch` (AUDIT-2 P2-2):
+        eval mode also disables gradient checkpointing, so a whole-val-set
+        forward with a graph held ~1.7x the activations that OOM'd the L4."""
         import torch
-        prompts = [render_prompt(r["ctx"], self.tok) for r in rows]
         self.model.eval()
         try:
-            logits = self._label_logits(self._tokenize(prompts))
-            probs = logits.softmax(-1)
-            t = torch.tensor([r["p"] for r in rows], dtype=torch.float32,
-                             device=self.device)
-            nll = float(-(t * (probs + 1e-9).log()).sum(-1).mean().detach())
-            top1 = float((probs.argmax(-1) == t.argmax(-1)).float().mean().item())
+            chunks = []
+            with torch.no_grad():
+                for lo in range(0, len(rows), max(1, batch)):
+                    part = rows[lo:lo + max(1, batch)]
+                    prompts = [render_prompt(r["ctx"], self.tok) for r in part]
+                    chunks.append(self._label_logits(self._tokenize(prompts))
+                                  .softmax(-1))
+                probs = torch.cat(chunks)
+                t = torch.tensor([r["p"] for r in rows], dtype=torch.float32,
+                                 device=self.device)
+                nll = float(-(t * (probs + 1e-9).log()).sum(-1).mean())
+                top1 = float((probs.argmax(-1) == t.argmax(-1)).float().mean())
             # grid regret from the labels' J vectors (no extra forwards)
-            regs, tots = [], 0.0
+            regs = []
             for r, p in zip(rows, probs.tolist()):
                 b = max(range(len(ORDER_GRID)), key=p.__getitem__)
                 regs.append(r["J"][b] - r["J"][r["argmin_idx"]])

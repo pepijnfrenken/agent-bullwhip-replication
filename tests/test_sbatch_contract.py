@@ -56,7 +56,7 @@ class Stub:
     def compute_pi_sft(self, rows, batch):
         return {dt.pi_sft_key(r): [1 / 21] * 21 for r in rows}
     def set_pi_sft(self, table): pass
-    def evaluate(self, rows): return {}
+    def evaluate(self, rows, batch): return {}
     def check_finite(self): return True
     def save_optimizer(self, p): return False
     def load_optimizer(self, p, lr): return True

@@ -93,7 +93,7 @@ class RecorderStub:
         self.calls += 1
         return StepResult(loss=2.0, loss_kl=0.01)
 
-    def evaluate(self, rows):
+    def evaluate(self, rows, batch):
         return {"nll": 2.5, "top1": 0.4, "mean_regret": 12.0}
 
     def check_finite(self):
@@ -242,6 +242,28 @@ class TestSftTorch:
             losses.append(out.loss)
         assert losses[-1] < 0.70 * losses[0], losses[:3] + losses[-3:]
         assert losses[0] > math.log(21) - 1.0          # near-uniform start
+
+    def test_evaluate_chunked_no_grad(self, sft_policy):
+        """AUDIT-2 P2-2: val forwards run under no_grad in chunks of `batch`
+        (eval mode turns grad-ckpt off) and agree with a single pass."""
+        import torch
+        rows = synth_rows(10)
+        seen = []
+        hook = sft_policy.model.register_forward_pre_hook(
+            lambda mod, args, kw: seen.append(
+                (kw["input_ids"].shape[0], torch.is_grad_enabled())),
+            with_kwargs=True)
+        try:
+            chunked = sft_policy.evaluate(rows, batch=4)
+        finally:
+            hook.remove()
+        assert [b for b, _ in seen] == [4, 4, 2]
+        assert not any(g for _, g in seen), "val forward built a graph"
+        assert sft_policy.model.training
+        whole = sft_policy.evaluate(rows, batch=len(rows))
+        assert chunked["top1"] == whole["top1"]
+        assert chunked["nll"] == pytest.approx(whole["nll"], abs=1e-4)
+        assert chunked["mean_regret"] == pytest.approx(whole["mean_regret"])
 
     def test_checkpoint_resume_roundtrip_torch(self, torch_ok, tmp_path):
         """Resume loads adapter + optimizer and continues the exact loss trace
