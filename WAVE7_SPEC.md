@@ -1,0 +1,194 @@
+# WAVE7_SPEC.md — Decision-native policy (System-1 readout, outcome-trained) — approved 2026-10-05
+
+**Status:** **approved 2026-10-05 (decisions recorded below).** Nothing below has run on the cluster
+yet. Post-approval changes get logged in the changes section at the bottom.
+
+**Lane:** wave 7 (decision-native). Wave 6 (free-form GRPO fidelity line) is **untouched** by this
+spec; its eval and verdict stand as reported.
+
+---
+
+## 0. Why this lane, why now
+
+Wave-6 evidence (all on disk, hub-verified):
+
+- ~85% of GRPO training rollouts are unparseable free text; the reward has no parse-awareness
+  (`reward-unparsed-findings.md`, 866f336), and the parse rate never improves over 300 steps.
+- The a0_base eval aggregate is null by the §4 gates, tail-carried by digit-run rogues
+  (`eval-a0-report.md`); the robust read (median, log-space) is positive but far from floors.
+- Hub probes (2026-10-05): **stock Qwen3-0.6B, asked as a closed choice over 21 order options
+  (single-token letters A..U, one forward pass, read the label logits), produces coherent order
+  distributions zero-shot on real game states** (retailer w6 → order 14, p=0.29; factory w12 →
+  order 14, p=0.58; ≥99.8% of next-token mass on option letters). The same checkpoint rambles in
+  free-form. A generic 79M System-1 model (Byrne-Jev) on our domain is flat noise zero-shot →
+  domain training is the missing ingredient, and it is ours to supply (we own the simulator).
+
+**Headline question:** can a decision-native policy (no generation; the answer is a probability
+distribution over the allowed orders) trained primarily from **our own simulator's outcome labels**
+beat (i) its own untrained readout, (ii) the classic floors, (iii) the wave-6 free-form arms —
+paired on identical demand paths?
+
+Precedents and references:
+- Wave 5 already tested decision-native via the **hosted** Jev API (typed questions, probabilities,
+  no parse failures; `WAVE5.md`), but hosted = untrainable and ToS-bound. Wave 7 makes the same
+  interface **local, trainable, open**, on our existing base model.
+- Cloudflare **Clef** (Apache-2.0): Qwen3.8-27B + a small "joint schema head" (4 layers, 1024 wide,
+  span-routed option scoring); span-tracked record encoding; `/v1/systemone` wire protocol.
+- Community **RLCD recipe** (AstroHan, Apache-2.0): LoRA r=8/α=16 on attention projections only
+  (~5M trainable params) + letter-logit readout; trained with outcome-scored RL, noise on candidate
+  logits + leave-one-out baseline; their `decision.py` ships with `Qwen/Qwen3-0.6B` as default model.
+- The grammar-constrained probe on the existing wave-6 checkpoint stays queued as the **format-only
+  control** (same model, constrained decoding; isolates format from training).
+
+## 1. Decisions (draft — answer inline)
+
+- **D1 — base model: `Qwen/Qwen3-0.6B`** (already cached on hub and staged on the cluster; fits the
+  existing cluster env pins with zero changes; same rung as wave-6 A0, so comparisons are direct).
+- **D2 — interface:** one forward pass. Prompt = system instruction + leak-free state (the wave-1–5
+  field family) + question + options rendered as single-token letters **A..U → orders 0..40 step 2**
+  (21 options). Read the last-position logits of the 21 label token ids, softmax. **Primary
+  composition: argmax; secondary: expectation** over the grid (both reported). Invariants asserted
+  per batch: labels are single tokens; label mass ≥ 0.99; option order fixed ascending.
+- **D3 — labels (simulator is the teacher):** states sampled from the **wave-6 training curricula**
+  (Poisson λ~U[5,20]; TruncNormal μ~U[8,20], σ~U[2,6]; resampled per episode — **never eval paths**),
+  all 4 roles, all weeks, under a mixed behavior policy (floors + random + wave-6 checkpoint
+  snapshots). Per (state, candidate): simulate return-to-go J under a fixed continuation policy;
+  targets = softmax(−J/τ). τ set by a stated rule (matched to the candidate-J gap scale; ablated).
+- **D4 — training:** LoRA r=8/α=16, attention projections only, base frozen. **Stage 1:** supervised
+  soft-target cross-entropy. **Stage 2 (arm):** RLCD refinement — sample K actions from the policy,
+  score sampled outcomes by simulation, update with a leave-one-out baseline over the K outcomes
+  (public recipe shape). Seeds {0,1,2}.
+- **D5 — eval:** the exact protocol arms as waves 1–6: **step n=30 (seeds 1000+i)**, noisy n=10
+  (→ n=20 if cheap), paired vs floors and vs the wave-6 arms on identical paths. Extra diagnostics:
+  counterfactual sensitivity (± demand, ± inventory state edits), grid regret (best-on-grid vs
+  fine-grid optimum), argmax-vs-expectation, parse-fail asserted 0.
+- **D6 — serving:** batched in-process torch readout for eval (no HTTP server needed); optional
+  local `/v1/systemone` server for protocol-parity demos (drop-in for the wave-5 harness).
+- **D7 — compute (cluster):** labeler on **`tue.cpu3.q`** (CPU array, deterministic from seeds — no
+  file uploads needed); training + eval forward passes on **`tue.gpu.q -C l4`**. Same kit pins,
+  same sbatch conventions (`SLURM_SUBMIT_DIR` lesson), same `pull_results.sh` + `verify_pull.py`.
+- **D8 — scope guard:** new lane; wave-6 files/verdicts untouched; all gates pre-registered before
+  the first cluster job. 4B/Jev-scale rungs out of scope. Joint-head variant is a post-readout
+  stretch (only if readout quality caps out).
+
+## 2. Reuse map (build vs take — the answer to "start from scratch or reuse")
+
+**Reuse as-is (zero changes):**
+- `engine.GameStepper` + `run_game` + demand curricula (`grpo_env`) + golden fixture + `test_no_leak`.
+- Floors: `walkforward_paths.py`, `walkforward_floor.py`, `tuned_floor.py`, `oos_floor.py` +
+  `paired_analysis.py`; analysis: `hpc-umbrella/eval-analyze.py` (its rogue columns will read zero —
+  expected and visible proof the interface is fixed).
+- `hpc-umbrella/` kit: `config.sh` pins, `stage.sh`, all sbatch conventions, `pull_results.sh`,
+  `verify_pull.py`; mission runtime + `train_log.jsonl` logging shape.
+
+**Adapt (same scaffolding, different inner loop):**
+- `grpo_train.py` → `decision_train.py`: keep CLI / logging / checkpoint / SIGTERM-resume shape;
+  replace generation rollouts with batched readout forwards; replace GRPO advantage updates with
+  soft-target CE then RLCD.
+- `grpo_env` episode machinery → state-snapshot sampler (reuses stepper + curricula).
+- `runner.py` → decision eval mode, emitting the same JSONL schema so the analysis stack is unchanged.
+
+**New:**
+- `readout.py` (prompt render, option grids, label ids, mass checks), `labeler.py` (candidate
+  simulation → J → targets; multiprocess; deterministic), `decision_train.py` (stages 1–2),
+  `decision_eval.py`; optional `/v1/systemone` server.
+
+**Reference-only (copy patterns with attribution; both Apache-2.0):** AstroHan `decision.py`,
+Cloudflare `joint_schema_model.py`.
+
+## 3. Design detail
+
+- **State rendering:** identical field text to the wave-1–5 prompts (on_hand, backlog, outstanding,
+  incoming_last, incoming_now[retailer only], last_orders) — leak-free engine, upstream
+  `incoming_now=None`. One question per decision: "How many units should this stage order this
+  week?"; options `A. order 0 units` … `U. order 40 units`.
+- **Labeler:** for each state, J(s, a) = realized cost of the remainder of the episode when this
+  decision is a and all later decisions (all roles) follow the continuation policy (primary:
+  walk-forward tuned floor; sensitivity: naive-zero). Batch/parallel; expected ~0.2 s/state
+  single-core; N≈50–100k states.
+- **Targets:** p*(a) ∝ exp(−J(s,a)/τ). τ: set so the target entropy sits in a stated band; ablate
+  τ ∈ {small, medium, large} on a validation slice (label-side, no cluster needed).
+- **Trainer:** batch 32 (packed ~400-token sequences), lr/epochs logged; checkpoints every N steps
+  with resume; validation = held-out states (NLL vs targets + top-1 agreement + regret).
+- **RLCD arm:** from the SFT checkpoint: sample K=8 actions per state, simulate each, advantage =
+  J − mean(J) over the K (LOO); one update per round; 2–3 rounds on a fresh 20k-state subset.
+  Same logging; this is an arm, not a risk to the SFT result.
+- **Eval:** batched readout on the fixed protocol; JSONL identical to waves 1–6 so `eval-analyze.py`
+  and the paired machinery work unchanged; parse-fail==0 is an assertion, not a hope.
+
+## 4. Pre-registered success criteria (draft numbers — set by Pino)
+
+- **C1 (interface + training):** trained readout beats **its own untrained readout** on the paired
+  step arm: median cost reduction ≥ 15% AND ≥20/30 wins (sign test p<0.02).
+- **C2 (absolute level):** step-arm median ≤ 4× the walk-forward tuned floor (~13k) = strong tier;
+  median ≤ 2× = headline. Report the actual number regardless.
+- **C3 (vs wave-6):** beats the wave-6 a0_base trained arm on identical paths, paired (≥20/30 wins).
+- **C4 (reproducibility):** 3 seeds agree within combined CI; parse-fail == 0; artifacts committed
+  (adapters + logs + labels) and pulled/verified.
+- **R1 (RLCD arm):** report SFT-vs-RLCD paired; adopt RLCD only if it wins beyond noise, else the
+  simpler SFT line is the story.
+- **Null clause:** if C1/C3 fail, the interface-alone hypothesis dies at 0.6B and gets reported as
+  such (consistent with repo standards).
+
+## 5. Traps & controls
+
+- **Surface-statistic shortcut** (echoing digits from the state): counterfactual edits (±demand,
+  ±inventory) + grid regret + held-out response-slope checks.
+- **Labeler policy dependence:** targets depend on the continuation policy — two-policy agreement
+  report on a validation slice; primary = wf_tuned floor.
+- **Closed-loop distribution shift:** iterated relabeling is an optional round 2 (collect visited
+  states → relabel → retrain); primary dataset = mixed behavior policies.
+- **Tokenization/labels:** single-token assertions for A..U in Qwen3-0.6B; fixed option order;
+  option-shuffle control arm (quantifies order sensitivity, known from the Byrne card).
+- **Version drift hub↔cluster:** hub transformers 4.57.6 vs cluster 4.55.4 — chat-template
+  `enable_thinking=False` and related API compat must be pinned/asserted on the cluster (audit
+  item); fallback = pre-rendered prompt constant, no template API needed.
+- **Eval demand hygiene:** labeler draws curricula paths only; eval paths never enter training —
+  same guard as wave 6, plus a test.
+
+## 6. Compute & budget
+
+| phase | where | est. |
+|---|---|---|
+| labeler (N≈50–100k × 21 candidates) | cluster `tue.cpu3.q` array (deterministic from seeds) | hours, free |
+| SFT + RLCD (3 seeds × 2 stages) | cluster `tue.gpu.q -C l4`, one L4 per leg | ~6–12 GPU-hours total, free |
+| protocol evals (step 30 + noisy) | cluster GPU (batched forwards) | minutes |
+| analysis + report | hub | hours |
+
+No new spend: no paid clouds, no downloads beyond cache (Qwen3-0.6B already staged; labeler data is
+generated on-cluster).
+
+## 7. Deliverables
+
+- `agent_bullwhip/decision_*.py` + tests (readout determinism, labeler, loss shapes).
+- `results/wave7_<arm>/`: `train_log.jsonl`, adapters, eval JSONLs + summaries; pulled & verified.
+- `WAVE7.md` results doc (repo voice) + audit pass before any post material (drafts never in repo).
+- README: wave-7 section; this spec's changes log updated.
+
+## 8. Decision points for Pino
+
+- **D1/D2:** base + grid 0..40 step 2 + argmax-primary OK?
+- **D4:** RLCD as a wave-7 arm (recommended) or supervised-only first?
+- **C-gates:** C1/C2/C3 numbers — set them.
+- **D7:** cluster-permission notes (queue limits, per-person caps?) for the session.
+
+## Decisions (2026-10-05, by Pino)
+
+- **Wave 7 approved** ("sounds very good"), commissioning the cluster move once the build is green.
+  Drafted defaults stand; changes get logged below.
+- **D1/D2:** `Qwen/Qwen3-0.6B`; option grid 0..40 step 2 (A..U); primary composition = argmax;
+  expectation reported as secondary.
+- **D4:** RLCD runs as the second-stage arm; the SFT line is the main result, R1 decides whether
+  RLCD joins the story.
+- **C-gates as drafted:** C1 ≥15% median reduction AND ≥20/30 paired wins vs the untrained readout
+  (sign p<0.02); C2 ≤4× the wf_tuned floor (≈13k) = strong tier, ≤2× = headline; C3 ≥20/30 paired
+  wins vs the wave-6 a0_base trained arm; C4 seed agreement + parse-fail==0 + artifacts committed.
+- **D7 (cluster session):** standard kit flow (git pull → `stage.sh` → sbatch); labeler on
+  `tue.cpu3.q`; train + evals on `tue.gpu.q -C l4`. The "pull" ping comes from the operator once
+  build + audits are green, with exact commands.
+
+## Changes log
+
+- 2026-10-05: draft written (post-wave-6 a0 eval + reward findings; hub readout probes; Clef/RLCD
+  references reviewed).
+- 2026-10-05: approved by Pino; decisions recorded; status → approved.
