@@ -232,3 +232,29 @@ messages; this section amends §1–§7 by reference (the audit's checklist is t
 - 2026-10-05: AUDIT-1 amendments recorded (above) after the adversarial design audit falsified the
   zero-shot premise (letter prior) and the step-n=30 assumption, and pinned the first-cluster-job
   crash causes. Spec §0 corrected inline; all other changes tracked in the amendments section.
+
+### Wave-7 build changes log (implementation notes, 2026-10-05)
+
+- Continuation floor for labels: FIXED (theta=3.5, lam=0.2), tuned
+  out-of-sample on 60 curriculum episodes (seeds 4000..4059), validated on 60
+  held-out (4060..4119): 8,766 / 9,066 mean cost vs untuned (3.0,0.5)
+  15,544 / 15,997. No per-path walk-forward search (that leaks future demand —
+  AUDIT-1 §1 fix 4).
+- Labels: E[J] over M=16 CRN futures from each episode's OWN curriculum params
+  (AUDIT-1 §1 fix 1); per-state tau = tau_scale * max(std_a(E[J]), 1e-3),
+  tau_scale=0.5 default (ablate 0.25/0.5/1.0); late weeks t >= H-2 excluded;
+  labeler seed 6000, eval band [1000,1030) rejected. Measured edge-argmin rate
+  ~0.68 on a smoke run — grid truncation is a live risk (AUDIT-1 §1 fix 3):
+  the sbatch prints a WARN above 0.9 and `--p-random` can lower extreme
+  behavior states.
+- Readout prompt hash fixture b96fb847... (pinned snapshot
+  c1899de289a04d12100db370d81485cdf75e47ca); label ids resolved on the RENDERED
+  continuation; left padding + logits_to_keep=1 (probed; falls back to
+  logits[:, -1]); mass >= 0.99 fatal.
+- RLCD arm: A = -(J - b)/std with LOO baseline excluding self; exact all-21
+  expected-cost PG by default (--rlcd-sample-k K restores the sampled recipe);
+  beta_kl=0.02 anchor to pi_sft; states collected by CURRENT-policy rollout +
+  relabel (DAgger round 2) before RLCD.
+- Eval: step-argmax is the single deterministic game (n=1, labeled as such —
+  AUDIT-1 §5 P0); the n=30 distributional step arm samples from the readout
+  (seeds 1000+i); inferential gates move to noisy n=30.
