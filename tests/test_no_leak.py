@@ -38,3 +38,48 @@ def test_prompt_hides_incoming_now_upstream():
     ctx_retailer = dict(ctx_upstream, role="retailer", incoming_now=8)
     p2 = build_prompt("retailer", ctx_retailer)
     assert "Incoming order from your customer this week: 8" in p2
+
+
+# --------------------------------------------------------------------------- #
+# Wave 7: the decision-native readout renderer must hold the same no-leak
+# contract (it renders from engine observations, bypassing build_prompt).
+# --------------------------------------------------------------------------- #
+def test_readout_renderer_upstream_hides_incoming_now():
+    """render_state/render_prompt take GameStepper.observations() ctxs; an
+    upstream ctx (incoming_now=None) must render 'not yet known' and never a
+    same-week number, while the retailer renders its incoming_now."""
+    from agent_bullwhip.decision_readout import render_state
+
+    ctx_upstream = {"role": "wholesaler", "t": 3, "on_hand": 0, "backlog": 5,
+                    "outstanding": 10, "incoming_last": 8, "incoming_now": None,
+                    "last_orders": [8, 8, 8]}
+    text = render_state(ctx_upstream)
+    assert "not yet known (you decide on last week's information)" in text
+    assert "Incoming order from your customer this week: " not in text or \
+        "not yet known" in text
+
+    ctx_retailer = dict(ctx_upstream, role="retailer", incoming_now=8)
+    text_r = render_state(ctx_retailer)
+    assert "this week: 8" in text_r
+    assert "not yet known" not in text_r
+
+
+def test_readout_renders_live_engine_observations_no_leak():
+    """Full pipeline: capture GameStepper.observations() during a run and render
+    every week; no upstream row may contain a same-week incoming number."""
+    from agent_bullwhip.decision_readout import render_state
+    from agent_bullwhip.engine import GameStepper, SimConfig, make_demand
+    from agent_bullwhip.agents import MirrorAgent
+
+    agents = {r: MirrorAgent() for r in ROLES}
+    step = GameStepper(make_demand(6, "noisy", seed=1003), SimConfig(horizon=6))
+    while not step.done():
+        obs = step.observations()
+        for r in ROLES:
+            text = render_state(obs[r])
+            if r == "retailer":
+                assert f"this week: {obs[r]['incoming_now']}" in text
+            else:
+                assert "not yet known" in text
+                assert f"this week: {obs[r]['incoming_now']}" not in text
+        step.advance({r: agents[r](obs[r]) for r in ROLES})
