@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
-# hpc-umbrella/pull_results.sh — laptop/hub-side rsync of results back off scratch.
+# hpc-umbrella/pull_results.sh — laptop/hub-side pull of results back off scratch
+# (rsync when both ends have it; tar-over-ssh when the cluster has no rsync).
 #
 # WHY THIS EXISTS: /scratch-shared is deleted 14 days after the last write and has
 # NO backup; home (200 GiB) has no backup either. Nothing on Umbrella is durable.
@@ -46,18 +47,45 @@ if ! ssh -o BatchMode=yes -o ConnectTimeout=8 "${REMOTE}" true 2>/dev/null; then
   exit 2
 fi
 
+# transport: rsync when both ends have it; otherwise tar-over-ssh (the cluster
+# login node has no rsync).
+HAVE_RSYNC=0
+if command -v rsync >/dev/null 2>&1 \
+   && ssh -o BatchMode=yes -o ConnectTimeout=8 "${REMOTE}" 'command -v rsync >/dev/null 2>&1' 2>/dev/null; then
+  HAVE_RSYNC=1
+fi
+if [ "$HAVE_RSYNC" = 1 ]; then
+  echo "[pull] transport: rsync"
+else
+  echo "[pull] transport: tar-over-ssh (no rsync locally or on ${REMOTE})"
+fi
+
+# pull <remote-path> <local-dir> — one directory at a time (SCC asks for single sessions)
+pull() {
+  local rp="$1" ld="$2"
+  if [ "$DRY" = 1 ] && [ "$HAVE_RSYNC" = 0 ]; then
+    echo "[pull] (dry) tar ${REMOTE}:${rp} -> ${ld}"
+    return 0
+  fi
+  mkdir -p "$ld"
+  if [ "$HAVE_RSYNC" = 1 ]; then
+    rsync "${OPTS[@]}" "${REMOTE}:${rp}/" "${ld}/"
+  else
+    ssh "${REMOTE}" "tar -C '${rp}' -cf - ." | tar -C "${ld}" -xf -
+  fi
+}
+
 echo "[pull] ${REMOTE}:${REPO}/results/  ->  ${DEST}/results/"
-mkdir -p "${DEST}"
-rsync "${OPTS[@]}" "${REMOTE}:${REPO}/results/" "${DEST}/results/"
+pull "${REPO}/results" "${DEST}/results"
 
 # job logs are the evidence when a run misbehaves (SIGTERM checkpoints, OOM kills, module errors)
 echo "[pull] ${REMOTE}:${RUNROOT}/logs/  ->  ${DEST}/logs/"
-rsync "${OPTS[@]}" "${REMOTE}:${RUNROOT}/logs/" "${DEST}/logs/"
+pull "${RUNROOT}/logs" "${DEST}/logs"
 
 # the bench JSONs are small and are the Snellius-decision numbers — keep them separate
+# (the tar fallback brings the whole grpo_bench/ dir; it is small by design)
 echo "[pull] bench metrics"
-rsync "${OPTS[@]}" --include='bench_*.json' --include='*/' --exclude='*' \
-  "${REMOTE}:${REPO}/results/grpo_bench/" "${DEST}/bench/"
+pull "${REPO}/results/grpo_bench" "${DEST}/bench"
 
 cat <<EOF
 
@@ -70,5 +98,5 @@ Reminders
   * scratch expires 14 days after the last write — pull after the pilot and after each campaign wave
   * a run that was killed by walltime leaves {"event": "sigterm"} as the last line of train_log.jsonl;
     resubmitting the same sbatch command resumes from state.json (no lost work)
-  * if rsync reports "No such file", check the path with: ssh ${REMOTE} 'ls -la ${RUNROOT}'
+  * if the pull reports "No such file" (rsync) or a tar error, check the path with: ssh ${REMOTE} 'ls -la ${RUNROOT}'
 EOF

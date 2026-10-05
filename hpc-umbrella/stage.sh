@@ -41,9 +41,11 @@ doit() { if [ "$DRY" = 1 ]; then printf '  would: %s\n' "$*"; else eval "$*"; fi
 say "kit -> ${BULLWHIP_ROOT}/kit"
 doit "mkdir -p '${BULLWHIP_ROOT}/kit' '${LOG_DIR}' '${HF_HOME}' '${PIP_CACHE_DIR}'"
 if [ "$DRY" = 0 ] && [ "$(cd "${KIT_DIR}" && pwd)" != "$(cd "${BULLWHIP_ROOT}/kit" && pwd 2>/dev/null || echo x)" ]; then
-  # rsync keeps campaign.tsv + sbatch + config.sh in sync with this checkout; the
-  # .sbatch files are always submitted from the staged copy so SLURM_SUBMIT_DIR is stable.
-  doit "rsync -a --delete '${KIT_DIR}/' '${BULLWHIP_ROOT}/kit/'"
+  # tar-mirror keeps campaign.tsv + sbatch + config.sh in sync with this checkout
+  # (the login node has NO rsync, so we mirror manually: rm -rf + fresh copy, where
+  # rsync --delete used to prune removed files). The .sbatch files are always
+  # submitted from the staged copy so SLURM_SUBMIT_DIR is stable.
+  doit "rm -rf '${BULLWHIP_ROOT}/kit' && mkdir -p '${BULLWHIP_ROOT}/kit' && tar -C '${KIT_DIR}' -cf - . | tar -C '${BULLWHIP_ROOT}/kit' -xf -"
   say "re-exec from the staged copy so the run uses scratch, not home"
   exec bash "${BULLWHIP_ROOT}/kit/stage.sh" "${ARGS[@]}"
 fi
@@ -100,7 +102,7 @@ if [ "$SKIP_WEIGHTS" = 0 ]; then
   say "weights ${MODEL_ID} -> ${HF_HOME}"
   doit "HF_HOME='${HF_HOME}' python3 -c \"from huggingface_hub import snapshot_download as d; print(d('${MODEL_ID}'))\" || echo '[stage] HF download failed (no egress?) — upload weights from the laptop, see OPERATOR.md'"
   say "if this fails: no login-node egress — upload from the laptop instead:"
-  say "  rsync -av ~/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B ${USER}@hpc.tue.nl:${HF_HOME}/hub/"
+  say "  tar -C ~/.cache/huggingface/hub -cf - models--Qwen--Qwen3-0.6B | ssh ${USER}@hpc.tue.nl 'mkdir -p ${HF_HOME}/hub && tar -C ${HF_HOME}/hub -xf -'"
 else
   say "--skip-weights: not downloading"
 fi
