@@ -430,6 +430,13 @@ class _Policy:
                                              "o_proj"],   # attention only
                              task_type="CAUSAL_LM")
             self.model = get_peft_model(self.model, cfg)
+        # peft loads from_pretrained adapters FROZEN — make the LoRA params
+        # trainable for every resume/RLCD path (the base stays frozen; this is
+        # idempotent for the fresh get_peft_model path). Without it a resumed
+        # run would hit "optimizer got an empty parameter list".
+        for name, p in self.model.named_parameters():
+            if "lora_" in name:
+                p.requires_grad_(True)
         self.model.to(self.device)
         self.model.train()          # LoRA dropout active during training
         from .decision_readout import resolve_label_ids
