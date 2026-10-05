@@ -216,7 +216,8 @@ def _git_stamp() -> dict:
 # --------------------------------------------------------------------------- #
 def run_loop(policy: DecisionPolicy, args: argparse.Namespace, log_path: Path,
              ckpt_path: Path, *, start_step: int = 0, labels_sha: str = "",
-             stop: threading.Event | None = None) -> None:
+             stop: threading.Event | None = None,
+             has_torch: Callable[[], bool] = _torch_available) -> None:
     """SFT or RLCD over the fixed label set, checkpointing every save-every
     steps, on the last step, and on SIGTERM (checked at step boundaries)."""
     stop = stop or threading.Event()
@@ -284,7 +285,7 @@ def run_loop(policy: DecisionPolicy, args: argparse.Namespace, log_path: Path,
         if do_save:
             pay = save_checkpoint(policy, ckpt_path, state_path, step=step,
                                   seed=seed, args=args, labels_sha=labels_sha,
-                                  phase=args.phase)
+                                  phase=args.phase, has_torch=has_torch)
             if stop.is_set():
                 _log({"event": "sigterm", "step": step})
                 return

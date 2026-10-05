@@ -147,13 +147,14 @@ class TestCursorAndCheckpoint:
         args = stub_args(tmp_path / "full", steps=12, batch=8, val_frac=0.05)
         args.labels = labels
         run_loop(full, args, tmp_path / "full" / "train_log.jsonl",
-                 tmp_path / "full" / "checkpoint")
+                 tmp_path / "full" / "checkpoint", has_torch=lambda: False)
 
         resumed = RecorderStub()
         args2 = stub_args(tmp_path / "res", steps=12, batch=8, val_frac=0.05)
         args2.labels = labels
         run_loop(resumed, args2, tmp_path / "res" / "train_log.jsonl",
-                 tmp_path / "res" / "checkpoint", start_step=5)
+                 tmp_path / "res" / "checkpoint", start_step=5,
+                 has_torch=lambda: False)
         # full run steps 5..11 == resumed steps 0..6 (same epoch/perm math)
         assert resumed.batches == full.batches[5:]
         # batch-level determinism across full process runs too
@@ -161,7 +162,7 @@ class TestCursorAndCheckpoint:
         args3 = stub_args(tmp_path / "full2", steps=12, batch=8, val_frac=0.05)
         args3.labels = labels
         run_loop(full2, args3, tmp_path / "full2" / "train_log.jsonl",
-                 tmp_path / "full2" / "checkpoint")
+                 tmp_path / "full2" / "checkpoint", has_torch=lambda: False)
         assert full2.batches == full.batches
         # every train row appears exactly once per epoch (no dupes, no gaps)
         flat = [x for b in full.batches[:math.ceil(28 / 8)] for x in b]
@@ -194,7 +195,8 @@ class TestCursorAndCheckpoint:
         stop = threading.Event()
         stop.set()                              # kill signal already pending
         run_loop(pol, args, tmp_path / "out" / "train_log.jsonl",
-                 tmp_path / "out" / "checkpoint", start_step=0, stop=stop)
+                 tmp_path / "out" / "checkpoint", start_step=0, stop=stop,
+                 has_torch=lambda: False)
         log = (tmp_path / "out" / "train_log.jsonl").read_text()
         assert '"event": "sigterm"' in log
         assert pol.calls == 1                   # stopped at the step-0 boundary
@@ -236,7 +238,7 @@ class TestSftTorch:
             if len(batch) < 4:
                 batch = rows[:4]
             out = sft_policy.sft_step(batch, [r["p"] for r in batch],
-                                      lr=5e-4, seed=5, epoch=step)
+                                      lr=5e-4, seed=5, epoch=step, step=step)
             losses.append(out.loss)
         assert losses[-1] < 0.70 * losses[0], losses[:3] + losses[-3:]
         assert losses[0] > math.log(21) - 1.0          # near-uniform start
@@ -260,7 +262,8 @@ class TestSftTorch:
                 if len(batch) < 8:
                     batch = rows[:8]
                 out.append(pol.sft_step(batch, [r["p"] for r in batch],
-                                        lr=2e-4, seed=5, epoch=step).loss)
+                                        lr=2e-4, seed=5, epoch=step,
+                                        step=step).loss)
             return out
         pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
                       max_length=1024, seed=5, permute_options=False)
@@ -391,9 +394,9 @@ class TestEvalArmsHub:
         a = sample_orders(probs, [0, 1, 2], seed_base=1000)
         b = sample_orders(probs, [0, 1, 2], seed_base=1000)
         assert a == b
-        assert a[(0, 0)] == 0 and a[(1, 0)] == 1       # deterministic peeks
+        assert a[(0, 0)] == 0 and a[(1, 1)] == 1       # deterministic peeks
         c = sample_orders(probs, [0, 1, 2], seed_base=1001)
-        assert c != b or c[(2, 0)] != b[(2, 0)]        # different seeds -> diff
+        assert c != b or c[(2, 2)] != b[(2, 2)]        # different seeds -> diff
 
     def test_collect_state_dump_hub_shape(self, tmp_path, monkeypatch):
         """Collection rows must carry the full engine snapshot + params the
