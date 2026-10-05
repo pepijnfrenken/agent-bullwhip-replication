@@ -257,8 +257,13 @@ class TestPipeline:
         assert z["J"].shape == (len(rows), len(ORDER_GRID))
         assert z["p"].shape == (len(rows), len(ORDER_GRID))
         for i, r in enumerate(rows):
-            assert list(z["J"][i]) == pytest.approx(r["J"], abs=1e-5)
-            assert list(z["p"][i]) == pytest.approx(r["p"], abs=1e-6)
+            # npz stores J/p as float32 by design (training-side artifact); upcast
+            # before comparing and use a float32-safe tolerance. The old abs=1e-5
+            # was env-fragile: the hub's pytest passed the same bytes while the
+            # cluster's older pytest/numpy scalar-promotion rules failed them.
+            # (C4 lesson: never let test tolerances depend on numpy/pytest version.)
+            assert list(z["J"][i].astype("float64")) == pytest.approx(r["J"], rel=1e-6, abs=1e-6)
+            assert list(z["p"][i].astype("float64")) == pytest.approx(r["p"], rel=1e-6, abs=1e-6)
             assert int(z["week"][i]) == r["week"]
             assert ROLES[int(z["role_idx"][i])] == r["role"]
             assert int(z["argmin"][i]) == r["argmin_idx"]
