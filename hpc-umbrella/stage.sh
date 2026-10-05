@@ -34,7 +34,13 @@ while [ $# -gt 0 ]; do
 done
 
 say() { printf '[stage] %s\n' "$*"; }
-doit() { if [ "$DRY" = 1 ]; then printf '  would: %s\n' "$*"; else eval "$*"; fi; }
+doit() { if [ "$DRY" = 1 ]; then printf '  would: %s\n' "$*"; else printf '  + %s\n' "$*"; eval "$*"; fi; }
+
+# Non-interactive hardening: a credential / host-key prompt on the login node must
+# FAIL FAST with a readable error instead of freezing the staging run. If git says
+# "Permission denied (publickey)" here, fix the checkout key with: ssh -T git@github.com
+export GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/true SSH_ASKPASS=/bin/true
+export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new}"
 
 [ "$DRY" = 1 ] || bw_load_env
 
@@ -89,11 +95,11 @@ if [ "$SKIP_VENV" = 0 ]; then
   TRACK="$( [ "$ENV_MODE" = module ] && echo "TRACK A" || echo "TRACK B" )"
   doit "sed -n '/>>>BEGIN ${TRACK}/,/<<<END ${TRACK}/p' '${REQ_IN}' | grep -v '>>>BEGIN\\|<<<END' > '${REQ_OUT}'"
   say "installing ${TRACK} pins -> ${REQ_OUT}"
-  doit ". '${VENV_DIR}/bin/activate' && python3 -m pip install --upgrade pip"
+  doit ". '${VENV_DIR}/bin/activate' && python3 -m pip install --no-input --upgrade pip"
   if [ "$ENV_MODE" = "pip" ]; then
-    doit ". '${VENV_DIR}/bin/activate' && python3 -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cu121"
+    doit ". '${VENV_DIR}/bin/activate' && python3 -m pip install --no-input 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cu121"
   fi
-  doit ". '${VENV_DIR}/bin/activate' && python3 -m pip install -r '${REQ_OUT}'"
+  doit ". '${VENV_DIR}/bin/activate' && python3 -m pip install --no-input -r '${REQ_OUT}'"
 else
   say "--skip-venv: leaving ${VENV_DIR} untouched"
 fi
