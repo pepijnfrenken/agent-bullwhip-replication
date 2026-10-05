@@ -249,43 +249,42 @@ class TestSftTorch:
         from agent_bullwhip.decision_train import _Policy, save_checkpoint
         import argparse
         rows = synth_rows(24)
-        rng = random.Random(2)
         for r in rows:
-            p = [0.0] * 21
-            p[r["argmin_idx"]] = 0.7
-            rest = 0.3 / 20
-            r["p"] = [rest if i != r["argmin_idx"] else 0.7 for i in range(21)]
+            k = r["argmin_idx"]
+            r["p"] = [0.3 / 20 if i != k else 0.7 for i in range(21)]
+
         def trace(pol, start, steps):
             out = []
             for step in range(start, start + steps):
-                batch = rows[(step * 8) % 24:(step * 8) % 24 + 8]
-                if len(batch) < 8:
-                    batch = rows[:8]
+                batch = rows[(step * 2) % 24:(step * 2) % 24 + 2]
+                if len(batch) < 2:
+                    batch = rows[:2]
                 out.append(pol.sft_step(batch, [r["p"] for r in batch],
                                         lr=2e-4, seed=5, epoch=step,
                                         step=step).loss)
             return out
+
         pol = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
                       max_length=1024, seed=5, permute_options=False)
-        t_full = trace(pol, 0, 6)
-        t_cont = trace(pol, 6, 3)
-        import gc
-        del pol
-        gc.collect()
-        args = argparse.Namespace(model="Qwen/Qwen3-0.6B", lr=2e-4, batch=8,
+        t_full = trace(pol, 0, 4)
+        args = argparse.Namespace(model="Qwen/Qwen3-0.6B", lr=2e-4, batch=2,
                                   epochs=None, permute_options=0, beta_kl=None,
                                   seed=5, val_frac=0.05)
         ck = tmp_path / "ck"
-        save_checkpoint(pol, ck, tmp_path / "state.json", step=5, seed=5,
+        save_checkpoint(pol, ck, tmp_path / "state.json", step=3, seed=5,
                         args=args, labels_sha="x" * 64, phase="sft")
+        t_cont = trace(pol, 4, 2)          # continue AFTER the save boundary
+        import gc
+        del pol
+        gc.collect()
         # resume: fresh policy on the saved adapter + optimizer
         pol2 = _Policy("Qwen/Qwen3-0.6B", device="cpu", phase="sft",
-                       adapter_dir=str(tmp_path / "ck-5"), max_length=1024,
+                       adapter_dir=str(tmp_path / "ck-3"), max_length=1024,
                        seed=5, permute_options=False)
-        pol2.load_optimizer(tmp_path / "ck-5" / "optimizer.pt", lr=2e-4)
-        t_res = trace(pol2, 6, 3)
+        pol2.load_optimizer(tmp_path / "ck-3" / "optimizer.pt", lr=2e-4)
+        t_res = trace(pol2, 4, 2)
         assert t_res == pytest.approx(t_cont, abs=1e-5)
-        assert len(t_full) == 6 and len(t_res) == 3
+        assert len(t_full) == 4 and len(t_res) == 2
 
     def test_rlcd_exact_pg_moves_mass_to_low_cost(self, torch_ok, tmp_path):
         """Exact expected-cost PG must RAISE pi on the low-J action (sign fix:
@@ -389,14 +388,16 @@ class TestEvalArmsHub:
     def test_sample_orders_deterministic_and_seed_dependent(self):
         pytest.importorskip("torch")
         from agent_bullwhip.decision_eval import sample_orders
-        probs = [[1.0, 0.0] + [0.0] * 19, [0.0, 1.0] + [0.0] * 19,
-                 [0.5, 0.5] + [0.0] * 19]
-        a = sample_orders(probs, [0, 1, 2], seed_base=1000)
-        b = sample_orders(probs, [0, 1, 2], seed_base=1000)
+        # rows 0,1 one-hot (deterministic peeks); rows 2..13 random 50/50
+        probs = [[1.0, 0.0] + [0.0] * 19, [0.0, 1.0] + [0.0] * 19] +             [[0.5, 0.5] + [0.0] * 19] * 12
+        run_ids = list(range(len(probs)))
+        a = sample_orders(probs, run_ids, seed_base=1000)
+        b = sample_orders(probs, run_ids, seed_base=1000)
         assert a == b
         assert a[(0, 0)] == 0 and a[(1, 1)] == 1       # deterministic peeks
-        c = sample_orders(probs, [0, 1, 2], seed_base=1001)
-        assert c != b or c[(2, 2)] != b[(2, 2)]        # different seeds -> diff
+        c = sample_orders(probs, run_ids, seed_base=1001)
+        # 14 binary draws: two different seeds collide with prob ~2^-14
+        assert c != b
 
     def test_collect_state_dump_hub_shape(self, tmp_path, monkeypatch):
         """Collection rows must carry the full engine snapshot + params the
