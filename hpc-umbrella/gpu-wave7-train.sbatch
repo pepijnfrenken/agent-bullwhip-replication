@@ -172,5 +172,8 @@ while kill -0 "${PY_PID}" 2>/dev/null; do
 done
 trap - TERM
 echo "=== rlcd seed=${SEED} exit=${RC} at $(date -Is) ==="
+if [ "${RC}" -ne 0 ]; then
+  exit "${RC}"
+fi
 
 echo "=== wave7-train seed=${SEED} done at $(date -Is) ==="
