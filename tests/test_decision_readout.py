@@ -176,6 +176,18 @@ class TestReadoutTorch:
             want = sum(p * o for p, o in zip(rec["probs"], ORDER_GRID))
             assert rec["expect_order"] == pytest.approx(want, abs=1e-3)
 
+    def test_batch_equals_single_within_tolerance(self, rm_and_prompts):
+        """Batching (left padding) must not change any decision: argmax is
+        identical and probs/mass agree within fp32 GEMM noise (~1e-5)."""
+        rm, prompts = rm_and_prompts
+        single = [rm.readout(p) for p in prompts]
+        batch = rm.readout_batch(prompts)
+        for s, b in zip(single, batch):
+            assert s["argmax_index"] == b["argmax_index"]
+            assert abs(s["mass"] - b["mass"]) < 1e-3
+            assert max(abs(a - c) for a, c in zip(s["probs"], b["probs"])) < 1e-3
+            assert b["tokens"] == s["tokens"]
+
     def test_max_length_guard_raises_instead_of_truncating(self, rm_and_prompts):
         rm, prompts = rm_and_prompts
         rm.max_length = 16

@@ -43,6 +43,12 @@ from typing import Callable
 ORDER_GRID = list(range(0, 41, 2))            # 21 options
 LABELS = list(string.ascii_uppercase[:len(ORDER_GRID)])  # A..U
 
+# WAVE7-AUDIT-1 3a P2: pin the hub snapshot the probe numbers were verified on
+# (tokenizer/template bytes come from the snapshot, not the transformers
+# version). stage.sh must pin the same revision on the cluster; --revision=None
+# overrides (for local experiments), but the default is the pinned SHA.
+PINNED_REVISION = "c1899de289a04d12100db370d81485cdf75e47ca"
+
 QUESTION = "How many units should this stage order from its supplier this week?"
 
 # System instruction: repo field text voice (agents.py build_system_prompt) plus
@@ -73,10 +79,16 @@ def _torch_available() -> bool:
 # --------------------------------------------------------------------------- #
 # Prompt rendering (repo field text, engine ctx dicts only)
 # --------------------------------------------------------------------------- #
-def render_options(grid: list[int] | None = None) -> str:
-    """Options block: 'A. order 0 units' ... 'U. order 40 units' (fixed ascending)."""
+def render_options(grid: list[int] | None = None,
+                   require_ascending: bool = True) -> str:
+    """Options block: 'A. order 0 units' ... 'U. order 40 units'.
+
+    The ascending order is a D2 invariant for EVAL rendering. Training option-
+    permutation augmentation (decision_train, audit P0 #1) deliberately renders
+    shuffled grids — caller passes require_ascending=False there.
+    """
     grid = ORDER_GRID if grid is None else grid
-    if list(grid) != sorted(grid):
+    if require_ascending and list(grid) != sorted(grid):
         raise ValueError(f"option grid must be ascending, got {grid}")
     if len(grid) != len(LABELS):
         raise ValueError(f"grid has {len(grid)} options but {len(LABELS)} labels")
@@ -143,7 +155,7 @@ def render_prompt(ctx: dict, tokenizer: object, *, enable_thinking: bool = False
         messages[1] = {"role": "user",
                        "content": f"Material:\n{render_state(ctx)}\n\n"
                                   f"Question:\n{QUESTION}\n\n"
-                                  f"Options:\n{render_options(grid)}"}
+                                  f"Options:\n{render_options(grid, require_ascending=False)}"}
     return tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True,
         enable_thinking=enable_thinking)
@@ -207,7 +219,8 @@ class ReadoutModel:
     def __init__(self, model_name: str, *, device: str | None = None,
                  dtype: str | None = None, local_files_only: bool = True,
                  adapter_dir: str | Path | None = None, seed: int = 12345,
-                 max_length: int | None = 1024):
+                 max_length: int | None = 1024,
+                 revision: str | None = PINNED_REVISION):
         if not _torch_available():
             raise ImportError("decision_readout needs torch — run under the "
                               "torch venv (e.g. /home/pino/bw6-eval/.venvs/jev/bin/python)")
@@ -219,18 +232,20 @@ class ReadoutModel:
         # dtype: "float32" on CPU (hub smoke; the seed's verified numbers),
         # "bfloat16" on GPU unless overridden. `torch_dtype=` is the kwarg name
         # both 4.55.4 and 4.57.6 accept (4.57 renamed it `dtype`; torch_dtype
-        # still works there with a deprecation warning — AUDIT-1 3c P2).
+        # still works there with a deprecation warning — AUDIT-1 §3a/3c P2).
         if dtype is None:
             dtype = "float32" if self.device == "cpu" else "bfloat16"
         torch.manual_seed(seed)
         self.max_length = max_length
+        self.revision = revision
         self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name, local_files_only=local_files_only)
+            model_name, local_files_only=local_files_only, revision=revision)
         self.tokenizer.padding_side = "left"
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         load_kwargs: dict = {
             "local_files_only": local_files_only,
+            "revision": revision,
             "torch_dtype": getattr(torch, dtype),
             "attn_implementation": "sdpa",
         }
@@ -250,6 +265,26 @@ class ReadoutModel:
         if list(self.label_ids) != LABELS:
             raise AssertionError("label order must be fixed A..U (D2)")
         self.prompt_hash = prompt_hash(sample)
+        # logits_to_keep: audit VERIFIED present on cluster pin 4.55.4 (Qwen3
+        # forward slices logits at :494) and it cuts the full-logits
+        # materialization ([B,T,V] -> [B,1,V]); probe it at load time and
+        # fall back to logits[:, -1] if the version gated it differently.
+        self._use_logits_to_keep = self._probe_logits_to_keep()
+
+    def _probe_logits_to_keep(self) -> bool:
+        try:
+            tok = self.tokenizer
+            inp = tok([tok.eos_token or " "], return_tensors="pt",
+                      padding=True).to(self.device)
+            with self._torch.inference_mode():
+                out = self.model(**inp, use_cache=False, logits_to_keep=1)
+            if tuple(out.logits.shape)[-2] == 1:
+                return True
+        except TypeError:
+            pass
+        except Exception:  # noqa: BLE001 - any version quirk -> fallback
+            pass
+        return False
 
     # -- composition --------------------------------------------------------- #
     def compose(self, probs: "object"):  # torch 1-D tensor over the grid
@@ -275,8 +310,14 @@ class ReadoutModel:
                              f"silently truncating a decision prompt")
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         with torch.inference_mode():
-            logits = self.model(**inputs, use_cache=False).logits
-            last = logits[:, -1, :].float()          # left-padded: always real
+            fwd = {"use_cache": False}
+            if self._use_logits_to_keep:
+                fwd["logits_to_keep"] = 1        # cluster-verified on 4.55.4
+            logits = self.model(**inputs, **fwd).logits
+            if self._use_logits_to_keep:
+                last = logits[:, 0, :].float()   # [B, 1, V] -> last position
+            else:
+                last = logits[:, -1, :].float()  # left-padded: always real
             cand = last[:, list(self.label_ids.values())]
             probs = cand.softmax(-1)
             masses = (cand.logsumexp(-1) - last.logsumexp(-1)).exp()
