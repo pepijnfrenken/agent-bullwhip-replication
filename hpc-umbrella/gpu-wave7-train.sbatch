@@ -135,21 +135,29 @@ fi
 echo "sft final adapter: ${SFT_FINAL}"
 
 # --- round 2: on-policy state collection + relabel (AUDIT-1 fix 8) -----------
+# Skipped on a resubmit once the relabel manifest exists (AUDIT-2 P1-5): the
+# relabel writes the manifest LAST, a killed collect exits non-zero before the
+# relabel starts, and a partial SFT exits 75 (never reaches this point) — so
+# an existing manifest means the round-2 labels RLCD already trained on.
 POLICY_STATES="${RESULTS_DIR}/wave7_labels/policy_states_seed${SEED}.jsonl"
 POLICY_LABELS="${RESULTS_DIR}/wave7_labels/policy_labels_seed${SEED}"
-python3 -u -m agent_bullwhip.decision_eval \
-  --model "${MODEL_ID}" \
-  --adapter "${SFT_FINAL}" \
-  --collect-states "${POLICY_STATES}" \
-  --n-collect "${W7_N_COLLECT}" \
-  --collect-seed "$((7000 + SEED))" || exit $?
+if [ -s "${POLICY_LABELS}.manifest.json" ]; then
+  echo "round 2: ${POLICY_LABELS}.manifest.json exists — reusing, skipping collect + relabel"
+else
+  python3 -u -m agent_bullwhip.decision_eval \
+    --model "${MODEL_ID}" \
+    --adapter "${SFT_FINAL}" \
+    --collect-states "${POLICY_STATES}" \
+    --n-collect "${W7_N_COLLECT}" \
+    --collect-seed "$((7000 + SEED))" || exit $?
 
-python3 -u -m agent_bullwhip.decision_labeler \
-  --states-jsonl "${POLICY_STATES}" \
-  --seed "$((6000 + SEED))" \
-  --processes "${SLURM_CPUS_PER_TASK}" \
-  --hash-rows 2000 \
-  --out "${POLICY_LABELS}" || exit $?
+  python3 -u -m agent_bullwhip.decision_labeler \
+    --states-jsonl "${POLICY_STATES}" \
+    --seed "$((6000 + SEED))" \
+    --processes "${SLURM_CPUS_PER_TASK}" \
+    --hash-rows 2000 \
+    --out "${POLICY_LABELS}" || exit $?
+fi
 
 # --- stage 2: RLCD from the SFT checkpoint on the on-policy states ------------
 python3 -u -m agent_bullwhip.decision_train \
