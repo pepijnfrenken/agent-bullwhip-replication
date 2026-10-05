@@ -76,6 +76,21 @@ if [ ! -f "${LABELS_JSONL}" ]; then
   exit 1
 fi
 
+# Record which label set is being trained on (canonical hub hash:
+# 45d9f40d6ffc4ce93b0caaf7e9233c1e22e6b726efc980d92ffd8dc13e41f51b).
+# Warn-only by default; set W7_EXPECT_LABEL_HASH=<hash> to make a mismatch fatal.
+LABEL_MANIFEST="${RESULTS_DIR}/wave7_labels/labels.manifest.json"
+if [ -f "${LABEL_MANIFEST}" ]; then
+  LABEL_HASH="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('hash','? '))" "${LABEL_MANIFEST}")"
+  echo "labels: ${LABELS_JSONL} hash=${LABEL_HASH}"
+  if [ -n "${W7_EXPECT_LABEL_HASH:-}" ] && [ "${LABEL_HASH}" != "${W7_EXPECT_LABEL_HASH}" ]; then
+    echo "FATAL: label hash ${LABEL_HASH} != expected ${W7_EXPECT_LABEL_HASH}" >&2
+    exit 1
+  fi
+else
+  echo "WARN: no label manifest at ${LABEL_MANIFEST} — cannot report the label hash" >&2
+fi
+
 echo "=== wave7-train seed=${SEED} | sft_steps=${W7_SFT_STEPS} rlcd_steps=${W7_RLCD_STEPS} lr=${W7_LR} at $(date -Is) ==="
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
 
