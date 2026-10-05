@@ -76,9 +76,9 @@ python3 -u -m agent_bullwhip.decision_labeler \
 
 echo "=== labeler exit=$? at $(date -Is) ==="
 echo "manifest:"
-python3 - <<'PY'
-import json
-m = json.load(open("${LABEL_OUT}.manifest.json"))
+python3 - "${LABEL_OUT}.manifest.json" <<'PY'
+import json, sys
+m = json.load(open(sys.argv[1]))
 for k in ("n_states", "flat_rate", "edge_argmin_rate",
           "mean_target_entropy_nats", "hash", "continuation_theta",
           "continuation_lam", "wall_sec"):
