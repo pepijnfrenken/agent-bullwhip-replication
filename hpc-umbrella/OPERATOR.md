@@ -272,3 +272,10 @@ Failure playbook additions: labels hash ≠ hub → different code/knobs, do not
 train on them; `--resume` refuses a changed labels file (`labels_sha`); RLCD
 needs `--base-adapter` (an sft `checkpoint-*` dir — the sbatch picks the final
 one automatically).
+
+Note for running the full pytest suite under ANY torch env (jev venv, cluster):
+the wave-6 test `test_torch_available_reports_false_on_hub` asserts the hub has
+no torch and fails by design there — deselect it:
+`pytest tests/ -q -k "not torch_available_reports_false_on_hub"`.
+Everything wave-7 passes on both the torch-less hub (308 pass, 11 skip) and the
+torch env (readout 16/16, decision_train 17/17, rest 285 pass).
