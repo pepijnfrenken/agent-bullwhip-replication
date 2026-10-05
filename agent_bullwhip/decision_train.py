@@ -329,6 +329,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--device", default=None)
     ap.add_argument("--dtype", default=None)
     ap.add_argument("--max-length", type=int, default=1024)
+    ap.add_argument("--grad-ckpt", action="store_true",
+                    help="recompute activations instead of retaining them "
+                         "(needed to fit batch 32 on a 22 GiB L4)")
     args = ap.parse_args(argv)
     if args.phase == "rlcd" and not args.base_adapter:
         ap.error("--phase rlcd requires --base-adapter (an SFT checkpoint dir)")
@@ -369,7 +372,8 @@ def main(argv: list[str] | None = None) -> int:
                      revision=args.revision, phase=args.phase,
                      base_adapter=args.base_adapter, adapter_dir=adapter_dir,
                      max_length=args.max_length, seed=seed,
-                     permute_options=bool(args.permute_options))
+                     permute_options=bool(args.permute_options),
+                     grad_ckpt=bool(args.grad_ckpt))
     if adapter_dir:
         opt = Path(adapter_dir) / "optimizer.pt"
         if opt.exists():
@@ -388,12 +392,36 @@ def main(argv: list[str] | None = None) -> int:
 # --------------------------------------------------------------------------- #
 # Real policy (torch + peft — lazy imports)
 # --------------------------------------------------------------------------- #
+def _enable_grad_checkpointing(model) -> None:
+    """Recompute activations instead of retaining all layers' worth.
+
+    Batch 32 x ~700-token prompts keeps ~21 GiB of activations alive on a
+    0.6B model: the L4 target (22 GiB) OOMs in the first SFT step without
+    this. `use_reentrant=False` is required so the frozen base still feeds
+    gradients to the first checkpointed block; `enable_input_require_grads`
+    makes the embedding outputs require grad for the same reason.
+    """
+    try:
+        model.enable_input_require_grads()
+    except AttributeError:
+        pass
+    try:
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": False})
+    except TypeError:      # older transformers: no kwargs passthrough
+        model.gradient_checkpointing_enable()
+    cfg = getattr(model, "config", None)
+    if cfg is not None:
+        cfg.use_cache = False
+
+
 class _Policy:
     def __init__(self, model_name: str, *, device: str | None = None,
                  dtype: str | None = None, revision: str | None = None,
                  phase: str = "sft", base_adapter: str | None = None,
                  adapter_dir: str | None = None, max_length: int = 1024,
-                 seed: int = 12345, permute_options: bool = True):
+                 seed: int = 12345, permute_options: bool = True,
+                 grad_ckpt: bool = False):
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
         from peft import LoraConfig, get_peft_model, PeftModel
@@ -440,6 +468,8 @@ class _Policy:
                 p.requires_grad_(True)
         self.model.to(self.device)
         self.model.train()          # LoRA dropout active during training
+        if grad_ckpt:
+            _enable_grad_checkpointing(self.model)
         from .decision_readout import resolve_label_ids
         sample = render_prompt({"role": "retailer", "t": 0, "on_hand": 0,
                                 "backlog": 0, "outstanding": 0,

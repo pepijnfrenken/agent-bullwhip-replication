@@ -67,6 +67,13 @@ W7_SFT_STEPS="${W7_SFT_STEPS:-120}"              # optimizer batches (batch 32)
 W7_RLCD_STEPS="${W7_RLCD_STEPS:-40}"
 W7_SAVE_EVERY="${W7_SAVE_EVERY:-10}"
 W7_N_COLLECT="${W7_N_COLLECT:-40}"               # curriculum episodes for round-2
+W7_BATCH="${W7_BATCH:-32}"                       # spec batch 32; lower only if forced
+W7_MAX_LEN="${W7_MAX_LEN:-1024}"
+W7_GRAD_CKPT="${W7_GRAD_CKPT:-1}"                # activation recompute: the 22 GiB
+                                                 # L4 OOMs batch 32 without it
+GRAD_CKPT_FLAG=()
+if [ "${W7_GRAD_CKPT}" = "1" ]; then GRAD_CKPT_FLAG=(--grad-ckpt); fi
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 LABELS_JSONL="${RESULTS_DIR}/wave7_labels/labels.jsonl"
 SFT_OUT="results/wave7_sft_seed${SEED}"
 RLCD_OUT="results/wave7_rlcd_seed${SEED}"
@@ -99,7 +106,9 @@ python3 -u -m agent_bullwhip.decision_train \
   --model "${MODEL_ID}" \
   --labels "${LABELS_JSONL}" \
   --phase sft \
-  --steps "${W7_SFT_STEPS}" --batch 32 --lr "${W7_LR}" \
+  --steps "${W7_SFT_STEPS}" --batch "${W7_BATCH}" --lr "${W7_LR}" \
+  --max-length "${W7_MAX_LEN}" \
+  "${GRAD_CKPT_FLAG[@]}" \
   --save-every "${W7_SAVE_EVERY}" \
   --seed "${SEED}" \
   --out "${SFT_OUT}" --resume &
@@ -148,7 +157,9 @@ python3 -u -m agent_bullwhip.decision_train \
   --labels "${POLICY_LABELS}.jsonl" \
   --phase rlcd \
   --base-adapter "${SFT_FINAL}" \
-  --steps "${W7_RLCD_STEPS}" --batch 32 --lr "${W7_LR}" \
+  --steps "${W7_RLCD_STEPS}" --batch "${W7_BATCH}" --lr "${W7_LR}" \
+  --max-length "${W7_MAX_LEN}" \
+  "${GRAD_CKPT_FLAG[@]}" \
   --beta-kl 0.02 \
   --save-every "${W7_SAVE_EVERY}" \
   --seed "${SEED}" \
