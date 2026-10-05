@@ -80,7 +80,7 @@ class RecorderStub:
     def _ids(self, rows):
         return [(r["episode"], r["week"], r["role"]) for r in rows]
 
-    def sft_step(self, rows, targets, lr, seed, epoch):
+    def sft_step(self, rows, targets, lr, seed, epoch, step=None):
         self.batches.append(self._ids(rows))
         self.calls += 1
         ent = -sum(x * math.log(x) for p in targets for x in p if x > 0)

@@ -104,7 +104,7 @@ class DecisionPolicy(Protocol):
     tok: object
 
     def sft_step(self, rows: list[dict], targets: list[list[float]],
-                 lr: float, seed: int, epoch: int) -> StepResult: ...
+                 lr: float, seed: int, epoch: int, step: int) -> StepResult: ...
     def rlcd_step(self, rows: list[dict], j_vals: list[list[float]],
                   lr: float, beta_kl: float, sample_k: int, seed: int,
                   step: int) -> StepResult: ...
@@ -257,7 +257,7 @@ def run_loop(policy: DecisionPolicy, args: argparse.Namespace, log_path: Path,
                                    seed=seed, step=step)
         else:
             out = policy.sft_step(batch_rows, targets, lr=args.lr,
-                                  seed=seed, epoch=epoch)
+                                  seed=seed, epoch=epoch, step=step)
         rec = {"step": step, "phase": args.phase, "epoch": epoch,
                "loss": out.loss, "wall": round(time.time() - t0, 1)}
         for k in ("loss_kl", "grad_norm", "mean_target_entropy", "train_top1"):
@@ -504,10 +504,16 @@ class _Policy:
 
     # -- stage 1: soft-target CE -------------------------------------------- #
     def sft_step(self, rows: list[dict], targets: list[list[float]],
-                 lr: float, seed: int, epoch: int) -> StepResult:
+                 lr: float, seed: int, epoch: int, step: int) -> StepResult:
         import torch
         if len(rows) != len(targets):
             raise ValueError("rows/targets length mismatch")
+        # per-step torch seeding: LoRA dropout draws depend only on
+        # (seed, epoch, step), so a resumed run reproduces every forward
+        # EXACTLY (the audit's "torch RNG not checkpointed" gap closed by
+        # derivation, which needs no state file entry).
+        torch.manual_seed(int(hashlib.sha256(
+            f"{seed}:sft:{epoch}:{step}".encode()).hexdigest()[:8], 16))
         # render with per-sample option permutation (deterministic per
         # (seed, epoch, row-identity) — the audit P0 #1 augmentation)
         prompts, tgt = [], []
