@@ -427,6 +427,26 @@ def _enable_grad_checkpointing(model) -> None:
         cfg.use_cache = False
 
 
+def _attach_adapter(model, *, phase: str, base_adapter: str | None,
+                    adapter_dir: str | None):
+    """Exactly ONE adapter on the base (AUDIT-2 P1-3): the resume checkpoint,
+    else the SFT anchor (rlcd), else a fresh LoRA (sft). Stacking
+    PeftModel(PeftModel(base, sft), rlcd_ckpt) re-initialises the shared
+    `default` adapter (lora_B == 0 -> the base model) and saves checkpoints
+    with a nested key prefix that later load as the base. RLCD checkpoints
+    already carry the SFT-initialised adapter, trained in place."""
+    from peft import LoraConfig, PeftModel, get_peft_model
+    if adapter_dir is not None:
+        return PeftModel.from_pretrained(model, adapter_dir)
+    if phase == "rlcd":
+        return PeftModel.from_pretrained(model, base_adapter)
+    cfg = LoraConfig(r=8, lora_alpha=16, lora_dropout=0.05,
+                     target_modules=["q_proj", "k_proj", "v_proj",
+                                     "o_proj"],   # attention only
+                     task_type="CAUSAL_LM")
+    return get_peft_model(model, cfg)
+
+
 class _Policy:
     def __init__(self, model_name: str, *, device: str | None = None,
                  dtype: str | None = None, revision: str | None = None,
@@ -436,7 +456,6 @@ class _Policy:
                  grad_ckpt: bool = False):
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        from peft import LoraConfig, get_peft_model, PeftModel
         self._torch = torch
         self.phase = phase
         self.seed = seed
@@ -459,18 +478,9 @@ class _Policy:
         if self.tok.pad_token_id is None:
             self.tok.pad_token = self.tok.eos_token
         self.model = AutoModelForCausalLM.from_pretrained(model_name, **load_kwargs)
-        # Adapter stack: sft anchor (rlcd) -> resume state (checkpoint dir) ->
-        # fresh LoRA (sft, no resume).
-        if phase == "rlcd":
-            self.model = PeftModel.from_pretrained(self.model, base_adapter)
-        if adapter_dir is not None:
-            self.model = PeftModel.from_pretrained(self.model, adapter_dir)
-        elif phase == "sft":
-            cfg = LoraConfig(r=8, lora_alpha=16, lora_dropout=0.05,
-                             target_modules=["q_proj", "k_proj", "v_proj",
-                                             "o_proj"],   # attention only
-                             task_type="CAUSAL_LM")
-            self.model = get_peft_model(self.model, cfg)
+        self.model = _attach_adapter(self.model, phase=phase,
+                                     base_adapter=base_adapter,
+                                     adapter_dir=adapter_dir)
         # peft loads from_pretrained adapters FROZEN — make the LoRA params
         # trainable for every resume/RLCD path (the base stays frozen; this is
         # idempotent for the fresh get_peft_model path). Without it a resumed
