@@ -106,7 +106,7 @@ fi
 
 if [ "$SKIP_WEIGHTS" = 0 ]; then
   say "weights ${MODEL_ID} -> ${HF_HOME}"
-  doit "HF_HOME='${HF_HOME}' python3 -c \"from huggingface_hub import snapshot_download as d; print(d('${MODEL_ID}'))\" || echo '[stage] HF download failed (no egress?) — upload weights from the laptop, see OPERATOR.md'"
+  doit "HF_HOME='${HF_HOME}' python3 -c \"from huggingface_hub import snapshot_download as d; print(d('${MODEL_ID}', revision='${MODEL_REVISION}'))\" || echo '[stage] HF download failed (no egress?) — upload weights from the laptop, see OPERATOR.md'"
   say "if this fails: no login-node egress — upload from the laptop instead:"
   say "  tar -C ~/.cache/huggingface/hub -cf - models--Qwen--Qwen3-0.6B | ssh ${USER}@hpc.tue.nl 'mkdir -p ${HF_HOME}/hub && tar -C ${HF_HOME}/hub -xf -'"
 else

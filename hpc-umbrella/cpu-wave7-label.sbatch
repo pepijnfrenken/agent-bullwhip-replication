@@ -66,15 +66,19 @@ LABEL_OUT="${RESULTS_DIR}/wave7_labels/labels"
 echo "=== wave7-label | seed=${W7_LABEL_SEED} episodes=${W7_LABEL_EPISODES} M=${W7_LABEL_M} procs=${SLURM_CPUS_PER_TASK} at $(date -Is) ==="
 echo "python: $(command -v python3) $(python3 -V 2>&1)"
 
+RC=0
 python3 -u -m agent_bullwhip.decision_labeler \
   --seed "${W7_LABEL_SEED}" \
   --episodes "${W7_LABEL_EPISODES}" \
   --m-futures "${W7_LABEL_M}" \
   --processes "${SLURM_CPUS_PER_TASK}" \
   --hash-rows 2000 \
-  --out "${LABEL_OUT}"
+  --out "${LABEL_OUT}" || RC=$?
 
-echo "=== labeler exit=$? at $(date -Is) ==="
+echo "=== labeler exit=${RC} at $(date -Is) ==="
+if [ "${RC}" -ne 0 ]; then
+  exit "${RC}"
+fi
 echo "manifest:"
 python3 - "${LABEL_OUT}.manifest.json" <<'PY'
 import json, sys

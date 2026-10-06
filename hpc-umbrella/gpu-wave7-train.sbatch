@@ -11,9 +11,11 @@
 #   3. RLCD from the SFT checkpoint on those states
 #      -> results/wave7_rlcd_seed<N>/   (the SFT adapter is NOT mutated)
 #
-# Walltime 4h is generous (measured SFT throughput: ~1-2 s/batch on an L4 for
-# batch 32). Slurm sends SIGTERM TERM_GRACE_SECONDS before the kill; the trap
-# forwards it to python, which checkpoints and exits (--save-every / --resume).
+# Walltime 4h is generous (AUDIT-2 estimate: ~1-2 s/step on an L4 for batch 32,
+# i.e. SFT ~2-4 min + collect ~1-2 min + relabel ~4-10 min + RLCD ~1-2 min —
+# [UNVERIFIED on L4], re-check the first run's log). Slurm sends SIGTERM
+# TERM_GRACE_SECONDS before the kill; the trap forwards it
+# to python, which checkpoints and exits (--save-every / --resume).
 # Resubmit the same array task to continue.
 #
 #   Submit:  cd /scratch-shared/$USER/bullwhip/kit && sbatch gpu-wave7-train.sbatch
@@ -54,7 +56,7 @@ mkdir -p "${LOG_DIR}"
 cd "${REPO_DIR}"
 
 REPO_HEAD="$(git -C "${REPO_DIR}" rev-parse HEAD 2>/dev/null || echo unknown)"
-REPO_DIRTY="$(git -C "${REPO_DIR}" status --porcelain 2>/dev/null | wc -l)"
+REPO_DIRTY="$(git -C "${REPO_DIR}" status --porcelain 2>/dev/null | wc -l || true)"
 echo "repo ${REPO_DIR} HEAD=${REPO_HEAD} dirty_files=${REPO_DIRTY}"
 if [ -n "${EXPECTED_COMMIT:-}" ] && [ "${REPO_HEAD}" != "${EXPECTED_COMMIT}" ]; then
   echo "FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but repo HEAD=${REPO_HEAD} — refusing to run stale code" >&2
@@ -109,7 +111,15 @@ if [ -n "${W7_EXPECT_LABEL_SHA256:-}" ] && [ "${LABEL_SHA256}" != "${W7_EXPECT_L
 fi
 
 echo "=== wave7-train seed=${SEED} | sft_steps=${W7_SFT_STEPS} rlcd_steps=${W7_RLCD_STEPS} lr=${W7_LR} at $(date -Is) ==="
+echo "python: $(command -v python3) $(python3 -V 2>&1)"
+python3 -c 'import torch; print("torch", torch.__version__, "cuda", torch.cuda.is_available())' || true
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
+
+# One logging trap for the whole script (AUDIT-2 P3-4): Slurm's TERM@600 must
+# always leave a trace and reach whatever python is running. Resetting the trap
+# to default (`trap - TERM`) killed bash silently and orphaned the child.
+STAGE="startup"
+trap 'echo "[$(date -Is)] SIGTERM from Slurm -> stage=${STAGE}; forwarding to python ${PY_PID:-none}"; if [ -n "${PY_PID:-}" ] && kill -0 "${PY_PID}" 2>/dev/null; then kill -TERM "${PY_PID}" 2>/dev/null || true; fi' TERM
 
 # --- stage 1: SFT -----------------------------------------------------------
 python3 -u -m agent_bullwhip.decision_train \
@@ -118,26 +128,35 @@ python3 -u -m agent_bullwhip.decision_train \
   --phase sft \
   --steps "${W7_SFT_STEPS}" --batch "${W7_BATCH}" --lr "${W7_LR}" \
   --max-length "${W7_MAX_LEN}" \
-  "${GRAD_CKPT_FLAG[@]}" \
+  ${GRAD_CKPT_FLAG[@]+"${GRAD_CKPT_FLAG[@]}"} \
   --save-every "${W7_SAVE_EVERY}" \
   --seed "${SEED}" \
   --out "${SFT_OUT}" --resume &
 PY_PID=$!
-trap 'echo "[$(date -Is)] SIGTERM from Slurm -> forwarding to python ${PY_PID}"; kill -TERM "${PY_PID}" 2>/dev/null || true' TERM
+STAGE="sft"
 RC=0
 while kill -0 "${PY_PID}" 2>/dev/null; do
   if wait "${PY_PID}"; then RC=0; else RC=$?; fi
 done
-trap - TERM
 echo "=== sft seed=${SEED} exit=${RC} at $(date -Is) ==="
 if [ "${RC}" -ne 0 ]; then
   exit "${RC}"
 fi
 
-# final SFT adapter = highest checkpoint dir (resume-safe lookup)
-# NB: keep the `|| true` — under `set -euo pipefail` a failing `ls` (no matches,
-# exit 2) would otherwise kill the script silently, before the FATAL below.
-SFT_FINAL="$(ls -d "${SFT_OUT}"/checkpoint-* 2>/dev/null | sort -t- -k2 -n | tail -1 || true)"
+# Final SFT adapter: the authoritative pointer is state.json's checkpoint_dir
+# (AUDIT-2 P3-1); the glob stays as a fallback. NB: keep the `|| true` — under
+# `set -euo pipefail` a failing `ls` (no matches, exit 2) would otherwise kill
+# the script silently, before the FATAL below.
+SFT_FINAL=""
+if [ -s "${SFT_OUT}/state.json" ]; then
+  SFT_DIRNAME="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("checkpoint_dir") or "")' "${SFT_OUT}/state.json" 2>/dev/null || true)"
+  if [ -n "${SFT_DIRNAME}" ] && [ -d "${SFT_OUT}/${SFT_DIRNAME}" ]; then
+    SFT_FINAL="${SFT_OUT}/${SFT_DIRNAME}"
+  fi
+fi
+if [ -z "${SFT_FINAL}" ]; then
+  SFT_FINAL="$(ls -d "${SFT_OUT}"/checkpoint-* 2>/dev/null | sort -t- -k2 -n | tail -1 || true)"
+fi
 if [ -z "${SFT_FINAL}" ]; then
   echo "FATAL: no sft checkpoint dirs under ${SFT_OUT}" >&2
   exit 1
@@ -177,18 +196,17 @@ python3 -u -m agent_bullwhip.decision_train \
   --base-adapter "${SFT_FINAL}" \
   --steps "${W7_RLCD_STEPS}" --batch "${W7_BATCH}" --lr "${W7_LR}" \
   --max-length "${W7_MAX_LEN}" \
-  "${GRAD_CKPT_FLAG[@]}" \
+  ${GRAD_CKPT_FLAG[@]+"${GRAD_CKPT_FLAG[@]}"} \
   --beta-kl 0.02 \
   --save-every "${W7_SAVE_EVERY}" \
   --seed "${SEED}" \
   --out "${RLCD_OUT}" --resume &
 PY_PID=$!
-trap 'echo "[$(date -Is)] SIGTERM from Slurm -> forwarding to python ${PY_PID}"; kill -TERM "${PY_PID}" 2>/dev/null || true' TERM
+STAGE="rlcd"
 RC=0
 while kill -0 "${PY_PID}" 2>/dev/null; do
   if wait "${PY_PID}"; then RC=0; else RC=$?; fi
 done
-trap - TERM
 echo "=== rlcd seed=${SEED} exit=${RC} at $(date -Is) ==="
 if [ "${RC}" -ne 0 ]; then
   exit "${RC}"
