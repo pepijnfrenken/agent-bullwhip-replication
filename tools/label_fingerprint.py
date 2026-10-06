@@ -2,10 +2,13 @@
 """Fingerprint a wave-7 label set at several precision levels.
 
 Purpose: tell "byte-identical rows" apart from "identical decisions, ULP-level
-float noise" between two machines (hub 5-process run vs Umbrella 96-process run,
-likely different numpy builds). The manifest `hash` covers full-precision floats
-of the first `hash_rows` rows, so a single last-bit difference breaks it while
-the decisions and the aggregate stats can still be identical.
+float noise" between two machines (hub 5-process run vs Umbrella 96-process run).
+Last-bit drift root cause (verified 2026-10-06): CPython 3.12 switched builtin
+sum() for floats to Neumaier summation (gh-100425); the labeler's mean/std/
+softmax-denominator sums follow the running Python minor (hub 3.13 vs cluster
+3.11.3) — not numpy, not glibc, not exp. The manifest `hash` covers full-precision
+float text of the first `hash_rows` rows, so a single last-bit difference breaks
+it while the decisions and the aggregate stats can still be identical.
 
 Run the SAME command on both machines and compare the printed lines:
 

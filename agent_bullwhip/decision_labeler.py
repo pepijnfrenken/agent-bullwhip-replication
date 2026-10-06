@@ -37,9 +37,14 @@ WAVE7-AUDIT-1 fixes baked in (re-read at P2 freeze, 2026-10-05):
 Determinism: every rng is derived from a stable SHA-256 string
 (seed:ep:w:role), never from process/iteration order, so multiprocessing cannot
 change the output. The engine cost arithmetic is plain Python floats (no numpy
-in the J path) — cross-interpreter reproducible (AUDIT-1 INCONCLUSIVE):
-`--hash-rows` writes the SHA-256 of the first N jsonl rows so the hub and the
-cluster can prove byte-identical labels.
+in the J path). Decision content (J, argmin, flat, ctx) is bit-identical across
+machines; tau/p carry <=1 ulp differences across Python MINORS because builtin
+sum() of floats is Neumaier-compensated since CPython 3.12 (gh-100425) and the
+three float-critical sums below use it (hub py3.13 vs cluster py3.11.3:
+25063/95200 rows differ in tau, 54255 in p — 2026-10-06 forensics in
+hpc-umbrella/HASH-FORENSICS.md). `--hash-rows` writes the SHA-256 of the first
+N jsonl rows; compare machines with tools/label_fingerprint.py +
+hpc-umbrella/labels_probe.py (decisions + J + p-12dp), not raw bytes.
 
 Torch-free: this module imports numpy only (npz mirror); prompt rendering
 happens in the trainer, which owns the tokenizer.
@@ -274,6 +279,11 @@ def softmax_minus_j(j_vals: list[float], tau_scale: float
     """Targets p* ∝ exp(-J/tau_s), tau_s = tau_scale * max(std(J), 1e-3).
     Returns (p, tau_s, flat). Flat (std below threshold) -> uniform targets."""
     n = len(j_vals)
+    # NOTE (2026-10-06): builtin sum() of floats is Neumaier-compensated since
+    # CPython 3.12 (gh-100425); on <=3.11 it is plain left-to-right. This sum,
+    # the std sum below, and z at the end are the only cross-machine float
+    # dependence in a row (<=1 ulp in tau/p; J above is exact binary fractions
+    # and immune). Cross-version byte-identity would need math.fsum here.
     mean = sum(j_vals) / n
     std = math.sqrt(sum((j - mean) ** 2 for j in j_vals) / n)
     flat = std < 1e-3
@@ -285,7 +295,7 @@ def softmax_minus_j(j_vals: list[float], tau_scale: float
     # underflow when tau is tiny relative to the J level (late-week states can
     # carry huge flat-ish costs — the naive exp(-j/tau) sums to 0).
     e = [math.exp(-(j - jmin) / tau) for j in j_vals]
-    z = sum(e)
+    z = sum(e)  # builtin sum(): Neumaier since 3.12 — see note at the top
     return [x / z for x in e], tau, False
 
 

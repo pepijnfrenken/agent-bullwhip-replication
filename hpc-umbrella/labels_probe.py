@@ -10,7 +10,8 @@ Between two machines running the same labeler code + knobs, these must match:
                                           iff float differences are last-ulp)
   row2k                                  (must equal the manifest "hash" value
                                           on the same machine — sanity check)
-p_raw / row2k may differ across machines when math.exp differs by 1 ulp.
+p_raw / row2k may differ across machines (<=1 ulp) via the CPython 3.12 builtin
+sum() change — see hpc-umbrella/HASH-FORENSICS.md. exp/libm is NOT the cause.
 """
 import hashlib
 import json

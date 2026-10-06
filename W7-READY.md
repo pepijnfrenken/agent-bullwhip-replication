@@ -250,6 +250,13 @@ cd "$B/kit" && sbatch gpu-wave7-train.sbatch
   - Record the value in the submission notes. It must equal `labels_sha` in every
     `wave7_sft_seed*/train_log.jsonl`.
 
+**Addendum (2026-10-06, post-run):** both hash values above are now explained: the brief's
+`59a6b39d…` is the cluster-side manifest hash and `45d9f40d…` is the hub-side reference;
+the difference is the CPython 3.12 `sum()` change (hub 3.13 vs cluster 3.11.3), not code
+or knobs. 25,063/95,200 rows differ in tau and 54,255 in p, all at the last ulp;
+J/decisions/ctx are bit-identical. The run's gates used the cluster value plus its
+full-file sha256 — correct. Full forensics: `hpc-umbrella/HASH-FORENSICS.md`.
+
 ## Item 5b: watching the first run
 
 Slurm log: `/scratch-shared/$USER/bullwhip/logs/wave7-train_<jobid>_<task>.log`. Per-step metrics are

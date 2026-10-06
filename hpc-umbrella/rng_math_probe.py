@@ -9,6 +9,11 @@ separately, so a difference can be attributed to CPython code (rng layer) vs
 the platform libm (math layer).
 
 Hub (py 3.13.12) expected values are in the wave-7 hash-forensics message.
+
+Result (2026-10-06): every fingerprint MATCHED across hub/cluster — rng and libm
+are NOT the hash-difference source. It is CPython's builtin sum(): 3.12 switched
+float summation to Neumaier (gh-100425); hub 3.13 vs cluster 3.11.3.
+See hpc-umbrella/HASH-FORENSICS.md.
 """
 import hashlib
 import math

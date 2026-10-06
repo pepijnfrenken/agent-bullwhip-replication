@@ -231,8 +231,12 @@ gate), three new sbatch files (label, train, eval). Sequence (with Pino):
 2. **Labels on CPU** (`tue.cpu3.q`, no GPU, ~minutes):
    `cd /scratch-shared/$USER/bullwhip/kit && sbatch cpu-wave7-label.sbatch`
    → `results/wave7_labels/labels.{jsonl,npz,manifest.json}`. The job prints the
-   manifest hash; **compare it with a hub run of the same knobs** (command in
-   the sbatch header): byte-identical labels are the C4 determinism proof.
+   manifest hash; compare a hub run of the same knobs with
+   `tools/label_fingerprint.py` + `hpc-umbrella/labels_probe.py`: the
+   determinism check is decisions + J bit-identical and p equal to 12 significant
+   digits. The full hash is byte-identical only when both sides run the same
+   Python minor (hub 3.13 vs cluster 3.11.3 differ at the last ulp via the
+   CPython 3.12 `sum()` change; verified benign — `hpc-umbrella/HASH-FORENSICS.md`).
    Guard rails built in: labeler seed 6000 (eval band 1000–1029 rejected by the
    code), CRN E[J] over M=16 futures, fixed continuation floor (3.5, 0.2),
    late-week states (t ≥ 34) excluded, edge-argmin/flat rates reported.
@@ -280,8 +284,11 @@ gate), three new sbatch files (label, train, eval). Sequence (with Pino):
    template bytes drift. `HF_HUB_OFFLINE=1` is exported by `bw_load_env` and
    both wave-7 sbatch files.
 
-Failure playbook additions: labels hash ≠ hub → different code/knobs, do not
-train on them; `--resume` refuses a changed labels file (`labels_sha`); RLCD
+Failure playbook additions: labels hash ≠ hub → run `tools/label_fingerprint.py`
++ `hpc-umbrella/labels_probe.py` first: decisions + J + p(12dp) all equal =
+benign runtime-version ulps (see `hpc-umbrella/HASH-FORENSICS.md`), lock the
+local SHA256 gate and proceed; any decision/J difference = different code/knobs,
+do not train on them; `--resume` refuses a changed labels file (`labels_sha`); RLCD
 needs `--base-adapter` (an sft `checkpoint-*` dir — the sbatch picks the final
 one automatically).
 
