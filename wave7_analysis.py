@@ -225,10 +225,13 @@ def main() -> None:
     L: list[str] = []
     L.append("# Wave-7 gate readout")
     L.append("")
-    L.append(f"eval dir: `{edir}` · arms found: **{len(arms)}** of 21 · "
+    # The designed readout = 21 arms: 3 combos x 7 arms (AUDIT-1/D5) — step-argmax (n=1),
+    # step-sampled (n=30, seeds 1000+i), noisy-argmax (n=30). Others are not expected.
+    expected = [(a, m, p) for a in ARMS
+                for m, p in (("argmax", "step"), ("sampled", "step"), ("argmax", "noisy"))]
+    L.append(f"eval dir: `{edir}` · arms found: **{sum((k in arms) for k in expected)}** of {len(expected)} · "
              f"perm probes: **{len(perms)}** · floors: `{args.floors}`")
-    missing = [f"w7-{a}-{m}-{p}" for a in ARMS for m in MODES for p in PATTERNS
-               if (a, m, p) not in arms]
+    missing = [f"w7-{a}-{m}-{p}" for (a, m, p) in expected if (a, m, p) not in arms]
     if missing:
         L.append("")
         L.append(f"missing arms ({len(missing)}): " + ", ".join(f"`{m}`" for m in missing))
@@ -256,7 +259,8 @@ def main() -> None:
              "Per AUDIT-1 fix 5 the inferential read is the **noisy n=30** arm; the step-sampled "
              "arm is the wave-6 T=0.7 counterpart; the step-argmax arm is n=1 (single labeled cost). "
              "For arms with fewer than 30 pairs the win threshold scales as ceil(2n/3) (deviation "
-             "recorded, never silent).")
+             "recorded, never silent). The n=1 step-argmax rows are marked `n/a` in the gate "
+             "column: a single game cannot clear a significance bar, and that arm is report-only.")
     L.append("")
     L.append("| trained arm | mode | pattern | n | med trained | med untrained | red1 (medians) "
              "| red2 (median of paths) | wins | sign p | C1 |")
@@ -277,10 +281,11 @@ def main() -> None:
         g = gate_c1(pa)
         key = f"{arm}|{mode}|{pattern}"
         stats["c1"][key] = {**{k: v for k, v in pa.items() if k != "t"}, **g}
+        verdict = "n/a (n=1)" if pa["n"] < 5 else ("PASS" if g["pass"] else "fail")
         L.append(f"| {arm} | {mode} | {pattern} | {pa['n']} | {fmt(pa['median_trained'])} "
                  f"| {fmt(pa['median_untrained'])} | {100 * g['reduction_of_medians']:.1f}% "
                  f"| {100 * g['median_of_reductions']:.1f}% | {pa['wins']}/{pa['n']} "
-                 f"| {pa['sign_p']:.2e} | {'PASS' if g['pass'] else 'fail'} |")
+                 f"| {pa['sign_p']:.2e} | {verdict} |")
     L.append("")
 
     # --- C2: absolute level on step ----------------------------------------
@@ -344,7 +349,9 @@ def main() -> None:
     # --- C4: seed agreement -------------------------------------------------
     L.append("## C4 — reproducibility (3-seed agreement, parse-fail == 0)")
     L.append("")
-    L.append("Agreement rule: every pair of per-seed means within 2 sqrt(SE_i^2 + SE_j^2) (two-sample z<2).")
+    L.append("Agreement rule: every pair of per-seed means within 2 sqrt(SE_i^2 + SE_j^2) (two-sample z<2). "
+             "The n=1 step-argmax combos cannot form a CI and are marked `n/a`; the binding read is "
+             "the noisy n=30 arm (AUDIT-1 amendment).")
     L.append("")
     L.append("| stage | mode | pattern | per-seed medians | z<=2 all pairs | parse-fail total |")
     L.append("|---|---|---|---|---|---|")
@@ -365,10 +372,13 @@ def main() -> None:
                         if abs(cs[i]["mean"] - cs[j]["mean"]) > max(combined, 1e-9):
                             ok = False
                 pf = sum(hygiene(a)["parse_fail_runs"] for _, a in got)
+                deg = any(c.get("n", 0) < 2 for c in cs)
                 key = f"{stage}|{mode}|{pattern}"
-                stats["c4"][key] = {"per_seed_medians": meds, "agree": ok, "parse_fail": pf}
+                stats["c4"][key] = {"per_seed_medians": meds, "agree": (None if deg else ok),
+                                    "degenerate": deg, "parse_fail": pf}
+                shown = "n/a (n=1)" if deg else ("yes" if ok else "NO")
                 L.append(f"| {stage} | {mode} | {pattern} | "
-                         + " / ".join(fmt(m) for m in meds) + f" | {'yes' if ok else 'NO'} | {pf} |")
+                         + " / ".join(fmt(m) for m in meds) + f" | {shown} | {pf} |")
     L.append("")
 
     # --- R1: sft vs rlcd ----------------------------------------------------
