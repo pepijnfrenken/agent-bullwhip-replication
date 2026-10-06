@@ -1,0 +1,613 @@
+[
+ {
+  "pattern": "step",
+  "pass": 0,
+  "seed": 1000,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 1,
+  "seed": 1001,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 2,
+  "seed": 1002,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 3,
+  "seed": 1003,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 4,
+  "seed": 1004,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 5,
+  "seed": 1005,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 6,
+  "seed": 1006,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 7,
+  "seed": 1007,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 8,
+  "seed": 1008,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 9,
+  "seed": 1009,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 10,
+  "seed": 1010,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 11,
+  "seed": 1011,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 12,
+  "seed": 1012,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 13,
+  "seed": 1013,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 14,
+  "seed": 1014,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 15,
+  "seed": 1015,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 16,
+  "seed": 1016,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 17,
+  "seed": 1017,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 18,
+  "seed": 1018,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 19,
+  "seed": 1019,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 20,
+  "seed": 1020,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 21,
+  "seed": 1021,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 22,
+  "seed": 1022,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 23,
+  "seed": 1023,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 24,
+  "seed": 1024,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 25,
+  "seed": 1025,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 26,
+  "seed": 1026,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 27,
+  "seed": 1027,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 28,
+  "seed": 1028,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "step",
+  "pass": 29,
+  "seed": 1029,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 0,
+  "seed": 1000,
+  "wf_theta": 2.0,
+  "wf_lam": 0.6,
+  "wf_cost": 5168.0,
+  "untuned_cost": 4635.0,
+  "oracle_cost": 4102.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 1,
+  "seed": 1001,
+  "wf_theta": 1.5,
+  "wf_lam": 0.9,
+  "wf_cost": 6014.0,
+  "untuned_cost": 5996.0,
+  "oracle_cost": 5376.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 2,
+  "seed": 1002,
+  "wf_theta": 3.0,
+  "wf_lam": 0.3,
+  "wf_cost": 5085.0,
+  "untuned_cost": 6397.0,
+  "oracle_cost": 4413.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 3,
+  "seed": 1003,
+  "wf_theta": 2.5,
+  "wf_lam": 0.4,
+  "wf_cost": 5079.0,
+  "untuned_cost": 5634.0,
+  "oracle_cost": 4652.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 4,
+  "seed": 1004,
+  "wf_theta": 1.5,
+  "wf_lam": 0.7,
+  "wf_cost": 6246.0,
+  "untuned_cost": 6681.0,
+  "oracle_cost": 4899.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 5,
+  "seed": 1005,
+  "wf_theta": 2.5,
+  "wf_lam": 0.4,
+  "wf_cost": 5329.0,
+  "untuned_cost": 6211.0,
+  "oracle_cost": 5118.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 6,
+  "seed": 1006,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 4025.0,
+  "untuned_cost": 4327.0,
+  "oracle_cost": 4025.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 7,
+  "seed": 1007,
+  "wf_theta": 1.5,
+  "wf_lam": 0.9,
+  "wf_cost": 5362.0,
+  "untuned_cost": 4922.0,
+  "oracle_cost": 4420.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 8,
+  "seed": 1008,
+  "wf_theta": 4.0,
+  "wf_lam": 0.2,
+  "wf_cost": 4116.0,
+  "untuned_cost": 5375.0,
+  "oracle_cost": 3870.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 9,
+  "seed": 1009,
+  "wf_theta": 1.5,
+  "wf_lam": 0.9,
+  "wf_cost": 5713.0,
+  "untuned_cost": 5035.0,
+  "oracle_cost": 4565.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 10,
+  "seed": 1010,
+  "wf_theta": 3.0,
+  "wf_lam": 0.3,
+  "wf_cost": 4362.0,
+  "untuned_cost": 5787.0,
+  "oracle_cost": 4362.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 11,
+  "seed": 1011,
+  "wf_theta": 2.0,
+  "wf_lam": 0.6,
+  "wf_cost": 5577.0,
+  "untuned_cost": 4874.0,
+  "oracle_cost": 4622.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 12,
+  "seed": 1012,
+  "wf_theta": 1.5,
+  "wf_lam": 0.8,
+  "wf_cost": 6290.0,
+  "untuned_cost": 5307.0,
+  "oracle_cost": 4441.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 13,
+  "seed": 1013,
+  "wf_theta": 1.5,
+  "wf_lam": 0.7,
+  "wf_cost": 6442.0,
+  "untuned_cost": 6259.0,
+  "oracle_cost": 4303.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 14,
+  "seed": 1014,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 4646.0,
+  "untuned_cost": 5324.0,
+  "oracle_cost": 4646.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 15,
+  "seed": 1015,
+  "wf_theta": 1.5,
+  "wf_lam": 0.9,
+  "wf_cost": 7050.0,
+  "untuned_cost": 6232.0,
+  "oracle_cost": 5610.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 16,
+  "seed": 1016,
+  "wf_theta": 4.0,
+  "wf_lam": 0.2,
+  "wf_cost": 4913.0,
+  "untuned_cost": 5395.0,
+  "oracle_cost": 4679.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 17,
+  "seed": 1017,
+  "wf_theta": 4.5,
+  "wf_lam": 0.2,
+  "wf_cost": 4705.0,
+  "untuned_cost": 5451.0,
+  "oracle_cost": 4302.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 18,
+  "seed": 1018,
+  "wf_theta": 2.5,
+  "wf_lam": 0.4,
+  "wf_cost": 4792.0,
+  "untuned_cost": 5086.0,
+  "oracle_cost": 4029.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 19,
+  "seed": 1019,
+  "wf_theta": 2.0,
+  "wf_lam": 0.8,
+  "wf_cost": 4341.0,
+  "untuned_cost": 4831.0,
+  "oracle_cost": 4339.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 20,
+  "seed": 1020,
+  "wf_theta": 2.0,
+  "wf_lam": 0.6,
+  "wf_cost": 6258.0,
+  "untuned_cost": 5975.0,
+  "oracle_cost": 4939.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 21,
+  "seed": 1021,
+  "wf_theta": 2.5,
+  "wf_lam": 0.4,
+  "wf_cost": 5508.0,
+  "untuned_cost": 6039.0,
+  "oracle_cost": 4994.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 22,
+  "seed": 1022,
+  "wf_theta": 2.0,
+  "wf_lam": 0.6,
+  "wf_cost": 5492.0,
+  "untuned_cost": 4857.0,
+  "oracle_cost": 4385.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 23,
+  "seed": 1023,
+  "wf_theta": 3.0,
+  "wf_lam": 0.3,
+  "wf_cost": 4288.0,
+  "untuned_cost": 5245.0,
+  "oracle_cost": 4288.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 24,
+  "seed": 1024,
+  "wf_theta": 2.5,
+  "wf_lam": 0.5,
+  "wf_cost": 5382.0,
+  "untuned_cost": 5863.0,
+  "oracle_cost": 5298.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 25,
+  "seed": 1025,
+  "wf_theta": 2.5,
+  "wf_lam": 0.5,
+  "wf_cost": 4230.0,
+  "untuned_cost": 4123.0,
+  "oracle_cost": 3812.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 26,
+  "seed": 1026,
+  "wf_theta": 2.5,
+  "wf_lam": 0.6,
+  "wf_cost": 4738.0,
+  "untuned_cost": 4727.0,
+  "oracle_cost": 4727.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 27,
+  "seed": 1027,
+  "wf_theta": 1.5,
+  "wf_lam": 0.9,
+  "wf_cost": 6132.0,
+  "untuned_cost": 5468.0,
+  "oracle_cost": 4882.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 28,
+  "seed": 1028,
+  "wf_theta": 2.0,
+  "wf_lam": 0.5,
+  "wf_cost": 6107.0,
+  "untuned_cost": 6128.0,
+  "oracle_cost": 5216.0
+ },
+ {
+  "pattern": "noisy",
+  "pass": 29,
+  "seed": 1029,
+  "wf_theta": 2.0,
+  "wf_lam": 0.6,
+  "wf_cost": 6295.0,
+  "untuned_cost": 6198.0,
+  "oracle_cost": 5578.0
+ },
+ {
+  "pattern": "step",
+  "pass": -1,
+  "seed": null,
+  "wf_theta": 3.0,
+  "wf_lam": 0.4,
+  "wf_cost": 3206.0,
+  "untuned_cost": 3681.0,
+  "oracle_cost": 3206.0,
+  "note": "single deterministic step game (n=1 step-argmax arm)"
+ }
+]
