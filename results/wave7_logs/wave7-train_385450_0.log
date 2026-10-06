@@ -1,0 +1,23 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=f4a28c1c453835907daa42adbbd5466e769668c1 dirty_files=1
+labels: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl hash=59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
+=== wave7-train seed=0 | sft_steps=120 rlcd_steps=40 lr=1e-5 at 2026-10-05T22:35:17+02:00 ===
+name, memory.total [MiB]
+NVIDIA L4, 23034 MiB
+=== sft seed=0 exit=0 at 2026-10-05T22:35:18+02:00 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+385450_0         FAILED                       
+385450_0.ba+     FAILED     24444K     24444K 
+385450_0.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

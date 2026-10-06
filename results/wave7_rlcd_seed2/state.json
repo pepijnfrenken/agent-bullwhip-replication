@@ -1,0 +1,16 @@
+{
+  "adapter_saved": true,
+  "batch": 32,
+  "beta_kl": 0.02,
+  "checkpoint_dir": "checkpoint-39",
+  "epochs": null,
+  "labels_sha": "c4838f49d316affd1f569122701f81fbd28c7a2f7d5e41d3b97b4aa1489ae9af",
+  "lr": 1e-05,
+  "model": "Qwen/Qwen3-0.6B",
+  "optimizer_saved": true,
+  "permute_options": 1,
+  "phase": "rlcd",
+  "saved_at": "2026-10-06T14:09:08+0200",
+  "seed": 2,
+  "step": 39
+}

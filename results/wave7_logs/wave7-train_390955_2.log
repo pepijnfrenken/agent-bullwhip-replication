@@ -1,0 +1,41 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=2a8ff87aa27ad171adfb364ce8c574decce71f3e dirty_files=1
+labels: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl hash(first 2000 rows)=59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
+labels: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl sha256(full file)=d35e8d9b30fe91ef581741689c590485e036c6e3f1a7c28ad970c85f060a7dd9
+=== wave7-train seed=2 | sft_steps=120 rlcd_steps=40 lr=1e-5 at 2026-10-06T13:48:37+02:00 ===
+python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+torch 2.1.2 cuda True
+name, memory.total [MiB]
+NVIDIA L4, 23034 MiB
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+=== sft seed=2 exit=0 at 2026-10-06T13:58:17+02:00 ===
+sft final adapter: results/wave7_sft_seed2/checkpoint-119
+collected 5760 policy states -> /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/policy_states_seed2.jsonl (label mass recorded, not asserted; see .notes.json)
+states=5440 flat=0.0000 edge=0.7689 entropy=2.292 wall=102.6s
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+=== rlcd seed=2 exit=0 at 2026-10-06T14:09:09+02:00 ===
+=== wave7-train seed=2 done at 2026-10-06T14:09:09+02:00 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+390955_0      COMPLETED                       
+390955_0.ba+  COMPLETED   2647512K   2647512K 
+390955_0.ex+  COMPLETED                       
+390955_1        RUNNING                       
+390955_1.ba+    RUNNING                       
+390955_1.ex+    RUNNING                       
+390955_2      COMPLETED                       
+390955_2.ba+  COMPLETED   2568644K   2568644K 
+390955_2.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

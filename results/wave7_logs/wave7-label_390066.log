@@ -1,0 +1,42 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=2a8ff87aa27ad171adfb364ce8c574decce71f3e dirty_files=1
+=== wave7-label | seed=6000 episodes=700 M=16 procs=96 at 2026-10-06T09:52:28+02:00 ===
+python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+states=95200 flat=0.0022 edge=0.7118 entropy=2.213 wall=186.7s
+=== labeler exit=0 at 2026-10-06T09:55:38+02:00 ===
+manifest:
+n_states: 95200
+flat_rate: 0.002226890756302521
+edge_argmin_rate: 0.711827731092437
+mean_target_entropy_nats: 2.213075005389812
+hash: 59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
+continuation_theta: 3.5
+continuation_lam: 0.2
+wall_sec: 186.66205167770386
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+390066        COMPLETED                       
+390066.batch  COMPLETED    791756K    791756K 
+390066.exte+  COMPLETED                       
+
+Job ID: 390066
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 96
+CPU Utilized: 04:55:39
+CPU Efficiency: 95.74% of 05:08:48 core-walltime
+Job Wall-clock time: 00:03:13
+Memory Utilized: 773.20 MB
+Memory Efficiency: 4.72% of 16.00 GB (16.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
