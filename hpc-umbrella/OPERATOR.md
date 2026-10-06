@@ -265,6 +265,11 @@ gate), three new sbatch files (label, train, eval). Sequence (with Pino):
    naming split — point --untrained/--trained at the matching tags.
    Paired-analysis floors: `python3 wave7_floors.py` (hub, ~6 s) →
    `results/wave7_floors.json` (30 seeded passes per pattern + the n=1 step game).
+   Gate readout once the eval JSONLs are back: `python3 wave7_analysis.py` (hub,
+   stdlib only; writes `results/wave7_report.md` + `.json`) — C1/C2/C3/C4, R1,
+   the permutation table and the floor context in one pass (C3 pairs against the
+   wave-6 a0_base refs, which are step n=30 / noisy n=10 — the deviation is
+   printed in the report).
 5. **Pull + verify** (`pull_results.sh` on the laptop covers `results/`):
    `python3 hpc-umbrella/verify_pull.py <pull-dest> --size` — wave-7 dirs are in
    EXPECT now.
