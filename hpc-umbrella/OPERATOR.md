@@ -223,7 +223,7 @@ the reason for that decision.
 Wave 7 is a new lane (see `WAVE7_SPEC.md`, approved 2026-10-05; binding audit in
 `WAVE7-AUDIT-1.md`). It does not touch the wave-6 machinery: same kit roots
 (config.sh pins, `SLURM_SUBMIT_DIR` block, TERM forwarding, `EXPECTED_COMMIT`
-gate), two new sbatch files. Sequence (with Pino):
+gate), three new sbatch files (label, train, eval). Sequence (with Pino):
 
 1. **Alpha gate — config.sh --check on the login node** (the CPU-partition rule
    now covers `cpu-*.sbatch`):
@@ -245,19 +245,26 @@ gate), two new sbatch files. Sequence (with Pino):
    submit; if you change step totals, update the matching `verify_pull.py`
    EXPECT entries.
 4. **Evals** (GPU, batched readout; the wave-1–6 JSONL schema so the analysis
-   stack is unchanged):
+   stack is unchanged) — one submit covers every arm:
+   `sbatch gpu-wave7-eval.sbatch`   (~30–60 min on one L4)
+   21 runs → `results/eval/w7-<arm>-<mode>-<pattern>.{jsonl,summary.json}`:
+   the untrained readout (C1 control) plus every trained adapter
+   (sft_seed{0,1,2} checkpoint-119, rlcd_seed{0,1,2} checkpoint-39) on
+   step-argmax (n=1, deterministic), step-sampled (n=30, seeds 1000+i) and
+   noisy-argmax (n=30, seeded paths). The same submit runs the AUDIT-1
+   amendment-1 permutation gate per arm
+   (`results/eval/w7-<arm>-perm.json`): >= 0.90 of 512 engine states must keep
+   the same argmax VALUE under 3 shuffled option grids; the untrained probe
+   runs gate-free (low invariance there is the expected contrast). Single
+   runs stay available manually — the sbatch loops exactly this, e.g.:
    ```
    python -m agent_bullwhip.decision_eval --adapter results/wave7_sft_seed0/checkpoint-119 \
        --pattern step --mode argmax        # n=1 (deterministic, AUDIT-1 P0)
-   python -m agent_bullwhip.decision_eval --adapter results/wave7_sft_seed0/checkpoint-119 \
-       --pattern step --mode sampled       # n=30 (seeded 1000+i)
-   python -m agent_bullwhip.decision_eval --adapter results/wave7_sft_seed0/checkpoint-119 \
-       --pattern noisy --mode argmax       # n=30 (seeded paths)
    ```
-   Same three for `--mode argmax`/`--pattern step` without `--adapter`
-   (untrained readout = the C1 control) and with the `wave7_rlcd_seed0`
-   adapter. parse-fail is asserted 0; `eval-analyze.py` needs the untrained/trained
+   parse-fail is asserted 0; `eval-analyze.py` needs the untrained/trained
    naming split — point --untrained/--trained at the matching tags.
+   Paired-analysis floors: `python3 wave7_floors.py` (hub, ~6 s) →
+   `results/wave7_floors.json` (30 seeded passes per pattern + the n=1 step game).
 5. **Pull + verify** (`pull_results.sh` on the laptop covers `results/`):
    `python3 hpc-umbrella/verify_pull.py <pull-dest> --size` — wave-7 dirs are in
    EXPECT now.
