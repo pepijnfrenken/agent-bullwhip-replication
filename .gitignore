@@ -22,3 +22,8 @@ POST_*.md
 # local agent/mission runtime — never in the repo
 .omp/
 .mr-mission
+
+# uv auto-generates an empty stub lockfile here (poetry-style pyproject has no [project]
+# table, so uv cannot resolve a real lock; `uv run` works via requirements.txt). Keeping it
+# untracked prevents a misleading 0-package lock from being committed.
+uv.lock
