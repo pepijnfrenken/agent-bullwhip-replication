@@ -1,0 +1,7 @@
+name	group	horizon	curricula	lr	beta_kl	steps	prompt_format	max_new	parse_aware	fmt_weight
+w6fix_a0	8	36	poisson,truncnorm	1e-5	0.02	50	raw	8	0	-
+w6fix_a0b	8	36	poisson,truncnorm	1e-5	0.02	25	raw	24	0	-
+w6fix_a1	8	36	poisson,truncnorm	1e-5	0.02	100	chat_contract	24	0	-
+w6fix_a1_seed2	8	36	poisson,truncnorm	1e-5	0.02	100	chat_contract	24	0	-
+w6fix_a2	8	36	poisson,truncnorm	1e-5	0.02	100	chat_contract	24	1	1.0
+w6fix_a2_seed2	8	36	poisson,truncnorm	1e-5	0.02	100	chat_contract	24	1	1.0

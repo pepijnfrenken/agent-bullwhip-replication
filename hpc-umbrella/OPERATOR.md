@@ -320,3 +320,19 @@ no torch and fails by design there — deselect it:
 `pytest tests/ -q -k "not torch_available_reports_false_on_hub"`.
 Everything wave-7 passes on both the torch-less hub (308 pass, 11 skip) and the
 torch env (readout 16/16, decision_train 17/17, rest 285 pass).
+
+## Wave 6-fix — contract micro-probe (6 array tasks, `gpu-w6fix.sbatch`)
+
+Spec: `docs/waves/WAVE6-FIX_SPEC.md`. One new sbatch + one TSV; same kit roots as the other waves.
+
+1. **Gate**: `bash kit/config.sh --check` (the new sbatch header must match the pins).
+2. **Pilot (optional, 4 steps of A1)**: `cd /scratch-shared/$USER/bullwhip/kit && W6FIX_STEPS=4 sbatch --array=2 gpu-w6fix.sbatch`;
+   check `results/grpo_w6fix_a1/train_log.jsonl` has `contract_parse_rate` and `completions_step0.jsonl` has 1152 rows.
+3. **Run**: `sbatch --array=0-5 gpu-w6fix.sbatch` (rows of `campaign-w6fix.tsv`: a0, a0b, a1, a1_seed2, a2, a2_seed2).
+   Slurm SIGTERM → checkpoint; resubmit the same array task to continue (`--resume`).
+4. **Send up**: `bash hpc-umbrella/push_results.sh -m "w6fix runs (job <id>)" results/grpo_w6fix_* results/w6fix_logs`
+   (copy the Slurm logs into `results/w6fix_logs/` first); on the hub `git pull --ff-only`, then
+   `python3 hpc-umbrella/verify_pull.py ~/projects/agent-bullwhip-replication --size`
+   (early-stopped A1/A2 arms report INCOMPLETE by design) and
+   `python3 scripts/w6fix_analysis.py --out results/w6fix_report.md --json results/w6fix_report.json`.
+

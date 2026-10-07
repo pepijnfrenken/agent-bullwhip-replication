@@ -1,5 +1,21 @@
 # Changes & Audit Log
 
+## 2026-10-07 — WAVE6-FIX implemented (mission bullwhip-impl; code + tests + staged kit, NOT run)
+
+`waves/WAVE6-FIX_SPEC.md` is implemented behind explicit flags; every wave-6 default is preserved
+(`tests/test_w6fix_contract.py` pins `collect_step` bit-identical to the pre-change code on goldens
+recorded before the edit). No GPU/cluster run happened; no wave 1–7 number or verdict was touched.
+
+- `agent_bullwhip/contract.py` (+ `qwen_chat.py`): paper `order_quantity` contract text, chat-template
+  render (verified equal to `apply_chat_template(enable_thinking=False)` in an external venv), strict parser.
+- `grpo_env.py`: `prompt_builder` hook; `combine_parse_aware` (A2 advantage). `grpo_train.py`: flags
+  `--prompt-format --max-new --parse-aware-reward --fmt-weight --dump-completions-every`; per-step
+  telemetry (`contract_parse_rate`, `cost_rows_frac`, `fmt_adv_share`, `demand_sha`, …); completion dumps.
+- `scripts/w6fix_analysis.py`: V-gates, P25/P50/P100, H1–H5, rules R-A..R-D, paired cost windows.
+- Kit: `hpc-umbrella/campaign-w6fix.tsv`, `gpu-w6fix.sbatch` (`--array=0-5`, `W6FIX_STEPS=4` pilot knob),
+  `config.sh` `CAMPAIGN_W6FIX_TSV`, `verify_pull.py` EXPECT, OPERATOR.md section.
+- Tests 326/15 → 379/16 (new: contract, analysis, sbatch). Deviations/decisions: spec changes log.
+
 ## 2026-10-07 — Specs for the two agreed next experiments land in the repo (spec-only; nothing run)
 
 Both specs were written 2026-10-07 (mission `bullwhip-plans`; sources kept at `~/bullwhip-plans/`)

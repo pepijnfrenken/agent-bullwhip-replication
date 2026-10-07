@@ -37,6 +37,14 @@ EXPECT = {
     "grpo_a9_lr_low": 300,
     "grpo_a10_lr_high": 300,
     "grpo_a11_seed2": 300,
+    # WAVE6-FIX probe (hpc-umbrella/campaign-w6fix.tsv). A1/A2 early-stopped at
+    # step 50 (W6F §6.2, P50 < 0.02) report INCOMPLETE here by design.
+    "grpo_w6fix_a0": 50,
+    "grpo_w6fix_a0b": 25,
+    "grpo_w6fix_a1": 100,
+    "grpo_w6fix_a1_seed2": 100,
+    "grpo_w6fix_a2": 100,
+    "grpo_w6fix_a2_seed2": 100,
 }
 CKPT_PAYLOAD = ("adapter_model.safetensors", "adapter_model.bin", "adapter_config.json",
                 "pytorch_model.bin")

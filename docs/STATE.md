@@ -53,7 +53,8 @@ are working on.
    numbers cannot yet be read as a test of the paper's GRPO claim.
 2. **Agreed next steps (specs written 2026-10-07, implementation underway):**
    - (a) a contract/format micro-probe on the free-form lane — as-is vs chat-template + the
-     paper's own `order_quantity` JSON answer contract vs + a parse-aware reward;
+     paper's own `order_quantity` JSON answer contract vs + a parse-aware reward
+     (**implemented 2026-10-07, code + tests + staged `hpc-umbrella/gpu-w6fix.sbatch`; not run**);
    - (b) a decision-model arm in the style of Cloudflare's Clef — fixed choice set + one-token
      readout + cost-scored RL, i.e. the RLCD lane with a corrected action grid and a collapse gate.
 

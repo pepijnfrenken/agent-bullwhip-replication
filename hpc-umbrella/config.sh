@@ -53,6 +53,7 @@ MODEL_ID="Qwen/Qwen3-0.6B"
 # fixture (b96fb847...) asserts the same template bytes.
 MODEL_REVISION="c1899de289a04d12100db370d81485cdf75e47ca"
 CAMPAIGN_TSV="${KIT_DIR}/campaign.tsv"
+CAMPAIGN_W6FIX_TSV="${KIT_DIR}/campaign-w6fix.tsv"   # WAVE6-FIX probe rows (gpu-w6fix.sbatch)
 
 # F6: pin the exact commit staging must serve. Empty (default) = stage.sh logs
 # HEAD + the dirty flag only; a full SHA makes stage.sh FAIL until the repo

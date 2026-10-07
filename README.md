@@ -58,7 +58,7 @@ Full protocol history: `docs/waves/protocol.md`. Read the audits before trusting
 ## Run (three commands that matter)
 
 ```bash
-uv run python -m pytest -q            # 326 passed, 15 skipped (2026-10-07 baseline)
+uv run python -m pytest -q            # 379 passed, 16 skipped (after WAVE6-FIX, 2026-10-07)
 uv run python scripts/wave7_analysis.py     # wave-7 gate readout → results/wave7_report.md
 uv run python scripts/walkforward_floor.py  # walk-forward + oracle floor columns ($0, no API)
 ```

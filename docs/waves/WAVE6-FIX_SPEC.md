@@ -1,8 +1,8 @@
 # WAVE6-FIX_SPEC.md — contract/format micro-probe on the wave-6 free-form GRPO lane (DRAFT — pre-registration, nothing below has run)
 
-**Status:** awaiting repo-cleanup completion before implementation (see the layout note). Spec-only: no code, no
-run, no repo write was done to produce this file. Per repo protocol (root `README.md` §research protocol) this file is
-committed to the repo only when Pino approves it; changes after that are logged in the changes section at the bottom.
+**Status:** IMPLEMENTED 2026-10-07 (mission `bullwhip-impl`); code + tests + staged sbatch only — **no run has happened**, no gate has
+been read. The spec below is the unchanged pre-registration; every implementation decision and deviation is in the Changes log at
+the bottom. Per repo protocol (root `README.md` §research protocol), changes after approval are logged there.
 
 **Layout note.** Wave docs are cited by FILENAME and follow the post-cleanup layout: `WAVE6_SPEC.md`, `WAVE7.md`,
 `WAVE7_SPEC.md`, `W7-READY.md` live in `docs/waves/`; `WAVE7-AUDIT-1.md`/`-2.md` in `docs/audits/`; `VERIFY-W7-EVAL.md`
@@ -496,3 +496,36 @@ the slowest row stops) and the training forward grows ~10 %; measure on the 4-st
 ## Changes log
 
 - 2026-10-07: draft written (spec-only; waiting for repo cleanup to finish and Pino's approval).
+- 2026-10-07 (implementation, mission `bullwhip-impl`): code + tests + kit implemented; **nothing was run on a GPU or the cluster**. Decisions
+  and deviations (smallest deviation that preserves the claim; no arm, gate or number changed):
+  1. **Braces / PDF check.** Contract constant kept in the braced form (the only valid JSON, as §3.1 prescribes). The paper PDF
+     (`curl https://arxiv.org/pdf/2605.17036v3` then `pdftotext -raw`, 2026-10-07, App. A.2) also renders the example WITHOUT braces
+     (`"order_quantity": <number_of_cases>` / `"order_quantity": 5`), i.e. the staged text extraction was faithful to the PDF text layer; whether the
+     brace-less form is a typesetting artifact of the paper cannot be decided from the text layer [unverified — would need the LaTeX source or a
+     page image]. Consequence: deviation (iii) stays as written ("braces added"); `loose_json_rate` (brace-agnostic) is the telemetry that keeps the
+     choice from silently deciding the verdict.
+  2. **Renderer.** `agent_bullwhip/qwen_chat.py::render_nothink` (pure string) was verified equal to
+     `tokenizer.apply_chat_template(..., enable_thinking=False)` on one real `build_prompt` output with the pinned snapshot, via an external
+     venv (`/home/pino/absolver/.venv`, transformers 5.14.1, offline; not a repo dependency). Same run measured the contract line
+     `{"order_quantity": 12}` = 8 tokens (`{"`, `order`, `_quantity`, `":`, ` `, `1`, `2`, `}`), matching F-B. The in-repo equality test is
+     `importorskip`-gated (skipped on the hub).
+  3. **Golden SHAs** recorded: A0 first prompt (step 0, seed 12345, poisson) from the PRE-change code
+     `a61e56c58958011688445c0d8b9ed368ec5010122110b2d9b810b0bc8ec4b370`; A1/A2 first prompt from the new code
+     `97a3b97f378272d98ee4225cb90c89b0e45064c16dda883e6bbd78d707efdb2f` (`tests/fixtures/w6fix_collect_legacy_golden.json`; also pins
+     bit-identical legacy `collect_step` output for two stub policies x 2 seeds x 2 curricula).
+  4. **Parser.** `CONTRACT_RE` uses ASCII `[0-9]{1,4}` (not `\d`, which accepts Unicode digits); leading zeros (`007`) parse to 7 (pinned by test).
+  5. **Flag guards.** `--parse-aware-reward 1` requires `--prompt-format chat_contract` (argparse error otherwise): the reward is defined on the
+     contract parse. `--max-new` must be >= 1.
+  6. **Telemetry definitions.** `demand_sha` = first 16 hex of sha256 of `",".join(demand)` (shared demand; with `shared_demand=False` the G demands
+     joined by `|`). `order_entropy_bits` = Shannon entropy in bits over the orders of rows the ARM'S OWN parser accepted (raw: has_int; contract:
+     contract-parsed; 0.0 if none). `cost_rows_frac` = rows with non-zero cost advantage after masking / n. `fmt_adv_share` null outside A2.
+     `first_prompt_sha256` (full hex of the step's first prompt) is logged every step. `value_token_frac` needs a tokenizer on the policy (null for stubs).
+  7. **Dump superset.** `completions_step<k>.jsonl` rows carry `{i, e, agent_id, t, text, ids, order, parsed, adv_cost, adv_fmt, adv}` (`e`, `adv_*`
+     added to §7.3's list so §8.2.3 can be recomputed from the dump alone).
+  8. **Seeds / V1 for seed-2 arms.** Golden prompt SHA exists for seed 12345 only; seed-2 arms' step-0 prompt is not gated (analysis prints it).
+  9. **Pilot.** `gpu-pilot.sbatch` is a three-stage benchmark script (optimizer probe, rollout bench, GRPO pilot) and resists a minimal switch; instead
+     `gpu-w6fix.sbatch` takes `W6FIX_STEPS=4` (`W6FIX_STEPS=4 sbatch --array=2 gpu-w6fix.sbatch`): the first 4 steps of the real A1 run in its own
+     `--out`, resumable by the full submit. Slightly different from the "first 4 steps + scancel" fallback; no scancel needed.
+  10. **verify_pull.** EXPECT has the six `grpo_w6fix_*` dirs; an A1/A2 arm stopped early (§6.2) reports INCOMPLETE there by design (no override flag
+     exists); judge by `results/w6fix_report.md`.
+  11. **Config.** `config.sh` gains `CAMPAIGN_W6FIX_TSV`; the array is `--array=0-5`, `--time=14:00:00` (same pins as `gpu-campaign.sbatch`).

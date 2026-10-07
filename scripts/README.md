@@ -16,6 +16,7 @@ Archive of one-off/legacy scripts from past waves: `archive/`.
 | `noisy_eval_arms.sh` | wave-7 eval launcher (W7-READY). |
 | `run_suite_chunked.sh` | run pytest one file per process (exact-stack, 15GB hub constraint). |
 | `probe_permutation_invariance.py` | wave-7 permutation-gate probe (VERIFY-W7-EVAL). |
+| `w6fix_analysis.py` | WAVE6-FIX gate readout (V-gates, P25/P50/P100, rules R-A..R-D) → `results/w6fix_report.{md,json}`. |
 | `probe_decision_readout.py` | stage-1 Qwen3-0.6B letter-logit readout demo (pre-package). |
 
 Run with `uv run python scripts/<name>.py …` (or `.venv/bin/python`).
