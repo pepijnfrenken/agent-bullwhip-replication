@@ -18,8 +18,8 @@ Both arms: `--config baseline --pattern step|noisy`, MIT step demand
 (4,4,4,4,8…8), horizon 36, 4 tiers → 144 decisions/game. Step arms n=30,
 noisy arms n=10 (seeds 1000+i, i in 0..9+). Paired on identical demand paths
 (same run index = same path). Floors = order-up-to machinery shipped in the repo
-(`walkforward_paths.py`, `walkforward_floor.py`, `tuned_floor.py`, `oos_floor.py`,
-`tuned_floor_chaos.py`) run on the same paths — outputs under
+(`../../scripts/walkforward_paths.py`, `../../scripts/walkforward_floor.py`, `../../scripts/tuned_floor.py`, `../../scripts/archive/oos_floor.py`,
+`../../scripts/archive/tuned_floor_chaos.py`) run on the same paths — outputs under
 `results/local-eval/floors/`.
 
 ## Arms

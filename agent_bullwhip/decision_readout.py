@@ -1,6 +1,6 @@
 """Decision-native readout: one forward pass, letter-logit answer over the order grid.
 
-Wave-7 lane (WAVE7_SPEC.md, approved 2026-10-05). The policy is a *readout*, not a
+Wave-7 lane (../docs/waves/WAVE7_SPEC.md, approved 2026-10-05). The policy is a *readout*, not a
 generator: the prompt renders the leak-free engine state (the wave-1-5 field family
 so comparisons to those arms are direct), the question, and the 21 allowed orders as
 single-token letters A..U -> orders 0..40 step 2. The answer is the softmax over the

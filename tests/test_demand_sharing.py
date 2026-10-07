@@ -22,7 +22,7 @@ def test_make_demand_seeded_for_all_patterns():
 
 
 def test_chaotic_wild_matches_seeded_reproduction():
-    """The seeded chaotic/wild paths are what tuned_floor_chaos.py tunes on."""
+    """The seeded chaotic/wild paths are what ../scripts/archive/tuned_floor_chaos.py tunes on."""
     for pattern in ["chaotic", "wild"]:
         d = make_demand(36, pattern, seed=1000)
         # just verify determinism + bounds (exact match to a saved fixture is overkill here)

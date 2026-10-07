@@ -101,7 +101,7 @@ ROLLOUT_BATCH=16          # D1 batching knob: prompts per generate() call
 SAVE_EVERY=10             # D3: checkpoint every N completed steps (Slurm kills cost <= N steps)
 STEPS_PILOT=4
 STEPS_CAMPAIGN=300
-BENCH_BATCHES="1,4,16,32" # bench_rollout.py chunk sizes (1 = the sequential baseline)
+BENCH_BATCHES="1,4,16,32" # ../scripts/bench_rollout.py chunk sizes (1 = the sequential baseline)
 
 # --- pins that only the probe can settle (name -> current best guess) --------
 # Printed by --pins / checked by --check. Keep this list in sync with the

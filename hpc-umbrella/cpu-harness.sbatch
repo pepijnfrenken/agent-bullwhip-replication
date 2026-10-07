@@ -68,11 +68,11 @@ python3 -m pytest tests/ -q \
   --deselect tests/test_grpo_train.py::test_torch_available_reports_false_on_hub
 
 # 3. deterministic floors (the CPU part of the campaign; hub anchor: 3681 on step demand)
-if [ -f walkforward_paths.py ]; then
+if [ -f scripts/walkforward_paths.py ]; then
   echo "=== walk-forward floors ==="
-  time python3 walkforward_paths.py
+  time python3 scripts/walkforward_paths.py
 else
-  echo "walkforward_paths.py not present in this checkout"
+  echo "scripts/walkforward_paths.py not present in this checkout"
 fi
 
 # 4. the Wave-6 training loop, torch-free: batched rollouts + checkpoint/resume

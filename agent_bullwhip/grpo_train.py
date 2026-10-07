@@ -30,7 +30,7 @@ Usage (desktop / Umbrella compute node, inside the wave6 venv):
     python -m agent_bullwhip.grpo_train --model Qwen/Qwen3-0.6B \
         --steps 300 --group 8 --out results/grpo_a0 --resume
 
-Success criteria / eval protocol: WAVE6_SPEC.md (never trained on step demand).
+Success criteria / eval protocol: ../docs/waves/WAVE6_SPEC.md (never trained on step demand).
 Slurm run kit (probe/config/sbatch/runbook): `hpc-umbrella/OPERATOR.md` (in this repo).
 """
 from __future__ import annotations
@@ -61,7 +61,7 @@ from .grpo_trl import ep_result_to_rewards
 # `_recv_msg`, GPU at 100% util but ~80 W, VRAM oscillating, 0 cached `.py` under
 # /tmp/torchinductor_*, and no explicit dynamo compile call anywhere in this repo.
 # Suspected cause: per-input-shape compilation from the transformers 5.17.0 /
-# torch 2.5.1+cu121 pairing (evidence: /home/pino/diag2.log, PARKED.md).
+# torch 2.5.1+cu121 pairing (evidence: /home/pino/diag2.log, ../docs/archive/PARKED.md).
 # Fix step 1 is to disable the compile path outright; the Umbrella module stack
 # (PyTorch 2.1.2) is the independent second test of the version hypothesis.
 #
@@ -220,7 +220,7 @@ class _Policy:
         # F12: one --seed drives the loop RNG (run_loop) AND the torch RNG, so a
         # replicate config no longer silently clones the seed-12345 run. torch
         # sampling itself is not checkpointed across a resume (only the loop RNG
-        # is) — see FIXES-2026-10-01.md.
+        # is) — see ../docs/fixes/FIXES-2026-10-01.md.
         if seed is not None:
             torch.manual_seed(seed)
             if torch.cuda.is_available():

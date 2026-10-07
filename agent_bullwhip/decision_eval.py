@@ -1,6 +1,6 @@
 """Wave-7 decision-native eval: batched readout over the wave-1-6 protocol arms.
 
-WAVE7_SPEC.md D5 + WAVE7-AUDIT-1 fixes (binding):
+../docs/waves/WAVE7_SPEC.md D5 + WAVE7-AUDIT-1 fixes (binding):
 
 - [P0 step n=30 is n=1] the step path is deterministic and argmax readout is
   deterministic, so ALL step-argmax runs are identical. This file therefore

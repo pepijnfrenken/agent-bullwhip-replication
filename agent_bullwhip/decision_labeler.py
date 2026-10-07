@@ -1,4 +1,4 @@
-"""Decision labeler: simulator-as-teacher (WAVE7_SPEC.md D3).
+"""Decision labeler: simulator-as-teacher (../docs/waves/WAVE7_SPEC.md D3).
 
 The labeler produces, for each engine state visited under a mixed behavior
 policy on wave-6 curriculum demand, the softmax target p*(a) ∝ exp(-J(s,a)/tau)

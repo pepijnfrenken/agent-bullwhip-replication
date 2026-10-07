@@ -26,13 +26,13 @@ import requests
 # - **Fallback labeling**: ToolAgent now records `last_decision_meta` per decision
 #   with `is_fallback` / `mirror_after_error` flags (kills the silent-mirror
 #   laundering anti-pattern from AUDIT2/3).
-# - **Per-decision checkpointing**: collect_tool_traces.py writes each decision to
+# - **Per-decision checkpointing**: ../scripts/archive/collect_tool_traces.py writes each decision to
 #   JSONL immediately (resume-friendly; mid-game outage doesn't lose the run).
 # - **401 / quota-lie retry**: FreeInference free tier returns 200 + {"error":
 #   "Invalid or expired API key"} when the account is throttled (NOT a real auth
 #   failure). chat() and chat_with_tools() now retry 401s and the error-body lie
 #   with backoff instead of treating them as terminal.
-# - **Model probe tooling**: probe_tool_models_light.py / run_model_comparison.py
+# - **Model probe tooling**: ../scripts/archive/probe_tool_models_light.py / ../scripts/archive/run_model_comparison.py
 #   = quota-aware, resumable multi-model tool-calling comparison (checkpoints per
 #   decision, 30s between calls, interleaved so a quota recovery benefits all).
 #   Tests: 66 pass (2 new: error-recovery loop, forced-final-round).

@@ -13,7 +13,7 @@ aggregation here: each generated completion (one weekly decision) gets its own
 reward = the group-normalized return-to-go advantage of that (agent, week)
 position, computed across this training step's G episodes. TRL then normalizes
 again per prompt group; because ours are already standardized, that second
-normalization is a no-op rescale (documented in WAVE6_SPEC.md §3.2).
+normalization is a no-op rescale (documented in ../docs/waves/WAVE6_SPEC.md §3.2).
 
 Training runs on the desktop (D3: Modal OUT). Everything here is CPU/GPU-agnostic;
 the pilot config lives in grpo_train.py.

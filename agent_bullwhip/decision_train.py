@@ -1,6 +1,6 @@
 """Wave-7 decision-native training: soft-target SFT then an RLCD refinement arm.
 
-WAVE7_SPEC.md D4 + WAVE7-AUDIT-1 fixes (binding fix-list, re-read at P3 freeze):
+../docs/waves/WAVE7_SPEC.md D4 + WAVE7-AUDIT-1 fixes (binding fix-list, re-read at P3 freeze):
 
 - LoRA r=8 / alpha=16, attention projections ONLY (q/k/v/o_proj), base frozen
   (peft; cluster pin peft==0.21.1 — LoraConfig API used here is stable across

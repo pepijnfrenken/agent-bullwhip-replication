@@ -1,7 +1,7 @@
 # Sweep check — array 363909 (FINAL read)
 
 **Date:** 2026-10-03 ~12:45 CEST · **Code:** HEAD `e1faf79` (+1 dirty file at launch: a comment-only
-`noisy_arm.sh` edit; committed alongside this doc to close the canary's provenance watch item)
+`../../scripts/noisy_arm.sh` edit; committed alongside this doc to close the canary's provenance watch item)
 **Hardware:** 1x NVIDIA L4 per task · **Seed:** 12345 (a11_seed2: seed 2) · **Walltime cap:** 14 h/task
 **Status: FINAL (2026-10-03)** — all 13 rows complete and clean. a9_lr_low and a11_seed2 finished in array 363909; a2_group16 completed its last 56 steps in resume job **374875 task 3** (checkpoint-244 -> 300, exit 0).
 
@@ -91,7 +91,7 @@ step 244 twice (SIGTERM save + resume boundary): dedupe by step when aggregating
 4. Sibling job id 363918 appears only in task 3's cancel notice (same second). No double-runs
    anywhere (every row shows a single fresh start, no unexpected resumes). Confirm or ignore on
    scratch.
-5. git_dirty=1 at launch on all rows — that file is the `noisy_arm.sh` comment edit; committed
+5. git_dirty=1 at launch on all rows — that file is the `../../scripts/noisy_arm.sh` comment edit; committed
    alongside this doc so future waves launch clean.
 
 ## Actions

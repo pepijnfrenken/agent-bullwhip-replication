@@ -117,7 +117,7 @@ print("A_PEAK_VRAM_GB", round(torch.cuda.max_memory_allocated() / 1e9, 2))
 PY
 
 echo "=== B: batched vs sequential rollout benchmark (D1 numbers) ==="
-run_py bench_rollout.py --model "${MODEL_ID}" --group "${GROUP}" --horizon "${HORIZON}" \
+run_py scripts/bench_rollout.py --model "${MODEL_ID}" --group "${GROUP}" --horizon "${HORIZON}" \
   --batches "${BENCH_BATCHES}" --repeats 2 --out "${BENCH_OUT}"
 echo "--- ${BENCH_OUT} ---"
 cat "${BENCH_OUT}"

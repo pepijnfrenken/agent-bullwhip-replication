@@ -6,7 +6,7 @@ config experiences the SAME set of endpoint windows. Window drift stops being
 a between-config confound and becomes a measured quantity (you can see it as
 the spread of identical-config results across passes).
 
-Also fixes (per AUDIT.md):
+Also fixes (per ../docs/audits/AUDIT.md):
 - truncate-on-start with a run-UUID (no more append-mode mixing)
 - per-call timestamp + model id logged in each trace decision
 - KB text snapshotted into each run record (so re-analysis uses the KB that
@@ -78,7 +78,7 @@ def main() -> None:
     ap.add_argument("--outdir", default="results/interleaved")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--wrapper-only", action="store_true",
-                    help="ablation: replace LLM order with anchor in wrappers (see AUDIT.md)")
+                    help="ablation: replace LLM order with anchor in wrappers (see ../docs/audits/AUDIT.md)")
     args = ap.parse_args()
 
     configs = [c.strip() for c in args.configs.split(",") if c.strip()]

@@ -1,6 +1,6 @@
 """Domain-neutral delayed-inventory decision environment for GRPO training.
 
-Wave 6 (WAVE6_SPEC.md). The paper's GRPO recipe (arXiv:2605.17036 §6–7) is defined over
+Wave 6 (../docs/waves/WAVE6_SPEC.md). The paper's GRPO recipe (arXiv:2605.17036 §6–7) is defined over
 a four-echelon beer-game. We implement the same mechanism over a DOMAIN-NEUTRAL interface
 so the identical training loop generalizes to financial-services problems with the same
 geometry (Pino's D5 constraint):

@@ -193,7 +193,7 @@ class GameStepper:
         AUDIT2 FIX: only the retailer sees the CURRENT week's exogenous customer
         demand. Upstream tiers must NOT see the tier-below's same-week order (that is
         a one-week lookahead the deterministic floor doesn't get, and it systematically
-        advantages the LLM — see AUDIT2.md §3). They decide on information through t-1
+        advantages the LLM — see ../docs/audits/AUDIT2.md §3). They decide on information through t-1
         only (`incoming_last`). This is also why a week's four decisions are mutually
         independent and may be batched into one model call.
         """

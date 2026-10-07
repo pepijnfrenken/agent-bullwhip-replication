@@ -81,7 +81,7 @@ perm() {  # perm <arm> <adapter|-> <gate>
   local aargs=()
   [ "${adapter}" != "-" ] && aargs=(--adapter "${adapter}")
   echo "--- perm probe ${arm} (gate=${gate}) at $(date -Is)"
-  if python3 -u probe_permutation_invariance.py \
+  if python3 -u scripts/probe_permutation_invariance.py \
       --model "${MODEL_ID}" \
       --cases results/wave7_labels/policy_states_seed0.jsonl \
       --n 512 --perms 3 --gate "${gate}" \

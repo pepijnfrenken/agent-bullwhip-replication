@@ -138,7 +138,7 @@ Three parts, each useful on its own:
 - **A — minimal optimizer step.** Prints two losses, `A_seconds`, `A_PEAK_VRAM_GB`. This is the
   step the desktop never completed; if it finishes here, the `TORCHDYNAMO_DISABLE=1` + no-compile
   path is what unblocked it.
-- **B — `bench_rollout.py`** → `results/grpo_bench/bench_<job>.json`: per-step wall-clock, µs per
+- **B — `../scripts/bench_rollout.py`** → `results/grpo_bench/bench_<job>.json`: per-step wall-clock, µs per
   `generate()` call and per decision, tokens/s, peak VRAM for `rollout_batch ∈ {1,4,16,32}`, plus
   `speedup_vs_baseline` (1 = sequential). Also printed to the log, and `cat`-ed by the sbatch.
 - **C — a 4-step GRPO pilot** (`results/grpo_a0_pilot_<job>/`): `train_log.jsonl`,
@@ -199,7 +199,7 @@ bash hpc-umbrella/push_results.sh -m "wave-7 eval results (job 398422)" \
 ```
 
 Hub side: `cd ~/projects/agent-bullwhip-replication && git pull --ff-only`, then run the reader for
-that lane (`wave7_analysis.py`, `verify_pull.py`). Raw equivalent of the helper, if it is not on
+that lane (`../scripts/wave7_analysis.py`, `verify_pull.py`). Raw equivalent of the helper, if it is not on
 the checkout yet: `git add -f <paths>` -> `git commit -m "<msg>"` -> `git push`.
 
 Commit early: scratch is deleted 14 days after the last write and nothing on Umbrella is backed up.
@@ -239,8 +239,8 @@ the reason for that decision.
 
 ## Wave 7 — decision-native policy (labeler on CPU, SFT+RLCD on GPU)
 
-Wave 7 is a new lane (see `WAVE7_SPEC.md`, approved 2026-10-05; binding audit in
-`WAVE7-AUDIT-1.md`). It does not touch the wave-6 machinery: same kit roots
+Wave 7 is a new lane (see `../docs/waves/WAVE7_SPEC.md`, approved 2026-10-05; binding audit in
+`../docs/audits/WAVE7-AUDIT-1.md`). It does not touch the wave-6 machinery: same kit roots
 (config.sh pins, `SLURM_SUBMIT_DIR` block, TERM forwarding, `EXPECTED_COMMIT`
 gate), three new sbatch files (label, train, eval). Sequence (with Pino):
 
@@ -286,9 +286,9 @@ gate), three new sbatch files (label, train, eval). Sequence (with Pino):
    ```
    parse-fail is asserted 0; `eval-analyze.py` needs the untrained/trained
    naming split — point --untrained/--trained at the matching tags.
-   Paired-analysis floors: `python3 wave7_floors.py` (hub, ~6 s) →
+   Paired-analysis floors: `python3 ../scripts/wave7_floors.py` (hub, ~6 s) →
    `results/wave7_floors.json` (30 seeded passes per pattern + the n=1 step game).
-   Gate readout once the eval JSONLs are back: `python3 wave7_analysis.py` (hub,
+   Gate readout once the eval JSONLs are back: `python3 ../scripts/wave7_analysis.py` (hub,
    stdlib only; writes `results/wave7_report.md` + `.json`) — C1/C2/C3/C4, R1,
    the permutation table and the floor context in one pass (C3 pairs against the
    wave-6 a0_base refs, which are step n=30 / noisy n=10 — the deviation is
