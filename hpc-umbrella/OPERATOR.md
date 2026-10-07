@@ -5,8 +5,15 @@ breaks. Pins live in **`config.sh`** (one file); `config.sh --check` fails if an
 unresolvable on the cluster. Facts behind the pins: `00-PROBE-AND-SETUP.md`.
 
 **Prerequisites:** TU/e account, **VPN** (hpc.tue.nl is campus/VPN only), a clone of this repo
-(the run kit lives at `hpc-umbrella/` inside it), and a hub session open for paste-back. `rsync` +
-`ssh` are needed only for `pull_results.sh` and the no-egress fallback.
+(the run kit lives at `hpc-umbrella/` inside it), and a hub session open for paste-back. `ssh` is
+needed only for the no-egress fallback.
+
+**Results transfer rule (must): results travel through this git repo, both directions.**
+On the cluster: `git add -f` the result paths (they live under the gitignored `results/`), commit,
+`git push`. On the hub: `git pull --ff-only`. Never rsync/scp result files: the commits record
+which job produced what, and git is the one channel that works without VPN on the hub. One-liner
+helper: `bash hpc-umbrella/push_results.sh -m "<message>" <paths...>` (see Step 6).
+`pull_results.sh` stays only as an emergency bulk mirror of scratch.
 
 **Submit rule (learned the hard way):** always `cd` into the kit dir before `sbatch` — Slurm
 executes batch scripts from its own spool copy (`/var/spool/slurmd/jobNNN/slurm_script`), so the
@@ -177,15 +184,27 @@ One task = one config (`results/grpo_<name>/`). To A/B the batching knob, run a 
 Walltime: each run checkpoints every 25 steps and resumes, so a kill is not lost work. Resubmit the
 same command to continue. `logs/campaign_<arrayjob>_<task>.log` per task.
 
-## Step 6 — pull results (laptop/hub, VPN)
+## Step 6 — send results up (git — the rule)
+
+Results are committed from the cluster checkout and pulled on the hub. `results/` is gitignored, so
+result paths are force-added. Slurm logs live outside the repo (`$BULLWHIP_ROOT/logs`); copy the
+ones that matter into a `results/..._logs/` dir first.
 
 ```bash
-bash pull_results.sh --dry-run        # see what would come over
-bash pull_results.sh --dest ~/umbrella-results
+B=/scratch-shared/$USER/bullwhip; R=$B/agent-bullwhip-replication; cd "$R"
+mkdir -p results/wave7_logs
+cp "$B"/logs/wave7-eval_398422.log results/wave7_logs/
+bash hpc-umbrella/push_results.sh -m "wave-7 eval results (job 398422)" \
+     results/eval results/wave7_logs/wave7-eval_398422.log
 ```
 
-Pulls `results/`, `logs/` and the bench JSONs into `umbrella-results/`. Do this after the pilot and
-after each campaign wave: scratch expires 14 days after the last write, with no backup.
+Hub side: `cd ~/projects/agent-bullwhip-replication && git pull --ff-only`, then run the reader for
+that lane (`wave7_analysis.py`, `verify_pull.py`). Raw equivalent of the helper, if it is not on
+the checkout yet: `git add -f <paths>` -> `git commit -m "<msg>"` -> `git push`.
+
+Commit early: scratch is deleted 14 days after the last write and nothing on Umbrella is backed up.
+(`pull_results.sh` still exists as an emergency bulk mirror because the login node has no rsync; it
+is not the normal path anymore.)
 
 **Paste back to the hub after each step:** the probe file (step 1), the `config.sh --check` tail +
 `ls` of the venv (step 2), the cpu-harness tail (step 3), the bench JSON + the pilot tail (step 4),
@@ -206,7 +225,7 @@ after each campaign wave: scratch expires 14 days after the last write, with no 
 | OOM (CUDA out of memory) | log traceback | lower `--rollout-batch` (16 → 4 → 1) and/or `--group`; 24 GB on an L4 is plenty at 0.6B, so OOM means something else (a second process on the same GPU) |
 | Walltime kill | last log line `{"event": "sigterm", "step": N}` | normal: resubmit the same command; `--resume` continues from `state.json`. If the last line is *not* a sigterm record, check `logs/` for OOM / node failure |
 | `OSError: no internet` / HF download fails on a compute node | pilot log | expected: compute nodes have no egress. Weights and pip must be fetched in `stage.sh` on the login node; the job runs offline from `$HF_HOME` |
-| `myquota` near the limit / `Disk quota exceeded` | job log or `myquota` | scratch is 8 TiB but expires; clean `$BULLWHIP_ROOT/hf` or `pipcache`, or `pull_results.sh` then delete old `results/` |
+| `myquota` near the limit / `Disk quota exceeded` | job log or `myquota` | scratch is 8 TiB but expires; clean `$BULLWHIP_ROOT/hf` or `pipcache`, or `push_results.sh` the artifacts worth keeping (git), then delete old `results/` |
 | `peft lacks disable_adapter()` | traceback in step C | install `peft>=0.11` in the venv (`pip install 'peft>=0.11'`) |
 | `state.json` exists but the adapter does not | `--resume` prints "step/RNG only" | expected when the previous run had no torch save (dry runs); a real run always writes both. Delete `results/grpo_<name>/` to restart a config cleanly |
 
@@ -274,9 +293,12 @@ gate), three new sbatch files (label, train, eval). Sequence (with Pino):
    the permutation table and the floor context in one pass (C3 pairs against the
    wave-6 a0_base refs, which are step n=30 / noisy n=10 — the deviation is
    printed in the report).
-5. **Pull + verify** (`pull_results.sh` on the laptop covers `results/`):
-   `python3 hpc-umbrella/verify_pull.py <pull-dest> --size` — wave-7 dirs are in
-   EXPECT now.
+5. **Send up + verify (git)**: from the cluster checkout, copy the eval Slurm log into
+   `results/wave7_logs/` and commit it with the eval outputs
+   (`bash hpc-umbrella/push_results.sh -m "wave-7 eval (job <jobid>)" results/eval
+   results/wave7_logs/<log>`); on the hub `git pull --ff-only`, then
+   `python3 hpc-umbrella/verify_pull.py ~/projects/agent-bullwhip-replication --size` — wave-7
+   dirs are in EXPECT; the eval JSONLs + perm files land in `results/eval/`.
 6. **Revision pin**: the model snapshot is pinned to
    `c1899de289a04d12100db370d81485cdf75e47ca` everywhere (config.sh
    `MODEL_REVISION`, `stage.sh`, `decision_readout`/`decision_train` defaults);
