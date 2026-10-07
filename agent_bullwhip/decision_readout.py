@@ -80,8 +80,27 @@ def make_w8_g26() -> GridSpec:
     return GridSpec("w8_g26", values, tuple(string.ascii_uppercase[:len(values)]))
 
 
-GRIDS: dict[str, GridSpec] = {"w7_u21": W7_U21, "w8_g26": make_w8_g26()}
+def make_w8_g26b(top: int = 200) -> GridSpec:
+    """w8_g26b = the pre-flight-F0 REVISION of w8_g26 (WAVE8_SPEC §3.1: "if F0 fails at >= 1,000
+    states the grid is revised before any training and the revision logged"; see the spec's
+    Changes log for the failing numbers). Letters A..P are unchanged (0..30 step 2); the tail
+    Q..Z is a GENERATED geometric ladder from 30 to `top`: v_k = 2*round(30*(top/30)^(k/10) / 2),
+    k = 1..10, kept strictly increasing, last = top."""
+    tail, prev = [], 30
+    for k in range(1, 11):
+        v = max(int(round(30 * (top / 30) ** (k / 10) / 2)) * 2, prev + 2)
+        tail.append(v)
+        prev = v
+    tail[-1] = top
+    values = W8_G26_HEAD + tuple(tail)
+    return GridSpec("w8_g26b", values, tuple(string.ascii_uppercase[:len(values)]))
+
+
+GRIDS: dict[str, GridSpec] = {"w7_u21": W7_U21, "w8_g26": make_w8_g26(),
+                              "w8_g26b": make_w8_g26b()}
 DEFAULT_GRID_ID = "w7_u21"
+# The grid the WAVE8 pipeline stages: the F0-revised one (w8_g26 failed F0 on 1,000 states).
+W8_STAGED_GRID = "w8_g26b"
 
 
 def get_grid(grid_id: str = DEFAULT_GRID_ID) -> GridSpec:

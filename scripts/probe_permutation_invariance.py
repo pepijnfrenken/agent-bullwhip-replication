@@ -31,7 +31,8 @@ import json
 import random
 from pathlib import Path
 
-from agent_bullwhip.decision_readout import ORDER_GRID, ReadoutModel, render_prompt
+from agent_bullwhip.decision_readout import (DEFAULT_GRID_ID, PINNED_REVISION, ReadoutModel,
+                                             get_grid, render_prompt)
 
 GATE = 0.90
 
@@ -52,15 +53,16 @@ def load_states(path: Path, n: int) -> list[dict]:
     return rows[::stride][:n]
 
 
-def build_grids(perms: int, seed: int) -> list[list[int]]:
+def build_grids(perms: int, seed: int, grid_id: str = DEFAULT_GRID_ID) -> list[list[int]]:
     """Canonical ascending grid + `perms` seeded shuffled variants (never equal
-    to the canonical grid; deduplicated)."""
-    grids = [list(ORDER_GRID)]
+    to the canonical grid; deduplicated). `grid_id` = the choice set (WAVE8 --grid)."""
+    base = list(get_grid(grid_id).values)
+    grids = [list(base)]
     rng = random.Random(seed)
     while len(grids) < perms + 1:
-        g = list(ORDER_GRID)
+        g = list(base)
         rng.shuffle(g)
-        if g != list(ORDER_GRID) and g not in grids:
+        if g != list(base) and g not in grids:
             grids.append(g)
     return grids
 
@@ -69,6 +71,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="post-training permutation gate (AUDIT-1 fix 1)")
     ap.add_argument("--model", default="Qwen/Qwen3-0.6B")
     ap.add_argument("--adapter", default=None)
+    ap.add_argument("--grid", default=DEFAULT_GRID_ID, help="choice set (default wave-7 w7_u21)")
+    ap.add_argument("--revision", default=PINNED_REVISION)
     ap.add_argument("--cases", required=True,
                     help="JSONL with rows carrying {'ctx': <engine observation>}")
     ap.add_argument("--n", type=int, default=512, help="states sampled (stride)")
@@ -83,9 +87,10 @@ def main() -> int:
     args = ap.parse_args()
 
     states = load_states(Path(args.cases), args.n)
-    grids = build_grids(args.perms, args.seed)
+    grids = build_grids(args.perms, args.seed, args.grid)
     rm = ReadoutModel(args.model, device=args.device, dtype=args.dtype,
-                      adapter_dir=args.adapter)
+                      adapter_dir=args.adapter, revision=args.revision or None,
+                      grid_id=args.grid)
     # Trained adapters: mass recorded, not asserted (WAVE7_SPEC A1). Untrained:
     # the D2 >=0.99 format proof stays fatal.
     require_mass = 0.0 if args.adapter else 0.99
@@ -93,7 +98,7 @@ def main() -> int:
     values: list[list[int]] = []      # per grid: argmax VALUE per state
     masses: list[float] = []
     for k, g in enumerate(grids):
-        prompts = [render_prompt(ctx, rm.tokenizer, grid=g) for ctx in states]
+        prompts = [render_prompt(ctx, rm.tokenizer, grid=g, grid_id=args.grid) for ctx in states]
         vals: list[int] = []
         for i in range(0, len(prompts), args.batch):
             for rec in rm.readout_batch(prompts[i:i + args.batch],
@@ -127,6 +132,8 @@ def main() -> int:
         "min_mass": min(masses), "require_mass": require_mass,
         "values": values,
     }
+    if args.grid != DEFAULT_GRID_ID:
+        summary["grid_id"] = args.grid
     if args.out:
         p = Path(args.out)
         p.parent.mkdir(parents=True, exist_ok=True)

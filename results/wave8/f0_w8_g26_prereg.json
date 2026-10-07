@@ -1,0 +1,103 @@
+{
+ "grid": "w8_g26",
+ "label_seed": 6000,
+ "m_futures": 8,
+ "processes": 6,
+ "reference": [
+  0,
+  200,
+  2
+ ],
+ "state_seed": 1,
+ "states_per_regime": 1000,
+ "stats": {
+  "mixed": {
+   "n_states": 1000,
+   "ref_argmin_median": 32.0,
+   "regret_mean_rel": 0.0023585204059521727,
+   "regret_p90_rel": 0.00569234388863623,
+   "top_argmax_share": 0.098,
+   "top_mass": 0.06840139343018202,
+   "zero_argmax_share": 0.293
+  },
+  "nominal": {
+   "n_states": 1000,
+   "ref_argmin_median": 16.0,
+   "regret_mean_rel": 0.00232542527470117,
+   "regret_p90_rel": 0.0017689559551194649,
+   "top_argmax_share": 0.032,
+   "top_mass": 0.021780372975867986,
+   "zero_argmax_share": 0.215
+  }
+ },
+ "verdict": {
+  "pass": false,
+  "regimes": {
+   "mixed": {
+    "regret_mean_rel": {
+     "pass": true,
+     "threshold": 0.005,
+     "value": 0.0023585204059521727
+    },
+    "regret_p90_rel": {
+     "pass": true,
+     "threshold": 0.02,
+     "value": 0.00569234388863623
+    },
+    "top_argmax_share": {
+     "pass": false,
+     "threshold": 0.08,
+     "value": 0.098
+    },
+    "top_mass": {
+     "pass": false,
+     "threshold": 0.06,
+     "value": 0.06840139343018202
+    }
+   },
+   "nominal": {
+    "regret_mean_rel": {
+     "pass": true,
+     "threshold": 0.005,
+     "value": 0.00232542527470117
+    },
+    "regret_p90_rel": {
+     "pass": true,
+     "threshold": 0.02,
+     "value": 0.0017689559551194649
+    },
+    "top_argmax_share": {
+     "pass": false,
+     "threshold": 0.03,
+     "value": 0.032
+    },
+    "top_mass": {
+     "pass": true,
+     "threshold": 0.03,
+     "value": 0.021780372975867986
+    }
+   }
+  }
+ },
+ "wall_sec": 465.8,
+ "wave7_grid_stats": {
+  "mixed": {
+   "n_states": 1000,
+   "ref_argmin_median": 32.0,
+   "regret_mean_rel": 0.021289721914992538,
+   "regret_p90_rel": 0.056923438886362296,
+   "top_argmax_share": 0.378,
+   "top_mass": 0.13379079317559656,
+   "zero_argmax_share": 0.305
+  },
+  "nominal": {
+   "n_states": 1000,
+   "ref_argmin_median": 16.0,
+   "regret_mean_rel": 0.03665497858501921,
+   "regret_p90_rel": 0.06646852001361389,
+   "top_argmax_share": 0.17,
+   "top_mass": 0.05611236379690657,
+   "zero_argmax_share": 0.216
+  }
+ }
+}

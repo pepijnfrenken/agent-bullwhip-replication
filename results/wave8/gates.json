@@ -1,0 +1,187 @@
+{
+  "F0": {
+    "grid": "w8_g26b",
+    "label_seed": 6050,
+    "m_futures": 8,
+    "source": "results/wave8/f0.json",
+    "state_seed": 3,
+    "states_per_regime": 1000,
+    "stats": {
+      "mixed": {
+        "n_states": 1000,
+        "ref_argmin_median": 32.0,
+        "regret_mean_rel": 0.0010853149099830327,
+        "regret_p90_rel": 0.003399743245015618,
+        "top_argmax_share": 0.058,
+        "top_mass": 0.04043789298979715,
+        "zero_argmax_share": 0.294
+      },
+      "nominal": {
+        "n_states": 1000,
+        "ref_argmin_median": 18.0,
+        "regret_mean_rel": 0.0006367785113175187,
+        "regret_p90_rel": 0.0019419486515356954,
+        "top_argmax_share": 0.021,
+        "top_mass": 0.015404316238936962,
+        "zero_argmax_share": 0.206
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "regimes": {
+        "mixed": {
+          "regret_mean_rel": {
+            "pass": true,
+            "threshold": 0.005,
+            "value": 0.0010853149099830327
+          },
+          "regret_p90_rel": {
+            "pass": true,
+            "threshold": 0.02,
+            "value": 0.003399743245015618
+          },
+          "top_argmax_share": {
+            "pass": true,
+            "threshold": 0.08,
+            "value": 0.058
+          },
+          "top_mass": {
+            "pass": true,
+            "threshold": 0.06,
+            "value": 0.04043789298979715
+          }
+        },
+        "nominal": {
+          "regret_mean_rel": {
+            "pass": true,
+            "threshold": 0.005,
+            "value": 0.0006367785113175187
+          },
+          "regret_p90_rel": {
+            "pass": true,
+            "threshold": 0.02,
+            "value": 0.0019419486515356954
+          },
+          "top_argmax_share": {
+            "pass": true,
+            "threshold": 0.03,
+            "value": 0.021
+          },
+          "top_mass": {
+            "pass": true,
+            "threshold": 0.03,
+            "value": 0.015404316238936962
+          }
+        }
+      }
+    }
+  },
+  "F0_prereg_w8_g26": {
+    "grid": "w8_g26",
+    "label_seed": 6000,
+    "m_futures": 8,
+    "source": "results/wave8/f0_w8_g26_prereg.json",
+    "state_seed": 1,
+    "states_per_regime": 1000,
+    "stats": {
+      "mixed": {
+        "n_states": 1000,
+        "ref_argmin_median": 32.0,
+        "regret_mean_rel": 0.0023585204059521727,
+        "regret_p90_rel": 0.00569234388863623,
+        "top_argmax_share": 0.098,
+        "top_mass": 0.06840139343018202,
+        "zero_argmax_share": 0.293
+      },
+      "nominal": {
+        "n_states": 1000,
+        "ref_argmin_median": 16.0,
+        "regret_mean_rel": 0.00232542527470117,
+        "regret_p90_rel": 0.0017689559551194649,
+        "top_argmax_share": 0.032,
+        "top_mass": 0.021780372975867986,
+        "zero_argmax_share": 0.215
+      }
+    },
+    "verdict": {
+      "pass": false,
+      "regimes": {
+        "mixed": {
+          "regret_mean_rel": {
+            "pass": true,
+            "threshold": 0.005,
+            "value": 0.0023585204059521727
+          },
+          "regret_p90_rel": {
+            "pass": true,
+            "threshold": 0.02,
+            "value": 0.00569234388863623
+          },
+          "top_argmax_share": {
+            "pass": false,
+            "threshold": 0.08,
+            "value": 0.098
+          },
+          "top_mass": {
+            "pass": false,
+            "threshold": 0.06,
+            "value": 0.06840139343018202
+          }
+        },
+        "nominal": {
+          "regret_mean_rel": {
+            "pass": true,
+            "threshold": 0.005,
+            "value": 0.00232542527470117
+          },
+          "regret_p90_rel": {
+            "pass": true,
+            "threshold": 0.02,
+            "value": 0.0017689559551194649
+          },
+          "top_argmax_share": {
+            "pass": false,
+            "threshold": 0.03,
+            "value": 0.032
+          },
+          "top_mass": {
+            "pass": true,
+            "threshold": 0.03,
+            "value": 0.021780372975867986
+          }
+        }
+      }
+    }
+  },
+  "F1": {
+    "m_futures": 16,
+    "seeds": [
+      9000,
+      9029
+    ],
+    "source": "results/wave8/f1.json",
+    "verdict": {
+      "floor_mean": 8541.233333333334,
+      "n": 30,
+      "pass": true,
+      "pi1_mean": 4590.733333333334,
+      "wins": 30
+    }
+  },
+  "S_nom": {
+    "n": 1024,
+    "path": "results/wave8/S_nom.jsonl",
+    "seeds": [
+      9100,
+      9115
+    ],
+    "sha256": "f651fc58e5a34c36421848a09e91090275a3e4786743549afb4ad45f0bc6aaa8"
+  },
+  "S_nom_oracle": {
+    "m_futures": 16,
+    "m_hi": 0.14874833921755284,
+    "m_star": 0.126953125,
+    "modal_letter": 0,
+    "path": "results/wave8/S_nom_oracle.json"
+  }
+}

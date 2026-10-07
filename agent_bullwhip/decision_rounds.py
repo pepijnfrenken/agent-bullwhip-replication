@@ -59,7 +59,7 @@ class RoundPlan:
     rounds: int = 3
     steps_per_round: int = 170
     batch: int = 32
-    grid_id: str = "w8_g26"
+    grid_id: str = "w8_g26b"
     n_argmax: int = 15
     n_sampled: int = 15
     n_behavior: int = 10
@@ -75,7 +75,7 @@ class RoundPlan:
     gates_json: str = "results/wave8/gates.json"
     results: str = "results"
     python: str = "python3"
-    tag_prefix: str = "w8"
+    suffix: str = ""              # ladder rung suffix: "" | "-1.7b" | "-4b"
 
     def __post_init__(self):
         if self.arm not in ("r1", "r2rl"):
@@ -88,7 +88,7 @@ class RoundPlan:
     # -- layout -------------------------------------------------------------- #
     @property
     def name(self) -> str:
-        return f"wave8_{self.arm}_{lr_tag(self.lr)}_seed{self.seed}"
+        return f"wave8_{self.arm}{self.suffix}_{lr_tag(self.lr)}_seed{self.seed}"
 
     @property
     def arm_dir(self) -> Path:
@@ -107,7 +107,7 @@ class RoundPlan:
 
     @property
     def val_tag(self) -> str:
-        return f"w8-val-{self.arm}-{lr_tag(self.lr)}-seed{self.seed}"
+        return f"w8-val-{self.arm}{self.suffix}-{lr_tag(self.lr)}-seed{self.seed}"
 
 
 @dataclass
@@ -381,10 +381,11 @@ def run_plan(plan: RoundPlan, runner: Callable[[list[str]], int],
 # R2 SFT stage + anchor table (torch lazily)
 # --------------------------------------------------------------------------- #
 def sft_argv(model: str, revision: str | None, seed: int, lr: float, *, labels: str,
-             steps: int = 2827, batch: int = 32, grid_id: str = "w8_g26",
+             steps: int = 2827, batch: int = 32, grid_id: str = "w8_g26b",
              permute_p: float = 0.5, save_every: int = 250, max_length: int = 1024,
              grad_ckpt: bool = True, micro_batch: int = 0, brier_weight: float = 0.0,
-             out: str | None = None, python: str = "python3") -> list[str]:
+             out: str | None = None, python: str = "python3", val_every: int = 0,
+             tag: str | None = None) -> list[str]:
     out = out or f"results/wave8_r2sft_seed{seed}"
     a = [python, "-u", "-m", "agent_bullwhip.decision_train", "--model", model]
     if revision:
@@ -393,7 +394,9 @@ def sft_argv(model: str, revision: str | None, seed: int, lr: float, *, labels: 
           "--batch", str(batch), "--lr", "%g" % lr, "--permute-p", "%g" % permute_p,
           "--max-length", str(max_length), "--save-every", str(save_every),
           "--seed", str(seed), "--out", out, "--resume",
-          "--tag", f"r2sft-seed{seed}"]
+          "--tag", tag or f"r2sft-seed{seed}"]
+    if val_every:
+        a += ["--val-every", str(val_every)]
     if grad_ckpt:
         a.append("--grad-ckpt")
     if micro_batch:
@@ -425,6 +428,33 @@ def compute_anchor_table(model: str, revision: str | None, adapter: str, labels:
     return {"n": len(table), "labels_sha": sha}
 
 
+def sft_gate_reads(a) -> int:
+    """Collapse + permutation read of every saved SFT checkpoint (post-hoc; W8 §4.2).
+    Appends one row per checkpoint to `<sft-dir>/sft_gate_reads.jsonl`."""
+    sft = Path(a.sft_dir)
+    ckpts = sorted((d for d in sft.glob("checkpoint-*") if d.name.split("-")[-1].isdigit()),
+                   key=lambda d: int(d.name.split("-")[-1]))
+    log = sft / "sft_gate_reads.jsonl"
+    seen = {r["checkpoint"] for r in read_jsonl(log)}
+    common = ["--model", a.model] + (["--revision", a.revision] if a.revision else []) + ["--grid", a.grid]
+    for d in ckpts:
+        if d.name in seen:
+            continue
+        col, perm = sft / f"gate_{d.name}_collapse.json", sft / f"gate_{d.name}_perm.json"
+        subprocess.run(["python3", "-u", "scripts/wave8_gates.py", "collapse-check", *common,
+                        "--adapter", str(d), "--n", "256", "--frozen", a.gates, "--out", str(col)], check=True)
+        subprocess.run(["python3", "-u", "scripts/wave8_gates.py", "perm-check", *common,
+                        "--adapter", str(d), "--states", a.states, "--n", "512", "--gate", "0",
+                        "--out", str(perm)], check=True)
+        c, p = json.loads(col.read_text()), json.loads(perm.read_text())
+        with log.open("a") as f:
+            f.write(json.dumps({"checkpoint": d.name, "collapsed": c["collapsed"],
+                                "median_entropy": c["median_entropy"],
+                                "modal_argmax_share": c["modal_argmax_share"], "I": c["I"],
+                                "perm_rate": p["invariance_rate"]}, sort_keys=True) + "\n")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="agent_bullwhip.decision_rounds")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -437,7 +467,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--rounds", type=int, default=3)
     run.add_argument("--steps-per-round", type=int, default=170)
     run.add_argument("--batch", type=int, default=32)
-    run.add_argument("--grid", default="w8_g26")
+    run.add_argument("--grid", default="w8_g26b")
     run.add_argument("--micro-batch", type=int, default=0)
     run.add_argument("--max-length", type=int, default=1024)
     run.add_argument("--grad-ckpt", type=int, choices=[0, 1], default=1)
@@ -448,15 +478,48 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--results", default="results")
     run.add_argument("--dry-run", action="store_true",
                      help="print the planned stage commands and exit")
+    run.add_argument("--rung-suffix", default="", choices=["", "-1.7b", "-4b"])
+    sf = sub.add_parser("sft", help="run/resume the R2 SFT stage (or the 500-step lr sweep)")
+    sf.add_argument("--labels", required=True)
+    sf.add_argument("--seed", type=int, required=True)
+    sf.add_argument("--lr", type=float, required=True)
+    sf.add_argument("--steps", type=int, default=2827)
+    sf.add_argument("--val-every", type=int, default=0)
+    sf.add_argument("--save-every", type=int, default=250)
+    sf.add_argument("--out", default=None)
+    sf.add_argument("--model", default="Qwen/Qwen3-0.6B")
+    sf.add_argument("--revision", default=PINNED_REVISION)
+    sf.add_argument("--grid", default="w8_g26b")
+    sf.add_argument("--permute-p", type=float, default=0.5)
+    sf.add_argument("--max-length", type=int, default=1024)
+    sf.add_argument("--micro-batch", type=int, default=0)
+    sf.add_argument("--brier-weight", type=float, default=0.0)
+    sg = sub.add_parser("sft-gates", help="post-hoc collapse + permutation reads over saved SFT checkpoints")
+    sg.add_argument("--sft-dir", required=True)
+    sg.add_argument("--gates", default="results/wave8/gates.json")
+    sg.add_argument("--states", default="results/wave8/S_nom.jsonl")
+    sg.add_argument("--model", default="Qwen/Qwen3-0.6B")
+    sg.add_argument("--revision", default=PINNED_REVISION)
+    sg.add_argument("--grid", default="w8_g26b")
     at = sub.add_parser("anchor-table", help="(torch) frozen-adapter pi table for R2+RL")
     at.add_argument("--model", default="Qwen/Qwen3-0.6B")
     at.add_argument("--revision", default=PINNED_REVISION)
     at.add_argument("--adapter", required=True)
     at.add_argument("--labels", required=True)
-    at.add_argument("--grid", default="w8_g26")
+    at.add_argument("--grid", default="w8_g26b")
     at.add_argument("--batch", type=int, default=32)
     at.add_argument("--out", required=True)
     a = ap.parse_args(argv)
+    if a.cmd == "sft":
+        argv_ = sft_argv(a.model, a.revision or None, a.seed, a.lr, labels=a.labels, steps=a.steps,
+                         grid_id=a.grid, permute_p=a.permute_p, save_every=a.save_every,
+                         max_length=a.max_length, micro_batch=a.micro_batch,
+                         brier_weight=a.brier_weight, out=a.out, val_every=a.val_every)
+        runner = SubprocessRunner()
+        runner.install()
+        return runner(argv_)
+    if a.cmd == "sft-gates":
+        return sft_gate_reads(a)
     if a.cmd == "anchor-table":
         print(compute_anchor_table(a.model, a.revision or None, a.adapter, a.labels, a.grid,
                                    a.batch, a.out))
@@ -467,8 +530,7 @@ def main(argv: list[str] | None = None) -> int:
                      micro_batch=a.micro_batch, max_length=a.max_length,
                      grad_ckpt=bool(a.grad_ckpt), save_every=a.save_every,
                      processes=a.processes, base_adapter=a.base_adapter,
-                     gates_json=a.gates, results=a.results, python=sys.executable
-                     if os.environ.get("W8_USE_SYS_PYTHON") else "python3")
+                     gates_json=a.gates, results=a.results, suffix=a.rung_suffix)
     if a.dry_run:
         for r in range(1, plan.rounds + 1):
             for st in round_stages(plan, r):

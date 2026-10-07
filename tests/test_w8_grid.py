@@ -61,7 +61,7 @@ def test_gridspec_validation_and_unknown_id():
         GridSpec("bad", tuple(range(27)), tuple(string.ascii_uppercase) + ("a",))
     with pytest.raises(ValueError, match="unknown grid"):
         get_grid("nope")
-    assert set(GRIDS) == {"w7_u21", "w8_g26"}
+    assert set(GRIDS) == {"w7_u21", "w8_g26", "w8_g26b"}
 
 
 def test_behavior_random_grid_is_frozen_and_stream_unchanged():
@@ -125,3 +125,43 @@ def test_committed_grid_artifact_matches_code():
     assert a["prompt_sha256_string_renderer"] == prompt_hash(
         render_prompt_str(CANONICAL_CTX, grid_id="w8_g26"))
     assert a["instruction"] == instruction("w8_g26")
+
+
+G26B = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
+        36, 44, 54, 64, 78, 94, 114, 136, 166, 200]
+
+
+def test_w8_g26b_is_the_generated_f0_revision_and_the_staged_grid():
+    from agent_bullwhip.decision_readout import W8_STAGED_GRID, make_w8_g26b
+    g = get_grid("w8_g26b")
+    assert list(g.values) == G26B and make_w8_g26b().values == g.values
+    assert W8_STAGED_GRID == "w8_g26b"
+    # generation rule: geometric ladder 30 -> 200, even integers, strictly increasing, last = top
+    tail = G26B[16:]
+    assert all(b > a for a, b in zip([30] + tail, tail)) and tail[-1] == 200
+    assert tail[:3] == [2 * round(30 * (200 / 30) ** (k / 10) / 2) for k in (1, 2, 3)]
+    # same head as w8_g26 (letters A..P keep the wave-7 values); only the tail differs
+    assert list(g.values[:16]) == list(get_grid("w8_g26").values[:16]) != G26B[16:]
+    assert prompt_hash(render_prompt_str(CANONICAL_CTX, grid_id="w8_g26b")) != prompt_hash(
+        render_prompt_str(CANONICAL_CTX, grid_id="w8_g26"))
+    assert make_w8_g26b(160).values[-1] == 160
+
+
+def test_prereg_grid_f0_failure_is_on_record_and_reproducible_from_the_saved_J():
+    """The pre-registered w8_g26 FAILED F0 on 1,000 states per regime (2026-10-07); the saved
+    reference-grid J rows reproduce the verdict and the g26b revision's selection-set reads."""
+    from agent_bullwhip import decision_gates as G
+    root = Path(__file__).resolve().parents[1] / "results" / "wave8"
+    rec, Jf = root / "f0_w8_g26_prereg.json", root / "f0_w8_g26_prereg.json.J.json"
+    if not (rec.exists() and Jf.exists()):
+        pytest.skip("F0 record not in this checkout")
+    saved = json.loads(rec.read_text())
+    assert saved["verdict"]["pass"] is False
+    J = json.loads(Jf.read_text())
+    ref = list(range(0, 201, 2))
+    st = {r: G.f0_stats([x["J"] for x in J[r]], list(get_grid("w8_g26").values), ref) for r in J}
+    assert not G.f0_gate(st)["pass"]
+    for r in st:
+        assert st[r]["top_argmax_share"] == pytest.approx(saved["stats"][r]["top_argmax_share"], abs=2e-3)
+    st_b = {r: G.f0_stats([x["J"] for x in J[r]], G26B, ref) for r in J}
+    assert G.f0_gate(st_b)["pass"]          # selection-set read only; the gate is the fresh-seed F0

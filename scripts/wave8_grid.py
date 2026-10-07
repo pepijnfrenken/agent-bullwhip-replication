@@ -66,7 +66,7 @@ def _head() -> str | None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--grid", default="w8_g26", choices=sorted(GRIDS))
+    ap.add_argument("--grid", default="w8_g26b", choices=sorted(GRIDS))
     ap.add_argument("--out", default=None)
     ap.add_argument("--tokenizer-check", action="store_true")
     ap.add_argument("--model", default="Qwen/Qwen3-0.6B")

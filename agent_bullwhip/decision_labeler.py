@@ -313,7 +313,9 @@ def _label_state_task(task: dict) -> dict:
     role = task["role"]; cur = task["curriculum"]; M = task["m_futures"]
     theta = task["theta"]; lam = task["lam"]; tau_scale = task["tau_scale"]
     horizon = task["horizon"]
-    behavior = BehaviorConfig(task["p_floor"], task["p_random"])
+    behavior = BehaviorConfig(
+        task["p_floor"], task["p_random"],
+        tuple(task.get("theta_range", (1.5, 5.0))), tuple(task.get("lam_range", (0.2, 0.8))))
     step, il_hist, params = _replay_to_week(seed, ep, week, cur, horizon, behavior)
     ctx = step.observations()[role]
     cont = make_continuation(theta, lam, il_hist, week)

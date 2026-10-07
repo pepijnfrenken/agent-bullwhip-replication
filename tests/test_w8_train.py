@@ -263,7 +263,7 @@ def test_full_r1_run_stage_order_and_paths(tmp_path):
     # the train argv is accepted by decision_train's own parser
     for a in trains:
         ns = dt.parse_args(a[4:])
-        assert ns.phase == "rlcd" and ns.steps == 170 and ns.permute_p == 0.5 and ns.grid == "w8_g26"
+        assert ns.phase == "rlcd" and ns.steps == 170 and ns.permute_p == 0.5 and ns.grid == "w8_g26b"
     val = runner.calls[-1][1]
     assert val[val.index("--pattern") + 1] == "curriculum" and val[val.index("--seed-base") + 1] == "9500"
     assert val[val.index("--adapter") + 1].endswith("round3/checkpoint-169")
@@ -348,7 +348,7 @@ def test_sft_argv_is_accepted_by_decision_train():
     a = dr.sft_argv("Qwen/Qwen3-0.6B", "c1899de2", 1, 1e-4, labels="l.jsonl")
     ns = dt.parse_args(a[4:])
     assert (ns.phase, ns.steps, ns.permute_p, ns.save_every, ns.grid, ns.seed) == \
-        ("sft", 2827, 0.5, 250, "w8_g26", 1)
+        ("sft", 2827, 0.5, 250, "w8_g26b", 1)
 
 
 def test_cli_flags_exist_in_target_modules():
