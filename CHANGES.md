@@ -1,5 +1,31 @@
 # Changes & Audit Log
 
+## 2026-10-07 — Repo cleanup + navigation (mission bullwhip-cleanup)
+
+Structural reorganization only — no numbers, verdicts, claims, code behavior, or dependencies
+changed; nothing deleted. Full audit of what moved where, the inventory decisions, and the
+untracked-binary table: `CLEANUP-REPORT.md`.
+
+- **Navigation docs (new).** `docs/README.md` = how to navigate/run everything;
+  `docs/STATE.md` = wave table 1–7, current verdicts, OPEN ISSUES (incl. the wave-6 free-form
+  lane validity caveats and the agreed-but-not-started Clef-style arm). Root `README.md` is now
+  the short entry point (project statement + binding protocol rules + links); the pre-cleanup
+  full text with the surviving tables is archived at `docs/archive/README_v4-2026-10-07.md`
+  (old versions v1–v3 + iteration log also under `docs/archive/`).
+- **Docs taxonomy.** Wave/spec docs → `docs/waves/`; audits → `docs/audits/`; fixes →
+  `docs/fixes/`; verifications → `docs/verify/`; wave-6 mission logs → `docs/missions/`.
+- **Scripts taxonomy.** Live tooling → `scripts/`; legacy one-offs (final_*.py, wave2*.sh,
+  probe_*/trace analyzers of past waves) → `scripts/archive/`. All references updated; move map
+  in `CLEANUP-REPORT.md`.
+- **Binary hygiene.** Checkpoint dirs under `results/wave7_{sft,rlcd}_seed*` untracked
+  (`git rm --cached`), kept on disk, `.gitignore` extended so they do not come back; summary in
+  `docs/ARTIFACTS.md` (sha256, size, how to regenerate).
+- **Test parity.** `uv run python -m pytest -q` before = 326 passed / 15 skipped; after =
+  identical (captures in the mission dir). Note: bare `uv run pytest` fails at collection on
+  this poetry-style pyproject (`agent_bullwhip` not importable) — use `python -m pytest`.
+- **Reported, not fixed.** `scratch/` (the 2026-08-29 archive of 19 one-off scripts) was
+  removed by commit `99a6c6e` the same day; those scripts survive only in git history.
+
 ## 2026-10-07 — Results transfer = git (rule); rsync demoted
 
 Pino: results travel through this repo in both directions, not rsync — a must. New kit script
