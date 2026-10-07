@@ -57,6 +57,11 @@ are working on.
      (**implemented 2026-10-07, code + tests + staged `hpc-umbrella/gpu-w6fix.sbatch`; not run**);
    - (b) a decision-model arm in the style of Cloudflare's Clef — fixed choice set + one-token
      readout + cost-scored RL, i.e. the RLCD lane with a corrected action grid and a collapse gate.
+     (**implemented 2026-10-07; hub pre-flights F0/F1 run, cluster kit staged, nothing trained.** The frozen
+     26-letter grid `w8_g26` FAILED F0 at 1,000 states (top-letter mass/argmax above threshold) and was revised
+     before any training, as WAVE8_SPEC §3.1 allows, to `w8_g26b` (tail 36..200), which passed F0 on fresh
+     seeds; F1 teacher check passed. Details: `waves/WAVE8_SPEC.md` Changes log.)
+   - Operator handoff for both: `waves/STAGING-READY.md`.
 
 ## Pointers
 

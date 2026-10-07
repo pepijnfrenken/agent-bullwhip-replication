@@ -7,7 +7,7 @@ Cloudflare Clef launch post).
 | file | what | status |
 |---|---|---|
 | [`WAVE6-FIX_SPEC.md`](WAVE6-FIX_SPEC.md) | contract/format micro-probe on the wave-6 free-form GRPO lane: A0 as-is vs A1 paper `order_quantity` JSON contract (chat template) vs A2 + parse-aware reward; parse-rate gates, GPU estimate (≈ 14–24 GPU-h), follow-up rules | **implemented 2026-10-07 (code + tests + staged sbatch; not run)** |
-| [`WAVE8_SPEC.md`](WAVE8_SPEC.md) | Clef-style decision-model arm: corrected 26-letter choice set `w8_g26`, R1 outcome-scored RL / R2 soft-target SFT warm start / R3 grid variants, computed collapse gate, permutation gate, schema extension, size ladder 0.6B→1.7B→4B, GGUF CPU step (≈ 30–45 GPU-h) | **awaiting repo-cleanup completion before implementation** |
+| [`WAVE8_SPEC.md`](WAVE8_SPEC.md) | Clef-style decision-model arm: corrected 26-letter choice set `w8_g26`, R1 outcome-scored RL / R2 soft-target SFT warm start / R3 grid variants, computed collapse gate, permutation gate, schema extension, size ladder 0.6B→1.7B→4B, GGUF CPU step (≈ 30–45 GPU-h) | **implemented 2026-10-07 (code + tests + hub pre-flights + staged kit; F0 revised grid `w8_g26b`; not trained)** |
 
 ## Dependencies
 

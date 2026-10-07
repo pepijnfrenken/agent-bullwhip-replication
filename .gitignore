@@ -13,6 +13,9 @@ results/**/checkpoint*/
 optimizer*.pt
 *.safetensors
 adapter_model.safetensors
+# WAVE8 CPU/GGUF step: models stay untracked (manifest.json + summaries are the evidence)
+*.gguf
+results/wave8_gguf/**/merged/
 
 .env.local
 # post drafts stay local — never in the repo

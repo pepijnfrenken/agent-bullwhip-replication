@@ -61,7 +61,7 @@ def test_gridspec_validation_and_unknown_id():
         GridSpec("bad", tuple(range(27)), tuple(string.ascii_uppercase) + ("a",))
     with pytest.raises(ValueError, match="unknown grid"):
         get_grid("nope")
-    assert set(GRIDS) == {"w7_u21", "w8_g26", "w8_g26b"}
+    assert set(GRIDS) == {"w7_u21", "w8_g26", "w8_g26b", "w8_r3b", "w8_r3c"}
 
 
 def test_behavior_random_grid_is_frozen_and_stream_unchanged():
@@ -165,3 +165,14 @@ def test_prereg_grid_f0_failure_is_on_record_and_reproducible_from_the_saved_J()
         assert st[r]["top_argmax_share"] == pytest.approx(saved["stats"][r]["top_argmax_share"], abs=2e-3)
     st_b = {r: G.f0_stats([x["J"] for x in J[r]], G26B, ref) for r in J}
     assert G.f0_gate(st_b)["pass"]          # selection-set read only; the gate is the fresh-seed F0
+
+
+def test_r3_variant_grids_follow_the_spec_descriptions():
+    b, c = list(get_grid("w8_r3b").values), list(get_grid("w8_r3c").values)
+    assert len(b) == len(c) == 26
+    assert b[:2] == [0, 2] and b[2:19] == list(range(4, 21)) and b[-1] == 200      # resolution 1 on 4..20
+    assert c[:24] == G26B[:24] and c[-2:] == [190, 240]                            # widened tail
+    for g in (b, c):
+        assert all(y > x for x, y in zip(g, g[1:]))
+    assert prompt_hash(render_prompt_str(CANONICAL_CTX, grid_id="w8_r3b")).startswith(
+        prompt_hash(render_prompt_str(CANONICAL_CTX, grid_id="w8_r3b"))[:8])

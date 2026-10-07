@@ -19,6 +19,8 @@ This repo spans **7 waves**: API-LLM arms (1–3), a tool-calling arm (4), a dec
 (5), local GRPO training (6), and decision-native training — soft-target SFT + RLCD (7). The
 latest wave's verdict is **interface positive, training null-to-negative** (closed-choice readout
 kills the rogue tail; outcome-label training at 0.6B made policy worse).
+Wave 6-fix (contract micro-probe) and wave 8 (Clef-style decision-model arm) are implemented and staged for the
+cluster but **not run** — see `docs/waves/STAGING-READY.md`.
 
 ---
 
@@ -58,7 +60,7 @@ Full protocol history: `docs/waves/protocol.md`. Read the audits before trusting
 ## Run (three commands that matter)
 
 ```bash
-uv run python -m pytest -q            # 379 passed, 16 skipped (after WAVE6-FIX, 2026-10-07)
+uv run python -m pytest -q            # 481 passed, 20 skipped (after WAVE6-FIX + WAVE8 staging, 2026-10-07)
 uv run python scripts/wave7_analysis.py     # wave-7 gate readout → results/wave7_report.md
 uv run python scripts/walkforward_floor.py  # walk-forward + oracle floor columns ($0, no API)
 ```

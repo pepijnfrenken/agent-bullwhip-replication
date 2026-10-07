@@ -96,8 +96,24 @@ def make_w8_g26b(top: int = 200) -> GridSpec:
     return GridSpec("w8_g26b", values, tuple(string.ascii_uppercase[:len(values)]))
 
 
+# R3 follow-up choice sets (WAVE8 §4.3), used ONLY if the collapse gate trips with an edge
+# signature. R3a (state-relative values) is NOT implemented — it needs per-state grids through
+# prompt, labeler, trainer and eval (see the spec Changes log).
+#   R3b "re-centred": resolution 1 on 4..20 (where the nominal optimum median 16 / p75 28 live),
+#       coarse geometric cover above: 0,2 | 4..20 | 24,30,40,60,90,140,200 (26 letters)
+#   R3c "widened tail": the staged w8_g26b with its last two letters pushed out: ...,136,190,240
+W8_R3B_VALUES = (0, 2) + tuple(range(4, 21)) + (24, 30, 40, 60, 90, 140, 200)
+W8_R3C_VALUES = make_w8_g26b().values[:24] + (190, 240)
+
+
+def _spec(grid_id: str, values: tuple) -> GridSpec:
+    return GridSpec(grid_id, values, tuple(string.ascii_uppercase[:len(values)]))
+
+
 GRIDS: dict[str, GridSpec] = {"w7_u21": W7_U21, "w8_g26": make_w8_g26(),
-                              "w8_g26b": make_w8_g26b()}
+                              "w8_g26b": make_w8_g26b(),
+                              "w8_r3b": _spec("w8_r3b", W8_R3B_VALUES),
+                              "w8_r3c": _spec("w8_r3c", W8_R3C_VALUES)}
 DEFAULT_GRID_ID = "w7_u21"
 # The grid the WAVE8 pipeline stages: the F0-revised one (w8_g26 failed F0 on 1,000 states).
 W8_STAGED_GRID = "w8_g26b"

@@ -17,6 +17,12 @@ Archive of one-off/legacy scripts from past waves: `archive/`.
 | `run_suite_chunked.sh` | run pytest one file per process (exact-stack, 15GB hub constraint). |
 | `probe_permutation_invariance.py` | wave-7 permutation-gate probe (VERIFY-W7-EVAL). |
 | `w6fix_analysis.py` | WAVE6-FIX gate readout (V-gates, P25/P50/P100, rules R-A..R-D) → `results/w6fix_report.{md,json}`. |
+| `wave8_grid.py` | WAVE8 choice-set artifact (values, labels, prompt SHA, token ids; `--tokenizer-check` needs transformers). |
+| `wave8_grid_probe.py` | WAVE8 pre-flight F0 (regret / top-letter mass of the choice set vs the 0..200 reference). |
+| `wave8_teacher_check.py` | WAVE8 pre-flight F1 (closed-loop PI1 vs the continuation floor, seeds 9000..9029). |
+| `wave8_gates.py` | WAVE8 S_nom sample, oracle, frozen F2/F3 control stats, collapse/permutation reads, gate report. |
+| `wave8_analysis.py` | WAVE8 gate readout G1-G7 + decision table; `select-lr`, `select-sft-lr`. |
+| `wave8_gguf_serve.py` | WAVE8 CPU/GGUF step: convert, llama-server readout, equivalence gate, protocol eval. |
 | `probe_decision_readout.py` | stage-1 Qwen3-0.6B letter-logit readout demo (pre-package). |
 
 Run with `uv run python scripts/<name>.py …` (or `.venv/bin/python`).

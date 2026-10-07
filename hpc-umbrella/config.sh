@@ -53,6 +53,27 @@ MODEL_ID="Qwen/Qwen3-0.6B"
 # fixture (b96fb847...) asserts the same template bytes.
 MODEL_REVISION="c1899de289a04d12100db370d81485cdf75e47ca"
 CAMPAIGN_TSV="${KIT_DIR}/campaign.tsv"
+
+# --- WAVE8 (docs/waves/WAVE8_SPEC.md) --------------------------------------------------
+# Size ladder (WAVE8 §9.1). Revisions are the `sha` of https://huggingface.co/api/models/<id>
+# read 2026-10-07 (lastModified 2025-07-26 for both). stage.sh --with-ladder downloads them
+# (4B ~ 8.06 GB: usedStorage 8,056,404,654 B); compute nodes are offline (HF_HUB_OFFLINE=1).
+MODEL_ID_17B="Qwen/Qwen3-1.7B"
+MODEL_REVISION_17B="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+MODEL_ID_4B="Qwen/Qwen3-4B"
+MODEL_REVISION_4B="1cfa9a7208912126459214e8b04321603b3df60c"
+WALLTIME_W8_TRAIN="08:00:00"      # R1 ~1.1 h/run; R2 = SFT ~3.7 h + 3 RL rounds (W8 §4.2)
+
+# W8_RUNG selects the model: 0.6b (default) | 1.7b | 4b. Sets RUNG_MODEL / RUNG_REV /
+# RUNG_SUFFIX (arm-name suffix) / RUNG_GATES (the rung's frozen F2/F3 file).
+bw_w8_rung() {
+  case "${W8_RUNG:-0.6b}" in
+    0.6b) RUNG_MODEL="${MODEL_ID}";     RUNG_REV="${MODEL_REVISION}";     RUNG_SUFFIX="";      RUNG_GATES="results/wave8/gates.json" ;;
+    1.7b) RUNG_MODEL="${MODEL_ID_17B}"; RUNG_REV="${MODEL_REVISION_17B}"; RUNG_SUFFIX="-1.7b"; RUNG_GATES="results/wave8/gates_1.7b.json" ;;
+    4b)   RUNG_MODEL="${MODEL_ID_4B}";  RUNG_REV="${MODEL_REVISION_4B}";  RUNG_SUFFIX="-4b";   RUNG_GATES="results/wave8/gates_4b.json" ;;
+    *) echo "FATAL: W8_RUNG must be 0.6b|1.7b|4b (got '${W8_RUNG:-}')" >&2; return 2 ;;
+  esac
+}
 CAMPAIGN_W6FIX_TSV="${KIT_DIR}/campaign-w6fix.tsv"   # WAVE6-FIX probe rows (gpu-w6fix.sbatch)
 
 # F6: pin the exact commit staging must serve. Empty (default) = stage.sh logs
@@ -122,7 +143,9 @@ bw_pin_table() {
     "ENV_MODE"          "$ENV_MODE"          "recommended default" \
     "TUE_USER"          "$TUE_USER"          "probe 09-30: 20234428 (laptop-side pulls)" \
     "ROLLOUT_BATCH"     "$ROLLOUT_BATCH"     "repo default; the pilot measures 1 vs N" \
-    "SAVE_EVERY"        "$SAVE_EVERY"        "checkpoint cadence for the campaign"
+    "SAVE_EVERY"        "$SAVE_EVERY"        "checkpoint cadence for the campaign" \
+    "MODEL_REVISION_17B" "$MODEL_REVISION_17B" "HF api sha 2026-10-07 (W8 ladder rung 2)" \
+    "MODEL_REVISION_4B" "$MODEL_REVISION_4B"   "HF api sha 2026-10-07 (W8 ladder rung 3)"
 }
 
 # --------------------------------------------------------------------------- #

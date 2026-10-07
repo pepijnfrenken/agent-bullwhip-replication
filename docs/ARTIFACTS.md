@@ -78,13 +78,27 @@ Produced by `hpc-umbrella/gpu-w6fix.sbatch` (WAVE6-FIX_SPEC §8.1); come back th
 | `results/w6fix_logs/w6fix-<jobid>_<task>.log` | tracked | Slurm logs (provenance) |
 | `tests/fixtures/w6fix_collect_legacy_golden.json` | tracked | pre-change `collect_step` goldens + first-prompt SHAs (V1) |
 
+## 3c. WAVE8 artifacts (code + hub pre-flight committed 2026-10-07; training/eval not yet run)
+
+| path | tracked? | content |
+|---|---|---|
+| `results/wave8/grid_w8_g26.json`, `grid_w8_g26b.json` | tracked (`git add -f`) | generated choice sets (`scripts/wave8_grid.py`): values, labels, instruction, prompt SHA (string renderer + `apply_chat_template`), label token ids |
+| `results/wave8/f0_w8_g26_prereg.json` (+ `.J.json`) | tracked | pre-registered `w8_g26` F0 read: **FAIL** (see WAVE8_SPEC changes log); reference-grid J rows for reproduction |
+| `results/wave8/f0.json` (+ `.J.json`), `f1.json`, `gates.json` | tracked | F0 (revised `w8_g26b`, fresh seeds), F1 teacher check, S_nom / oracle summaries; F2/F3 are filled by the cluster pre-flight |
+| `results/wave8/S_nom.jsonl`, `S_nom_oracle.json` | tracked | the fixed 1,024-state sample and its oracle labels (J, p, argmin) |
+| `results/wave8_<arm>_<lr>_seed<S>/` (`round_state.json`, `collapse_reads.jsonl`, `round<r>/` working files) and `results/wave8_<arm>_<lr>_seed<S>_round<r>/` (`train_log.jsonl`, `state.json`, `pi_sft.json`) | train logs tracked; `checkpoint-*` **untracked**; per-round state/label files regenerable | R1/R2+RL runs |
+| `results/wave8_val/w8-val-*.jsonl` | tracked | curriculum-validation evals (lr selection, band 9500..9529) |
+| `results/eval/w8-*.jsonl`, `*.summary.json`, `w8-*-perm.json`; `results/wave8/<arm>-S_nom.json`, `lr_selection*.json`, `gates_<rung>.json` | tracked | protocol evals with per-decision `traces` + `readout` key (W8 §7.2), gate reads |
+| `results/wave8_report.{md,json}` | tracked | `scripts/wave8_analysis.py` readout |
+| `results/wave8_gguf/` — `manifest.json`, `*.summary.json`, equivalence json | tracked | **`*.gguf` and the merged HF dir are untracked** (`.gitignore`); sha256 in `manifest.json` |
+
 ## 4. What to do after a clean clone
 
 1. `git clone` — you get code, docs, tests, and the tracked wave-7 readouts under `results/eval`,
    `results/wave7_labels`, `results/wave7_logs`, `results/wave7_floors.json`.
 2. Checkpoints/adapters are NOT in the clone. If you need the trained weights, copy them from
    the hub checkout (they live on disk here) or re-run training on the cluster.
-3. `uv run python -m pytest -q` to verify the tree (379 passed / 16 skipped after WAVE6-FIX, 2026-10-07; 326 / 15 before).
+3. `uv run python -m pytest -q` to verify the tree (481 passed / 20 skipped after WAVE6-FIX + WAVE8 staging, 2026-10-07; 326 / 15 before).
 
 ## 5. Integrity check (cheap, recommended on recovery)
 

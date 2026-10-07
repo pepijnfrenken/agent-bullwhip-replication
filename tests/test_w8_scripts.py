@@ -227,3 +227,9 @@ def test_committed_preflight_artifacts_are_self_consistent(gates_mod, s_nom):
     top = max(set(orc["argmin"]), key=orc["argmin"].count)
     assert orc["modal_letter"] == top and orc["m_star"] == orc["argmin"].count(top) / 1024
     assert orc["m_hi"] == pytest.approx(G.wilson_upper(orc["argmin"].count(top), 1024))
+
+
+def test_probe_refuses_a_grid_above_the_reference_max(tmp_path):
+    probe = _load("wave8_grid_probe")
+    with pytest.raises(SystemExit, match="exceeds the reference max"):
+        probe.main(["--states", "1", "--grid", "w8_r3c", "--out", str(tmp_path / "x.json")])

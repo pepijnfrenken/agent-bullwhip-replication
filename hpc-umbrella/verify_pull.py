@@ -45,6 +45,27 @@ EXPECT = {
     "grpo_w6fix_a1_seed2": 100,
     "grpo_w6fix_a2": 100,
     "grpo_w6fix_a2_seed2": 100,
+    # WAVE8 R1 (decision_rounds): flat per-round train dirs, 170 steps each, 2 lrs x 3 seeds
+    # x 3 rounds. R2 / R3 / ladder dirs (wave8_r2sft_seed*, wave8_r2rl_*, wave8_r1-1.7b_*,
+    # wave8_r1-4b_*) run conditionally and are listed as "extras (fine)" unless added here.
+    "wave8_r1_lr1e-5_seed0_round1": 170,
+    "wave8_r1_lr1e-5_seed0_round2": 170,
+    "wave8_r1_lr1e-5_seed0_round3": 170,
+    "wave8_r1_lr1e-5_seed1_round1": 170,
+    "wave8_r1_lr1e-5_seed1_round2": 170,
+    "wave8_r1_lr1e-5_seed1_round3": 170,
+    "wave8_r1_lr1e-5_seed2_round1": 170,
+    "wave8_r1_lr1e-5_seed2_round2": 170,
+    "wave8_r1_lr1e-5_seed2_round3": 170,
+    "wave8_r1_lr5e-5_seed0_round1": 170,
+    "wave8_r1_lr5e-5_seed0_round2": 170,
+    "wave8_r1_lr5e-5_seed0_round3": 170,
+    "wave8_r1_lr5e-5_seed1_round1": 170,
+    "wave8_r1_lr5e-5_seed1_round2": 170,
+    "wave8_r1_lr5e-5_seed1_round3": 170,
+    "wave8_r1_lr5e-5_seed2_round1": 170,
+    "wave8_r1_lr5e-5_seed2_round2": 170,
+    "wave8_r1_lr5e-5_seed2_round3": 170,
 }
 CKPT_PAYLOAD = ("adapter_model.safetensors", "adapter_model.bin", "adapter_config.json",
                 "pytorch_model.bin")

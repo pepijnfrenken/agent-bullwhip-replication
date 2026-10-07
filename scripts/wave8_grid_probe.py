@@ -42,20 +42,21 @@ def _task(t: dict) -> dict:
     cont = L.make_continuation(L.CONTINUATION_THETA, L.CONTINUATION_LAM, il, week)
     rng = L._seeded_rng(f"{seed}:ep:{ep}:w:{week}:{role}")
     fut = [L.draw_future_demand(rng, cur, params, 36 - week) for _ in range(t["m"])]
-    J = L.score_candidates(step, week, role, L.REFERENCE_GRID, cont, fut,
+    J = L.score_candidates(step, week, role, t["ref"], cont, fut,
                            L.CONTINUATION_THETA, L.CONTINUATION_LAM, il)
     return {"role": role, "week": week, "ep": ep, "J": J,
             "ctx": {k: ctx[k] for k in ("on_hand", "backlog", "outstanding", "incoming_last")}}
 
 
-def build_tasks(regime: str, n: int, state_seed: int, label_seed: int, m: int) -> list[dict]:
+def build_tasks(regime: str, n: int, state_seed: int, label_seed: int, m: int,
+                ref: list[int] | None = None) -> list[dict]:
     rnd = random.Random(f"{regime}:{state_seed}")
     out = []
     for _ in range(n):
         ep = rnd.randrange(700)
         out.append({"regime": regime, "ep": ep, "week": rnd.randrange(34),
                     "role": rnd.choice(ROLES), "cur": CURR[ep % 2],
-                    "label_seed": label_seed, "m": m})
+                    "label_seed": label_seed, "m": m, "ref": ref or L.REFERENCE_GRID})
     return out
 
 
@@ -68,24 +69,29 @@ def main(argv=None) -> int:
     ap.add_argument("--label-seed", type=int, default=6000)
     ap.add_argument("--processes", type=int, default=1)
     ap.add_argument("--grid", default="w8_g26b")
+    ap.add_argument("--ref-max", type=int, default=200,
+                    help="reference grid 0..ref-max step 2 (must reach the grid's top; default 200)")
     ap.add_argument("--out", default="results/wave8/f0.json")
     ap.add_argument("--gates", default=None, help="merge the verdict into this gates.json (key F0)")
     a = ap.parse_args(argv)
     if L.EVAL_SEED_MIN <= a.label_seed < L.EVAL_SEED_MAX:
         raise SystemExit("label seed is in the reserved eval band")
     grid, w7 = list(get_grid(a.grid).values), list(get_grid("w7_u21").values)
+    ref = list(range(0, a.ref_max + 1, 2))
+    if grid[-1] > ref[-1]:
+        raise SystemExit(f"grid top {grid[-1]} exceeds the reference max {ref[-1]}: pass --ref-max >= {grid[-1]}")
     t0 = time.time()
     stats, w7stats, rows_out = {}, {}, {}
     for regime in a.regimes.split(","):
-        tasks = build_tasks(regime, a.states, a.state_seed, a.label_seed, a.m_futures)
+        tasks = build_tasks(regime, a.states, a.state_seed, a.label_seed, a.m_futures, ref)
         if a.processes > 1:
             with mp.get_context("fork").Pool(a.processes) as pool:
                 rows = list(pool.imap(_task, tasks, chunksize=4))
         else:
             rows = [_task(t) for t in tasks]
         J = [r["J"] for r in rows]
-        stats[regime] = f0_stats(J, grid, L.REFERENCE_GRID)
-        w7stats[regime] = f0_stats(J, w7, L.REFERENCE_GRID)
+        stats[regime] = f0_stats(J, grid, ref)
+        w7stats[regime] = f0_stats(J, w7, ref)
         rows_out[regime] = [{k: r[k] for k in ("role", "week", "ep", "ctx")} | {"J": [round(x, 3) for x in r["J"]]}
                             for r in rows]
         s = stats[regime]
@@ -95,7 +101,7 @@ def main(argv=None) -> int:
               f"{100*w7stats[regime]['regret_mean_rel']:.2f}% top_mass={w7stats[regime]['top_mass']:.3f}",
               flush=True)
     verdict = f0_gate(stats) if set(stats) == {"mixed", "nominal"} else {"pass": None, "reason": "need both regimes"}
-    res = {"grid": a.grid, "reference": [0, 200, 2], "m_futures": a.m_futures,
+    res = {"grid": a.grid, "reference": [0, ref[-1], 2], "m_futures": a.m_futures,
            "states_per_regime": a.states, "state_seed": a.state_seed, "label_seed": a.label_seed,
            "wall_sec": round(time.time() - t0, 1), "processes": a.processes,
            "stats": stats, "wave7_grid_stats": w7stats, "verdict": verdict}

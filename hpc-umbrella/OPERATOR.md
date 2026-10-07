@@ -336,3 +336,30 @@ Spec: `docs/waves/WAVE6-FIX_SPEC.md`. One new sbatch + one TSV; same kit roots a
    (early-stopped A1/A2 arms report INCOMPLETE by design) and
    `python3 scripts/w6fix_analysis.py --out results/w6fix_report.md --json results/w6fix_report.json`.
 
+## Wave 8 — decision-model arm (corrected choice set, outcome-scored RL; `*-wave8-*.sbatch`)
+
+Spec: `docs/waves/WAVE8_SPEC.md`; the operator checklist with the gate tables is `docs/waves/STAGING-READY.md`
+(read that first — it fixes the order and the go/no-go reads). Kit additions: `cpu-wave8-label.sbatch`,
+`gpu-wave8-preflight.sbatch`, `gpu-wave8-train.sbatch`, `gpu-wave8-eval.sbatch`, `config.sh` ladder pins
+(`MODEL_*_17B/_4B`, `bw_w8_rung`), `stage.sh --with-ladder`.
+
+1. **Pre-flight on the hub (already committed)**: F0 (grid), F1 (teacher), the fixed state sample `S_nom` and its
+   oracle labels live in `results/wave8/` and arrive by `git pull`. Nothing on the cluster starts before
+   `results/wave8/gates.json` has F0 and F1 passing (the sbatch files refuse otherwise).
+2. **F2 + F3 on the cluster**: `sbatch gpu-wave8-preflight.sbatch` (per rung: `W8_RUNG=1.7b|4b`).
+3. **R1** (no labels needed): `sbatch --array=0-5 gpu-wave8-train.sbatch` = lrs {1e-5, 5e-5} x seeds {0,1,2}.
+   One resumable job per (lr, seed): 3 rounds of collect -> relabel -> train -> collapse read, then the
+   curriculum-validation eval. Resubmit the same task after exit 75. `results/wave8_r1_*/STOPPED_collapse.json` =
+   the stop-loss fired (not a failure).
+4. **R2 (only if R1 fails G1, STAGING-READY decides)**: `cpu-wave8-label.sbatch`; lr sweep
+   `W8_ARM=r2sweep sbatch --array=0-1 gpu-wave8-train.sbatch` then
+   `python3 scripts/wave8_analysis.py select-sft-lr`; then `W8_ARM=r2 W8_R2_LR=<winner> sbatch --array=0-2 gpu-wave8-train.sbatch`.
+5. **Eval**: `sbatch gpu-wave8-eval.sbatch` (selects the lr on the validation band, evaluates control + adapters,
+   permutation + collapse + calibration reads).
+6. **Send up + verify**: `bash hpc-umbrella/push_results.sh -m "wave-8 ... (job <id>)" <paths from STAGING-READY §4>`;
+   hub: `git pull --ff-only`, `python3 hpc-umbrella/verify_pull.py ~/projects/agent-bullwhip-replication --size`
+   (R1 round dirs are in EXPECT; R2/R3/ladder dirs show as extras), `python3 scripts/wave8_analysis.py --out results/wave8_report.md --json results/wave8_report.json`.
+7. **Ladder**: `stage.sh --with-ladder` on the login node, then the same sbatch files with `W8_RUNG=1.7b|4b`
+   (4B: `W8_MICRO_BATCH`, 10-step smoke first — fit on a 22 GiB L4 is unverified).
+8. **GGUF/CPU step** (hub, after results): `scripts/wave8_gguf_serve.py` — see STAGING-READY §3.
+

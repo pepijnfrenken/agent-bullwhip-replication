@@ -9,10 +9,11 @@
 #   4. download Qwen/Qwen3-0.6B into $HF_HOME           (needs login-node egress)
 #   5. verify: config.sh --check + a torch-free pytest run + one GPU-free import check
 #
-# Usage:   bash stage.sh [--dry-run] [--skip-weights] [--skip-venv] [-h]
+# Usage:   bash stage.sh [--dry-run] [--skip-weights] [--skip-venv] [--with-ladder] [-h]
 #   --dry-run        print every action, change nothing (works off-cluster too)
 #   --skip-weights   do not download the model
 #   --skip-venv      reuse the existing venv
+#   --with-ladder    also download Qwen3-1.7B and Qwen3-4B (WAVE8 size ladder; 4B ~ 8 GB)
 # =============================================================================
 set -euo pipefail
 
@@ -21,13 +22,14 @@ KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "${KIT_DIR}/config.sh"
 
 ARGS=("$@")          # kept for the re-exec into the staged copy
-DRY=0; SKIP_WEIGHTS=0; SKIP_VENV=0
+DRY=0; SKIP_WEIGHTS=0; SKIP_VENV=0; WITH_LADDER=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) DRY=1 ;;
     --skip-weights) SKIP_WEIGHTS=1 ;;
     --skip-venv) SKIP_VENV=1 ;;
-    -h|--help) sed -n '2,18p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    --with-ladder) WITH_LADDER=1 ;;
+    -h|--help) sed -n '2,19p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -111,6 +113,13 @@ if [ "$SKIP_WEIGHTS" = 0 ]; then
   say "  tar -C ~/.cache/huggingface/hub -cf - models--Qwen--Qwen3-0.6B | ssh ${USER}@hpc.tue.nl 'mkdir -p ${HF_HOME}/hub && tar -C ${HF_HOME}/hub -xf -'"
 else
   say "--skip-weights: not downloading"
+fi
+
+if [ "$WITH_LADDER" = 1 ]; then
+  for pair in "${MODEL_ID_17B}:${MODEL_REVISION_17B}" "${MODEL_ID_4B}:${MODEL_REVISION_4B}"; do
+    say "ladder weights ${pair%%:*} @ ${pair##*:} -> ${HF_HOME}"
+    doit "HF_HOME='${HF_HOME}' python3 -c \"from huggingface_hub import snapshot_download as d; print(d('${pair%%:*}', revision='${pair##*:}'))\" || echo '[stage] ladder download failed (no egress?)'"
+  done
 fi
 
 say "verify"
