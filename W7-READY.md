@@ -331,8 +331,12 @@ fires → exit 75 → resubmit.
 - `pi_sft.json` present in the RLCD dir.
 - A flat `loss_kl ≈ 1e-6` across all steps would mean P1-4 is not active → stop.
 
-**After all three tasks finish:** pull with `pull_results.sh`, then run `verify_pull.py`. With P2-1
-fixed it should say COMPLETE: SFT dirs at step 119 / checkpoint 119, RLCD dirs at step 39.
+**After all three tasks finish:** results go up via git (transfer rule — `OPERATOR.md` Step 6): copy
+the job's Slurm log into `results/wave7_logs/`, then from the cluster checkout
+`bash hpc-umbrella/push_results.sh -m "wave-7 train (job <jobid>)" results/wave7_logs/<log>
+<the wave-7 result dirs under results/>`; on the hub `git pull --ff-only`, then run
+`verify_pull.py`. With P2-1 fixed it should say COMPLETE: SFT dirs at step 119 / checkpoint 119,
+RLCD dirs at step 39.
 
 ## Residual risks
 

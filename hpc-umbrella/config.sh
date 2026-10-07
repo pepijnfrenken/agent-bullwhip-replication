@@ -25,14 +25,16 @@ set -u
 
 KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER="${USER:-$(id -un)}"
-# Your TU/e (SCC) username (login-node probe 2026-09-30: 20234428). pull_results.sh
-# runs from the laptop and needs it explicitly. Set once here, never edit the scripts.
+# Your TU/e (SCC) username (login-node probe 2026-09-30: 20234428). The emergency
+# pull_results.sh mirror runs from the laptop and needs it explicitly. Set once here,
+# never edit the scripts.
 TUE_USER="${TUE_USER:-20234428}"
 SSH_HOST="${SSH_HOST:-hpc.tue.nl}"
 
 # --- filesystem --------------------------------------------------------------
 # scratch-shared is 8 TiB but DELETED 14 days after last write; home is 200 GiB
-# and NOT backed up. Results go to scratch and must be mirrored off (pull_results.sh).
+# and NOT backed up. Results land in scratch, then travel off via git (push_results.sh
+# from the cluster checkout; 'git pull --ff-only' on the hub).
 SCRATCH_ROOT="/scratch-shared/${TUE_USER}"
 BULLWHIP_ROOT="${BULLWHIP_ROOT:-${SCRATCH_ROOT}/bullwhip}"
 REPO_DIR="${BULLWHIP_ROOT}/agent-bullwhip-replication"

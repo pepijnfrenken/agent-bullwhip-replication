@@ -11,7 +11,9 @@ L4 nodes). The run book, in order:
 4. `sbatch cpu-harness.sbatch` — CPU-only validation (free, immediate).
 5. `sbatch gpu-pilot.sbatch` — the unblock test + the Snellius-decision numbers.
 6. `sbatch --array=0-12 gpu-campaign.sbatch` — the 13 pre-registered configs (`campaign.tsv`).
-7. `pull_results.sh` — mirror results off scratch (it expires 14 days after the last write).
+7. `push_results.sh` — send results UP to the hub via git, the rule: `git add -f` + commit + push
+   from the cluster checkout, `git pull --ff-only` on the hub. `pull_results.sh` remains only as an
+   emergency bulk mirror (scratch expires 14 days after the last write).
 
 Start at **`OPERATOR.md`** (run order + expected outputs + failure playbook); verified cluster
 facts live in `00-PROBE-AND-SETUP.md`. All scripts resolve their own directory, so run them from

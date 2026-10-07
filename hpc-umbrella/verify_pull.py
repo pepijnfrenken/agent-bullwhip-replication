@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""verify_pull.py <umbrella-results-dir> [--size] — completeness check for a pull_results.sh tree.
+"""verify_pull.py <results-tree> [--size] — completeness check for a pulled results tree.
 
 Expects the 13 wave-6 sweep dirs under <dir>/results/ (pilot + a0..a11), each with state.json,
 train_log.jsonl and checkpoint-* dirs (save cadence: every 10 steps, ...9/...9). Prints a per-run
 table and an overall verdict; exits 1 on any gap. Stdlib only; safe to run on the laptop or the hub.
 
-Usage:
-  python3 verify_pull.py ~/projects/agent-bullwhip-replication/hpc-umbrella/umbrella-results
-  python3 verify_pull.py <dest-from-pull_results.sh> --size
+Usage (hub side, after `git pull --ff-only` — the same check ran on the old pull_results.sh dest):
+  python3 verify_pull.py ~/projects/agent-bullwhip-replication --size
 """
 import argparse
 import json

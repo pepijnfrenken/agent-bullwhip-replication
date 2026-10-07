@@ -1,5 +1,14 @@
 # Changes & Audit Log
 
+## 2026-10-07 — Results transfer = git (rule); rsync demoted
+
+Pino: results travel through this repo in both directions, not rsync — a must. New kit script
+`hpc-umbrella/push_results.sh` (`-n` preview; arg + missing-path guards; `git add -f` + commit +
+push). `OPERATOR.md` Step 6 rewritten around it (was `pull_results.sh`), prereqs line + quota row +
+wave-7 §5 updated; `README.md` item 7, `config.sh` comments, the `W7-READY.md` handoff and the
+`verify_pull.py` usage line follow. `pull_results.sh` stays only as an emergency bulk mirror of
+scratch. Historical notes (`FIXES*`, `VERIFY*`, `00-PROBE`) left as written.
+
 ## 2026-09-30 — Pilot readout (351229) + batched-generation padding fix
 
 `gpu-pilot` 351229 **COMPLETED** on Umbrella (L4). All three parts ran: A (the minimal
