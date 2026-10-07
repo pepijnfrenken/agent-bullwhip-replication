@@ -516,3 +516,17 @@ def task(t):                               # (seed, ep, week, role, curriculum, 
 ## Changes log
 
 - 2026-10-07: draft written (spec-only; waiting for repo cleanup to finish and Pino's approval).
+- 2026-10-07 (implementation, mission `bullwhip-impl`) — unit B1 (grid registry, readout interface, trace schema); nothing run on GPU/cluster:
+  1. **Grid tail is a frozen constant, not a formula.** §3.1 gives no closed form for Q..Z; a fit search over simple geometric forms (planning, 2026-10-07) did not reproduce it
+     (closest `[34,38,44,52,62,74,90,108,132,160]`). `decision_readout.W8_G26_TAIL` carries the spec's constants; `make_w8_g26()` composes + validates (strictly increasing, A..Z labels);
+     the artifact `results/wave8/grid_w8_g26.json` is emitted by `scripts/wave8_grid.py`. `GRIDS`/`get_grid`/`GridSpec` registry; wave-7 default and `INSTRUCTION` bytes unchanged.
+  2. **F2 interface, verified (external venv `/home/pino/absolver/.venv`, transformers 5.14.1, offline, pinned snapshot):** all 26 labels single-token on the rendered continuation, ids 32..57 contiguous;
+     `apply_chat_template` prompt SHA == pure-string renderer SHA == `5062a9d71c7372a01dd2dbd626e8b3960574292ef770626195b9fe39b59e58fc` (canonical ctx, `w8_g26`). The pure-string renderer also
+     reproduces the wave-7 fixture `b96fb847…` on the hub (test `test_string_renderer_reproduces_wave7_prompt_fixture`), so the hub can pin both SHAs without transformers.
+  3. **`pi_sft_key`** lives in `decision_train.py`, not the labeler (§12.2 mis-locates it); no `src` component was needed (round label files are merged with unique episode ids instead, B2).
+  4. **Labeler:** `--grid`, `--score-reference`; `BEHAVIOR_RANDOM_GRID` frozen (stream-identical to wave 7, test). `edge_argmin_rate` kept for compatibility; new `top_edge_rate`, `zero_rate`,
+     `target_mass_top_letter`, and (with `--score-reference`) `regret_vs_reference_{mean,p90}` = min_grid J − min_ref J, relative to the MEAN reference min-J (so p90 is the p90 of per-state regret / that constant).
+  5. **Eval:** `traces`/`readout` filled only with `--traces 1` or any non-default `--grid` (wave-7 JSONL stays byte-identical by default). `probs` rounded to 6 dp as specified; `confidence` is `max` of the
+     ROUNDED probs so `confidence == max(probs)` holds exactly; the per-vector sum error from 6-dp rounding is typically ~1e-6 but can reach 1.3e-5 in the worst case (§Verification item 5 tolerance 1e-5 may then
+     fail on a vector — a rounding artifact, not a model fault). New `--pattern curriculum` (validation band) and `--collect-mode/--collect-offset`.
+

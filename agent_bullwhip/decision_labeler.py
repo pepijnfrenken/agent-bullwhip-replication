@@ -66,7 +66,13 @@ from pathlib import Path
 
 from .engine import ROLES, GameStepper, SimConfig, TierState
 from .agents import OrderUpToAgent
-from .decision_readout import ORDER_GRID, LABELS
+from .decision_readout import DEFAULT_GRID_ID, LABELS, ORDER_GRID, get_grid
+
+# WAVE8_SPEC §3.2: the behaviour sampler's random orders stay on the wave-7 grid so
+# wave-8 states are comparable to wave-7's; only the SCORED candidates change.
+BEHAVIOR_RANDOM_GRID = list(range(0, 41, 2))
+# WAVE8_SPEC F0/§2.2 reference grid for regret (0..200 step 2).
+REFERENCE_GRID = list(range(0, 201, 2))
 
 # Fixed continuation floor — see AUDIT-1 fix 3 (tuned out-of-sample, logged).
 CONTINUATION_THETA = 3.5
@@ -167,7 +173,7 @@ class BehaviorPolicy:
     def act(self, role: str, ctx: dict, rng: random.Random) -> int:
         if rng.random() < self.cfg.p_floor:
             return self._floors[role](ctx)
-        return rng.choice(ORDER_GRID)
+        return rng.choice(BEHAVIOR_RANDOM_GRID)
 
 
 # --------------------------------------------------------------------------- #
@@ -315,16 +321,21 @@ def _label_state_task(task: dict) -> dict:
     rng_f = _seeded_rng(f"{seed}:ep:{ep}:w:{week}:{role}")
     futures = [draw_future_demand(rng_f, cur, params, horizon - week)
                for _ in range(M)]
-    j = score_candidates(step, week, role, ORDER_GRID, cont, futures,
+    grid = list(get_grid(task.get("grid_id", DEFAULT_GRID_ID)).values)
+    j = score_candidates(step, week, role, grid, cont, futures,
                          theta, lam, il_hist)
     p, tau, flat = softmax_minus_j(j, tau_scale)
     argmin = min(range(len(j)), key=j.__getitem__)
-    return {
+    row = {
         "episode": ep, "week": week, "role": role, "curriculum": cur,
         "params": params, "ctx": dict(ctx), "J": j, "p": p, "tau": tau,
         "flat": flat, "argmin_idx": argmin,
-        "argmin_order": ORDER_GRID[argmin],
+        "argmin_order": grid[argmin],
     }
+    if task.get("score_reference"):
+        row["ref_min"] = min(score_candidates(step, week, role, REFERENCE_GRID, cont,
+                                              futures, theta, lam, il_hist))
+    return row
 
 
 # --------------------------------------------------------------------------- #
@@ -380,14 +391,45 @@ def _label_collected_task(task: dict) -> dict:
     rng_f = _seeded_rng(f"{seed}:states:{st['episode']}:{week}:{role}")
     futures = [draw_future_demand(rng_f, cur, params,
                                   task["horizon"] - week) for _ in range(M)]
-    j = score_candidates(step, week, role, ORDER_GRID, cont, futures,
+    grid = list(get_grid(task.get("grid_id", DEFAULT_GRID_ID)).values)
+    j = score_candidates(step, week, role, grid, cont, futures,
                          theta, lam, st["il_hist"])
     p, tau, flat = softmax_minus_j(j, tau_scale)
     argmin = min(range(len(j)), key=j.__getitem__)
-    return {"episode": st["episode"], "week": week, "role": role,
-            "curriculum": cur, "params": params, "ctx": st["ctx"], "J": j,
-            "p": p, "tau": tau, "flat": flat, "argmin_idx": argmin,
-            "argmin_order": ORDER_GRID[argmin]}
+    row = {"episode": st["episode"], "week": week, "role": role,
+           "curriculum": cur, "params": params, "ctx": st["ctx"], "J": j,
+           "p": p, "tau": tau, "flat": flat, "argmin_idx": argmin,
+           "argmin_order": grid[argmin]}
+    if task.get("score_reference"):
+        row["ref_min"] = min(score_candidates(step, week, role, REFERENCE_GRID, cont,
+                                              futures, theta, lam, st["il_hist"]))
+    return row
+
+
+def grid_metrics(rows: list[dict], grid_id: str) -> dict:
+    """Choice-set diagnostics (WAVE8_SPEC §2.2): the wave-7 `edge_argmin_rate` mixed
+    both edges; these separate them and add the decision-relevant quantities.
+    `regret_*` appear only when the rows carry `ref_min` (labeler --score-reference):
+    regret_i = min_a J_grid - min_ref J; reported relative to the mean reference min-J."""
+    g = get_grid(grid_id)
+    n = len(rows)
+    if n == 0:
+        return {}
+    top = len(g.values) - 1
+    m = {
+        "grid_id": grid_id,
+        "top_edge_rate": sum(1 for r in rows if r["argmin_idx"] == top) / n,
+        "zero_rate": sum(1 for r in rows if r["argmin_idx"] == 0) / n,
+        "target_mass_top_letter": sum(r["p"][top] for r in rows) / n,
+    }
+    if all("ref_min" in r for r in rows):
+        reg = [min(r["J"]) - r["ref_min"] for r in rows]
+        denom = sum(r["ref_min"] for r in rows) / n
+        rel = sorted(x / denom for x in reg) if denom > 0 else [float("nan")] * n
+        m["regret_vs_reference_mean"] = (sum(reg) / n) / denom if denom > 0 else float("nan")
+        m["regret_vs_reference_p90"] = rel[min(n - 1, int(math.ceil(0.9 * n)) - 1)]
+        m["reference_grid"] = [REFERENCE_GRID[0], REFERENCE_GRID[-1], 2]
+    return m
 
 
 def run_labeler_from_states(states_path: str | Path, *, seed: int = 6000,
@@ -396,7 +438,9 @@ def run_labeler_from_states(states_path: str | Path, *, seed: int = 6000,
                             lam: float = CONTINUATION_LAM,
                             tau_scale: float = 0.5, processes: int = 1,
                             out_prefix: str | None = None,
-                            hash_rows: int = 2000) -> dict:
+                            hash_rows: int = 2000,
+                            grid_id: str = DEFAULT_GRID_ID,
+                            score_reference: bool = False) -> dict:
     """Label pre-collected (policy-visited) states. Same seed-band guard, same
     late-week exclusion (t >= H - 2), same CRN E[J] and tau rule as the main
     labeler. Deterministic from (seed, file rows)."""
@@ -411,7 +455,8 @@ def run_labeler_from_states(states_path: str | Path, *, seed: int = 6000,
             continue
         tasks.append({"seed": seed, "state_row": st, "m_futures": m_futures,
                       "theta": theta, "lam": lam, "tau_scale": tau_scale,
-                      "horizon": horizon})
+                      "horizon": horizon, "grid_id": grid_id,
+                      "score_reference": score_reference})
     if processes > 1:
         from multiprocessing import Pool
         with Pool(processes) as pool:
@@ -421,14 +466,15 @@ def run_labeler_from_states(states_path: str | Path, *, seed: int = 6000,
     out_rows.sort(key=lambda r: (r["episode"], r["week"], ROLES.index(r["role"])))
     n = len(out_rows)
     n_flat = sum(1 for r in out_rows if r["flat"])
-    edge = [r for r in out_rows if r["argmin_idx"] in (0, len(ORDER_GRID) - 1)]
+    gspec = get_grid(grid_id)
+    edge = [r for r in out_rows if r["argmin_idx"] in (0, len(gspec.values) - 1)]
     ent = sum(-sum(pi * math.log(pi) for pi in r["p"] if pi > 0)
               for r in out_rows) / n if n else float("nan")
     manifest = {
         "seed": seed, "source": str(states_path), "n_collected": len(rows),
         "n_excluded_late": len(rows) - len(tasks),
-        "m_futures": m_futures, "processes": processes, "grid": ORDER_GRID,
-        "labels": LABELS, "continuation_theta": theta, "continuation_lam": lam,
+        "m_futures": m_futures, "processes": processes, "grid": list(gspec.values),
+        "labels": list(gspec.labels), "continuation_theta": theta, "continuation_lam": lam,
         "continuation_tuning": CONTINUATION_TUNING_NOTE,
         "tau_rule": ("tau_s = tau_scale * max(std_a(E[J]), 1e-3); "
                      f"tau_scale={tau_scale}"),
@@ -436,6 +482,7 @@ def run_labeler_from_states(states_path: str | Path, *, seed: int = 6000,
         "flat_rate": n_flat / n if n else float("nan"),
         "edge_argmin_rate": len(edge) / n if n else float("nan"),
         "mean_target_entropy_nats": ent, "wall_sec": time.time() - t0,
+        **grid_metrics(out_rows, grid_id),
     }
     if out_prefix:
         out_prefix = str(out_prefix)
@@ -467,6 +514,7 @@ def run_labeler(seed: int, n_episodes: int, *, horizon: int = 36,
                 tau_scale: float = 0.5, p_floor: float = 0.75,
                 p_random: float = 0.25, processes: int = 1,
                 out_prefix: str | None = None, hash_rows: int = 2000,
+                grid_id: str = DEFAULT_GRID_ID, score_reference: bool = False,
                 ) -> dict:
     if EVAL_SEED_MIN <= seed < EVAL_SEED_MAX:
         raise ValueError(
@@ -481,7 +529,8 @@ def run_labeler(seed: int, n_episodes: int, *, horizon: int = 36,
     base_tasks = enumerate_states(seed, n_episodes, horizon, curricula)
     tasks = [dict(t, m_futures=m_futures, theta=theta, lam=lam,
                   tau_scale=tau_scale, p_floor=p_floor, p_random=p_random,
-                  horizon=horizon) for t in base_tasks]
+                  horizon=horizon, grid_id=grid_id,
+                  score_reference=score_reference) for t in base_tasks]
     if processes > 1:
         from multiprocessing import Pool
         with Pool(processes) as pool:
@@ -493,7 +542,8 @@ def run_labeler(seed: int, n_episodes: int, *, horizon: int = 36,
 
     n = len(rows)
     n_flat = sum(1 for r in rows if r["flat"])
-    edge = [r for r in rows if r["argmin_idx"] in (0, len(ORDER_GRID) - 1)]
+    gspec = get_grid(grid_id)
+    edge = [r for r in rows if r["argmin_idx"] in (0, len(gspec.values) - 1)]
     # mean target entropy (nats) over the grid — the tau band report
     ent = 0.0
     for r in rows:
@@ -502,7 +552,7 @@ def run_labeler(seed: int, n_episodes: int, *, horizon: int = 36,
     manifest = {
         "seed": seed, "n_episodes": n_episodes, "horizon": horizon,
         "curricula": curricula, "m_futures": m_futures, "processes": processes,
-        "grid": ORDER_GRID, "labels": LABELS,
+        "grid": list(gspec.values), "labels": list(gspec.labels),
         "continuation_theta": theta, "continuation_lam": lam,
         "continuation_tuning": CONTINUATION_TUNING_NOTE,
         "tau_rule": "tau_s = tau_scale * max(std_a(E[J]), 1e-3); "
@@ -515,6 +565,7 @@ def run_labeler(seed: int, n_episodes: int, *, horizon: int = 36,
         "edge_argmin_orders": sorted({r["argmin_order"] for r in edge}),
         "mean_target_entropy_nats": ent,
         "wall_sec": time.time() - t0,
+        **grid_metrics(rows, grid_id),
     }
     if out_prefix:
         out_prefix = str(out_prefix)
@@ -567,20 +618,28 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", required=False,
                     help="out prefix (writes .jsonl + .npz + .manifest.json)")
     ap.add_argument("--hash-rows", type=int, default=2000)
+    ap.add_argument("--grid", default=DEFAULT_GRID_ID,
+                    help="choice set to score (decision_readout.GRIDS); default w7_u21")
+    ap.add_argument("--score-reference", action="store_true",
+                    help="also score the 0..200/2 reference grid per state "
+                         "(adds regret_vs_reference_* to the manifest; ~4x cost)")
     args = ap.parse_args(argv)
+    get_grid(args.grid)
     if args.states_jsonl:
         out = run_labeler_from_states(
             args.states_jsonl, seed=args.seed, horizon=args.horizon,
             m_futures=args.m_futures, theta=args.theta, lam=args.lam,
             tau_scale=args.tau_scale, processes=args.processes,
-            out_prefix=args.out, hash_rows=args.hash_rows)
+            out_prefix=args.out, hash_rows=args.hash_rows,
+            grid_id=args.grid, score_reference=args.score_reference)
     else:
         out = run_labeler(
         args.seed, args.episodes, horizon=args.horizon,
         curricula=args.curricula.split(","), m_futures=args.m_futures,
         theta=args.theta, lam=args.lam, tau_scale=args.tau_scale,
         p_floor=args.p_floor, p_random=args.p_random, processes=args.processes,
-        out_prefix=args.out, hash_rows=args.hash_rows)
+        out_prefix=args.out, hash_rows=args.hash_rows,
+        grid_id=args.grid, score_reference=args.score_reference)
     m = dict(out)
     rows = m.pop("rows")
     print(f"states={m['n_states']} flat={m['flat_rate']:.4f} "

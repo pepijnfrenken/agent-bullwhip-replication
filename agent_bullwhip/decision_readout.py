@@ -35,13 +35,66 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import string
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-# ... order grid (A..U) — fixed ascending by pre-registered D2.
-ORDER_GRID = list(range(0, 41, 2))            # 21 options
-LABELS = list(string.ascii_uppercase[:len(ORDER_GRID)])  # A..U
+from .qwen_chat import render_nothink
+
+
+# --------------------------------------------------------------------------- #
+# Choice sets (WAVE8_SPEC §3 / §12.1): a registry of caller-defined grids. The
+# wave-7 grid stays the default everywhere so wave-7 bytes (prompt SHA fixture)
+# and wave-7 reproducibility are unchanged.
+# --------------------------------------------------------------------------- #
+@dataclass(frozen=True)
+class GridSpec:
+    grid_id: str
+    values: tuple
+    labels: tuple
+
+    def __post_init__(self):
+        v, l = list(self.values), list(self.labels)
+        if not v or len(v) != len(l) or len(v) > 26:
+            raise ValueError(f"grid {self.grid_id}: need 1..26 values with one label each")
+        if v[0] < 0 or any(b <= a for a, b in zip(v, v[1:])):
+            raise ValueError(f"grid {self.grid_id}: values must be non-negative and strictly increasing")
+        if l != list(string.ascii_uppercase[:len(v)]):
+            raise ValueError(f"grid {self.grid_id}: labels must be A.. in order")
+
+
+W7_U21 = GridSpec("w7_u21", tuple(range(0, 41, 2)),
+                  tuple(string.ascii_uppercase[:21]))                   # A..U, 0..40 step 2
+
+# w8_g26 (WAVE8_SPEC §3.1). The spec gives no closed form for the geometric tail
+# (a fit search over simple geometric forms did not reproduce it), so the tail knots
+# are the spec's frozen constants; make_w8_g26() composes + validates the grid.
+W8_G26_HEAD = tuple(range(0, 31, 2))                                     # A..P (= wave-7 A..P)
+W8_G26_TAIL = (34, 38, 44, 52, 62, 76, 94, 116, 140, 160)               # Q..Z
+
+
+def make_w8_g26() -> GridSpec:
+    values = W8_G26_HEAD + W8_G26_TAIL
+    return GridSpec("w8_g26", values, tuple(string.ascii_uppercase[:len(values)]))
+
+
+GRIDS: dict[str, GridSpec] = {"w7_u21": W7_U21, "w8_g26": make_w8_g26()}
+DEFAULT_GRID_ID = "w7_u21"
+
+
+def get_grid(grid_id: str = DEFAULT_GRID_ID) -> GridSpec:
+    try:
+        return GRIDS[grid_id]
+    except KeyError:
+        raise ValueError(f"unknown grid {grid_id!r}; known: {sorted(GRIDS)}") from None
+
+
+# ... wave-7 order grid (A..U) — fixed ascending by pre-registered D2. Kept as module
+# constants (wave-7 default; tests and the labeler import them).
+ORDER_GRID = list(W7_U21.values)            # 21 options
+LABELS = list(W7_U21.labels)                # A..U
 
 # WAVE7-AUDIT-1 3a P2: pin the hub snapshot the probe numbers were verified on
 # (tokenizer/template bytes come from the snapshot, not the transformers
@@ -55,17 +108,25 @@ QUESTION = "How many units should this stage order from its supplier this week?"
 # the closed-choice letter rule. build_prompt is NOT reused verbatim — it ends
 # "Reply with ONLY an integer" (AUDIT-1 3c P1), which contradicts the letter
 # interface; the environment/objective/cost sentences below are its verbatim text.
-INSTRUCTION = (
+INSTRUCTION_TEMPLATE = (
     "You are one stage in a four-stage beer supply chain:\n"
     "Retailer -> Wholesaler -> Distributor -> Factory.\n"
     "You manage inventory at your stage. Each week you decide how many units to "
     "order from your supplier (upstream). Goal: minimize total supply chain cost.\n"
     "Holding cost is $1 per unit per week; backlog cost is $2 per unit per week. "
     "Shipments from your supplier take 2 weeks to arrive.\n"
-    "You are given your stage's state and a list of 21 possible orders labelled "
-    "A..U. Choose the best order using only the supplied state. "
+    "You are given your stage's state and a list of {n} possible orders labelled "
+    "{first}..{last}. Choose the best order using only the supplied state. "
     "Reply with exactly one option letter, without explanation."
 )
+
+
+def instruction(grid_id: str = DEFAULT_GRID_ID) -> str:
+    g = get_grid(grid_id)
+    return INSTRUCTION_TEMPLATE.format(n=len(g.values), first=g.labels[0], last=g.labels[-1])
+
+
+INSTRUCTION = instruction("w7_u21")     # byte-identical to the wave-7 literal (tested)
 
 
 def _torch_available() -> bool:
@@ -80,19 +141,21 @@ def _torch_available() -> bool:
 # Prompt rendering (repo field text, engine ctx dicts only)
 # --------------------------------------------------------------------------- #
 def render_options(grid: list[int] | None = None,
-                   require_ascending: bool = True) -> str:
+                   require_ascending: bool = True,
+                   grid_id: str = DEFAULT_GRID_ID) -> str:
     """Options block: 'A. order 0 units' ... 'U. order 40 units'.
 
     The ascending order is a D2 invariant for EVAL rendering. Training option-
     permutation augmentation (decision_train, audit P0 #1) deliberately renders
     shuffled grids — caller passes require_ascending=False there.
     """
-    grid = ORDER_GRID if grid is None else grid
+    spec = get_grid(grid_id)
+    grid = list(spec.values) if grid is None else grid
     if require_ascending and list(grid) != sorted(grid):
         raise ValueError(f"option grid must be ascending, got {grid}")
-    if len(grid) != len(LABELS):
-        raise ValueError(f"grid has {len(grid)} options but {len(LABELS)} labels")
-    return "\n".join(f"{LABELS[i]}. order {v} units" for i, v in enumerate(grid))
+    if len(grid) != len(spec.labels):
+        raise ValueError(f"grid has {len(grid)} options but {len(spec.labels)} labels")
+    return "\n".join(f"{spec.labels[i]}. order {v} units" for i, v in enumerate(grid))
 
 
 def render_state(ctx: dict) -> str:
@@ -126,23 +189,43 @@ def render_state(ctx: dict) -> str:
     )
 
 
-def render_body(ctx: dict, grid: list[int] | None = None) -> str:
+def render_body(ctx: dict, grid: list[int] | None = None,
+                grid_id: str = DEFAULT_GRID_ID) -> str:
     """Material + question + options (the user message), verbatim probe shape."""
     return (f"Material:\n{render_state(ctx)}\n\n"
             f"Question:\n{QUESTION}\n\n"
-            f"Options:\n{render_options(grid)}")
+            f"Options:\n{render_options(grid, grid_id=grid_id)}")
 
 
-def chat_messages(ctx: dict) -> list[dict]:
+def chat_messages(ctx: dict, grid_id: str = DEFAULT_GRID_ID) -> list[dict]:
     """(system instruction, user body) — leaks nothing the engine does not show."""
     return [
-        {"role": "system", "content": INSTRUCTION},
-        {"role": "user", "content": render_body(ctx)},
+        {"role": "system", "content": instruction(grid_id)},
+        {"role": "user", "content": render_body(ctx, grid_id=grid_id)},
     ]
 
 
+def _messages_for(ctx: dict, grid: list[int] | None, grid_id: str) -> list[dict]:
+    messages = list(chat_messages(ctx, grid_id))
+    if grid is not None:
+        messages[1] = {"role": "user",
+                       "content": f"Material:\n{render_state(ctx)}\n\n"
+                                  f"Question:\n{QUESTION}\n\n"
+                                  f"Options:\n{render_options(grid, require_ascending=False, grid_id=grid_id)}"}
+    return messages
+
+
+def render_prompt_str(ctx: dict, *, grid: list[int] | None = None,
+                      grid_id: str = DEFAULT_GRID_ID) -> str:
+    """Torch/transformers-free renderer: the Qwen3 chat template (thinking off) as a
+    pure string. Equals `render_prompt(ctx, tokenizer)` (asserted where transformers
+    is importable; for w7_u21 the canonical-ctx SHA fixture is asserted on the hub)."""
+    return render_nothink(_messages_for(ctx, grid, grid_id))
+
+
 def render_prompt(ctx: dict, tokenizer: object, *, enable_thinking: bool = False,
-                  grid: list[int] | None = None) -> str:
+                  grid: list[int] | None = None,
+                  grid_id: str = DEFAULT_GRID_ID) -> str:
     """Full prompt string via the model's own chat template (add_generation_prompt).
 
     ``enable_thinking`` is a Jinja template variable (Qwen3 tokenizer_config), so
@@ -150,12 +233,7 @@ def render_prompt(ctx: dict, tokenizer: object, *, enable_thinking: bool = False
     documented in spec §5 (pre-rendered prompt constant) is covered by the
     ``--prompt-hash`` CLI + fixture: any template drift breaks the hash assert.
     """
-    messages = list(chat_messages(ctx))
-    if grid is not None:
-        messages[1] = {"role": "user",
-                       "content": f"Material:\n{render_state(ctx)}\n\n"
-                                  f"Question:\n{QUESTION}\n\n"
-                                  f"Options:\n{render_options(grid, require_ascending=False)}"}
+    messages = _messages_for(ctx, grid, grid_id)
     return tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True,
         enable_thinking=enable_thinking)
@@ -168,7 +246,8 @@ def prompt_hash(prompt: str) -> str:
 
 
 def resolve_label_ids(tokenizer: object, sample_prompt: str,
-                      labels: list[str] | None = None) -> dict[str, int]:
+                      labels: list[str] | None = None,
+                      grid_id: str = DEFAULT_GRID_ID) -> dict[str, int]:
     """Label letter -> token id, asserted on the RENDERED CONTINUATION.
 
     For every label, the token that follows the rendered prompt (the read
@@ -177,7 +256,7 @@ def resolve_label_ids(tokenizer: object, sample_prompt: str,
     tokenizer merged the letter with a leading space after the template tail, the
     naive id would read a different (dead) logit column.
     """
-    labels = LABELS if labels is None else labels
+    labels = list(get_grid(grid_id).labels) if labels is None else labels
     if len(set(labels)) != len(labels):
         raise ValueError("duplicate labels")
     ids: dict[str, int] = {}
@@ -220,13 +299,17 @@ class ReadoutModel:
                  dtype: str | None = None, local_files_only: bool = True,
                  adapter_dir: str | Path | None = None, seed: int = 12345,
                  max_length: int | None = 1024,
-                 revision: str | None = PINNED_REVISION):
+                 revision: str | None = PINNED_REVISION,
+                 grid_id: str = DEFAULT_GRID_ID):
         if not _torch_available():
             raise ImportError("decision_readout needs torch — run under the "
                               "torch venv (e.g. /home/pino/bw6-eval/.venvs/jev/bin/python)")
         import torch  # noqa: F401
         from transformers import AutoModelForCausalLM, AutoTokenizer
         self._torch = torch
+        self.grid_id = grid_id
+        self.grid = list(get_grid(grid_id).values)
+        self.labels = list(get_grid(grid_id).labels)
         self.model_name = model_name
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # dtype: "float32" on CPU (hub smoke; the seed's verified numbers),
@@ -260,10 +343,10 @@ class ReadoutModel:
             "role": "retailer", "t": 0, "on_hand": 0, "backlog": 0,
             "outstanding": 0, "incoming_last": 4, "incoming_now": 4,
             "last_orders": [],
-        }, self.tokenizer)
-        self.label_ids = resolve_label_ids(self.tokenizer, sample)
-        if list(self.label_ids) != LABELS:
-            raise AssertionError("label order must be fixed A..U (D2)")
+        }, self.tokenizer, grid_id=grid_id)
+        self.label_ids = resolve_label_ids(self.tokenizer, sample, grid_id=grid_id)
+        if list(self.label_ids) != self.labels:
+            raise AssertionError(f"label order must be fixed {self.labels[0]}..{self.labels[-1]} (D2)")
         self.prompt_hash = prompt_hash(sample)
         # logits_to_keep: audit VERIFIED present on cluster pin 4.55.4 (Qwen3
         # forward slices logits at :494) and it cuts the full-logits
@@ -290,8 +373,8 @@ class ReadoutModel:
     def compose(self, probs: "object"):  # torch 1-D tensor over the grid
         """argmax (primary) + expectation (secondary) over the grid."""
         idx = int(probs.argmax())
-        grid = self._torch.tensor(ORDER_GRID, dtype=probs.dtype, device=probs.device)
-        return {"argmax_index": idx, "argmax_order": ORDER_GRID[idx],
+        grid = self._torch.tensor(self.grid, dtype=probs.dtype, device=probs.device)
+        return {"argmax_index": idx, "argmax_order": self.grid[idx],
                 "expect_order": float(probs @ grid)}
 
     def readout_batch(self, prompts: list[str], *, require_mass: float = 0.99
@@ -330,11 +413,14 @@ class ReadoutModel:
                     f"label mass {mass:.4f} < {require_mass} (prompt {i}): "
                     f"candidate-letter invariant violated")
             comp = self.compose(row)
+            plist = [float(x) for x in row.tolist()]
             out.append({
-                "probs": [float(x) for x in row.tolist()],
+                "probs": plist,
+                "confidence": max(plist),
+                "entropy": -sum(q * math.log(q) for q in plist if q > 0),
                 "argmax_index": comp["argmax_index"],
                 "argmax_order": comp["argmax_order"],
-                "argmax_label": LABELS[comp["argmax_index"]],
+                "argmax_label": self.labels[comp["argmax_index"]],
                 "expect_order": comp["expect_order"],
                 "mass": mass,
                 "tokens": inputs["attention_mask"][i].sum().item(),
@@ -349,7 +435,7 @@ class ReadoutModel:
         def _agent(ctx: dict) -> int:
             if ctx.get("role") is None:
                 ctx = dict(ctx, role=role)
-            prompt = render_prompt(ctx, self.tokenizer)
+            prompt = render_prompt(ctx, self.tokenizer, grid_id=self.grid_id)
             with self._torch.inference_mode():
                 rec = self.readout(prompt)
             return int(rec["argmax_order"])
@@ -379,13 +465,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--adapter", default=None, help="LoRA adapter dir (optional)")
     ap.add_argument("--device", default=None)
     ap.add_argument("--dtype", default=None)
+    ap.add_argument("--grid", default=DEFAULT_GRID_ID, choices=sorted(GRIDS))
     ap.add_argument("--prompt-hash", action="store_true",
                     help="print SHA-256 of one canonical rendered prompt and exit "
                          "(template-drift fixture for hub/cluster pinning)")
     args = ap.parse_args(argv)
 
     rm = ReadoutModel(args.model, device=args.device, dtype=args.dtype,
-                      adapter_dir=args.adapter)
+                      adapter_dir=args.adapter, grid_id=args.grid)
     if args.prompt_hash:
         print(rm.prompt_hash)
         return 0
@@ -397,7 +484,7 @@ def main(argv: list[str] | None = None) -> int:
             metas.append({"rendered": True})
         else:
             ctx = line["ctx"]
-            prompts.append(render_prompt(ctx, rm.tokenizer))
+            prompts.append(render_prompt(ctx, rm.tokenizer, grid_id=args.grid))
             metas.append({"role": line["role"], "ctx": ctx, "rendered": False})
         if len(prompts) >= args.batch:
             for rec, meta in zip(rm.readout_batch(prompts), metas):
