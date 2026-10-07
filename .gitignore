@@ -5,6 +5,15 @@ results/
 .pytest_cache/
 *.egg-info/
 
+# Regenerable model-training binaries — never tracked (kept on disk; see docs/ARTIFACTS.md)
+# Checkpoint dirs pushed back from the cluster via push_results.sh are text readouts only;
+# if a checkpoint dir is ever force-added again, these rules keep the heavy files out.
+results/**/checkpoint*/
+*.pt
+optimizer*.pt
+*.safetensors
+adapter_model.safetensors
+
 .env.local
 # post drafts stay local — never in the repo
 POSTS.md
