@@ -1,0 +1,17 @@
+{
+  "completed": 30,
+  "config": "baseline",
+  "failed": 0,
+  "failure_rate": 0.0,
+  "max_cost": 51316.0,
+  "mean_cost": 23493.466666666667,
+  "min_cost": 5496.0,
+  "min_mass": 0.9975882768630981,
+  "model": "qwen3-0.6b-untrained",
+  "n_runs": 30,
+  "parse_fail": 0,
+  "require_mass": 0.99,
+  "runs": 30,
+  "tag": "w7-untrained-sampled-step",
+  "wall_sec": 116.80971264839172
+}

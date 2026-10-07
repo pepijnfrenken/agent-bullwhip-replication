@@ -1,0 +1,17 @@
+{
+  "completed": 30,
+  "config": "baseline",
+  "failed": 0,
+  "failure_rate": 0.0,
+  "max_cost": 32447.0,
+  "mean_cost": 25899.833333333332,
+  "min_cost": 21787.0,
+  "min_mass": 0.9631518721580505,
+  "model": "w7-sft-seed1",
+  "n_runs": 30,
+  "parse_fail": 0,
+  "require_mass": 0.0,
+  "runs": 30,
+  "tag": "w7-sft-seed1-argmax-noisy",
+  "wall_sec": 166.24543976783752
+}

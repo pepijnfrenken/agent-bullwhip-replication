@@ -1,0 +1,17 @@
+{
+  "completed": 30,
+  "config": "baseline",
+  "failed": 0,
+  "failure_rate": 0.0,
+  "max_cost": 28222.0,
+  "mean_cost": 27727.0,
+  "min_cost": 27310.0,
+  "min_mass": 0.9826503992080688,
+  "model": "w7-rlcd-seed2",
+  "n_runs": 30,
+  "parse_fail": 0,
+  "require_mass": 0.0,
+  "runs": 30,
+  "tag": "w7-rlcd-seed2-argmax-noisy",
+  "wall_sec": 166.06856179237366
+}

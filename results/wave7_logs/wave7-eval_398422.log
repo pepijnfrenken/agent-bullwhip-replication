@@ -1,0 +1,183 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=69bd364bd08c7fc6e969ebe67d2b54d104eaa9d4
+--- eval w7-untrained-argmax-step (step/argmax) at 2026-10-07T10:18:42+02:00
+w7-untrained-argmax-step: runs=1 mean=10,464 min=10,464 max=10,464 parse_fail=0 min_mass=0.99797 wall=2.5s -> results/eval/w7-untrained-argmax-step.jsonl
+--- ok w7-untrained-argmax-step
+--- eval w7-untrained-sampled-step (step/sampled) at 2026-10-07T10:18:53+02:00
+w7-untrained-sampled-step: runs=30 mean=23,493 min=5,496 max=51,316 parse_fail=0 min_mass=0.99759 wall=116.8s -> results/eval/w7-untrained-sampled-step.jsonl
+--- ok w7-untrained-sampled-step
+--- eval w7-untrained-argmax-noisy (noisy/argmax) at 2026-10-07T10:20:56+02:00
+w7-untrained-argmax-noisy: runs=30 mean=11,442 min=9,296 max=13,162 parse_fail=0 min_mass=0.99774 wall=116.2s -> results/eval/w7-untrained-argmax-noisy.jsonl
+--- ok w7-untrained-argmax-noisy
+--- perm probe untrained (gate=0) at 2026-10-07T10:23:00+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=untrained)
+disagreement vs canonical, per shuffled grid: [490, 512, 512]
+min_mass=0.9937 (require_mass=0.99)
+wrote results/eval/w7-untrained-perm.json
+--- ok perm untrained
+--- eval w7-sft-seed0-argmax-step (step/argmax) at 2026-10-07T10:24:02+02:00
+w7-sft-seed0-argmax-step: runs=1 mean=19,788 min=19,788 max=19,788 parse_fail=0 min_mass=0.96810 wall=3.5s -> results/eval/w7-sft-seed0-argmax-step.jsonl
+--- ok w7-sft-seed0-argmax-step
+--- eval w7-sft-seed0-sampled-step (step/sampled) at 2026-10-07T10:24:14+02:00
+w7-sft-seed0-sampled-step: runs=30 mean=48,503 min=10,866 max=105,456 parse_fail=0 min_mass=0.96740 wall=166.0s -> results/eval/w7-sft-seed0-sampled-step.jsonl
+--- ok w7-sft-seed0-sampled-step
+--- eval w7-sft-seed0-argmax-noisy (noisy/argmax) at 2026-10-07T10:27:06+02:00
+w7-sft-seed0-argmax-noisy: runs=30 mean=21,604 min=17,924 max=32,353 parse_fail=0 min_mass=0.96797 wall=165.6s -> results/eval/w7-sft-seed0-argmax-noisy.jsonl
+--- ok w7-sft-seed0-argmax-noisy
+--- perm probe sft-seed0 (gate=0.90) at 2026-10-07T10:30:00+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave7_sft_seed0/checkpoint-119)
+disagreement vs canonical, per shuffled grid: [458, 446, 453]
+min_mass=0.9677 (require_mass=0.0)
+wrote results/eval/w7-sft-seed0-perm.json
+--- PROBE sft-seed0: gate failed or errored (recorded in the JSON; continuing)
+--- eval w7-rlcd-seed0-argmax-step (step/argmax) at 2026-10-07T10:31:26+02:00
+w7-rlcd-seed0-argmax-step: runs=1 mean=37,526 min=37,526 max=37,526 parse_fail=0 min_mass=0.93690 wall=3.5s -> results/eval/w7-rlcd-seed0-argmax-step.jsonl
+--- ok w7-rlcd-seed0-argmax-step
+--- eval w7-rlcd-seed0-sampled-step (step/sampled) at 2026-10-07T10:31:38+02:00
+w7-rlcd-seed0-sampled-step: runs=30 mean=37,440 min=25,690 max=58,534 parse_fail=0 min_mass=0.92919 wall=166.1s -> results/eval/w7-rlcd-seed0-sampled-step.jsonl
+--- ok w7-rlcd-seed0-sampled-step
+--- eval w7-rlcd-seed0-argmax-noisy (noisy/argmax) at 2026-10-07T10:34:30+02:00
+w7-rlcd-seed0-argmax-noisy: runs=30 mean=37,468 min=37,049 max=38,003 parse_fail=0 min_mass=0.92919 wall=166.4s -> results/eval/w7-rlcd-seed0-argmax-noisy.jsonl
+--- ok w7-rlcd-seed0-argmax-noisy
+--- perm probe rlcd-seed0 (gate=0.90) at 2026-10-07T10:37:25+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave7_rlcd_seed0/checkpoint-39)
+disagreement vs canonical, per shuffled grid: [512, 512, 512]
+min_mass=0.9244 (require_mass=0.0)
+wrote results/eval/w7-rlcd-seed0-perm.json
+--- PROBE rlcd-seed0: gate failed or errored (recorded in the JSON; continuing)
+--- eval w7-sft-seed1-argmax-step (step/argmax) at 2026-10-07T10:38:51+02:00
+w7-sft-seed1-argmax-step: runs=1 mean=21,120 min=21,120 max=21,120 parse_fail=0 min_mass=0.96385 wall=4.1s -> results/eval/w7-sft-seed1-argmax-step.jsonl
+--- ok w7-sft-seed1-argmax-step
+--- eval w7-sft-seed1-sampled-step (step/sampled) at 2026-10-07T10:39:04+02:00
+w7-sft-seed1-sampled-step: runs=30 mean=49,318 min=21,268 max=105,456 parse_fail=0 min_mass=0.96123 wall=166.1s -> results/eval/w7-sft-seed1-sampled-step.jsonl
+--- ok w7-sft-seed1-sampled-step
+--- eval w7-sft-seed1-argmax-noisy (noisy/argmax) at 2026-10-07T10:41:57+02:00
+w7-sft-seed1-argmax-noisy: runs=30 mean=25,900 min=21,787 max=32,447 parse_fail=0 min_mass=0.96315 wall=166.2s -> results/eval/w7-sft-seed1-argmax-noisy.jsonl
+--- ok w7-sft-seed1-argmax-noisy
+--- perm probe sft-seed1 (gate=0.90) at 2026-10-07T10:44:51+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave7_sft_seed1/checkpoint-119)
+disagreement vs canonical, per shuffled grid: [431, 510, 482]
+min_mass=0.9631 (require_mass=0.0)
+wrote results/eval/w7-sft-seed1-perm.json
+--- PROBE sft-seed1: gate failed or errored (recorded in the JSON; continuing)
+--- eval w7-rlcd-seed1-argmax-step (step/argmax) at 2026-10-07T10:46:18+02:00
+w7-rlcd-seed1-argmax-step: runs=1 mean=32,646 min=32,646 max=32,646 parse_fail=0 min_mass=0.94855 wall=3.5s -> results/eval/w7-rlcd-seed1-argmax-step.jsonl
+--- ok w7-rlcd-seed1-argmax-step
+--- eval w7-rlcd-seed1-sampled-step (step/sampled) at 2026-10-07T10:46:30+02:00
+w7-rlcd-seed1-sampled-step: runs=30 mean=34,301 min=23,706 max=51,610 parse_fail=0 min_mass=0.94505 wall=166.1s -> results/eval/w7-rlcd-seed1-sampled-step.jsonl
+--- ok w7-rlcd-seed1-sampled-step
+--- eval w7-rlcd-seed1-argmax-noisy (noisy/argmax) at 2026-10-07T10:49:22+02:00
+w7-rlcd-seed1-argmax-noisy: runs=30 mean=32,601 min=32,178 max=33,111 parse_fail=0 min_mass=0.94965 wall=166.2s -> results/eval/w7-rlcd-seed1-argmax-noisy.jsonl
+--- ok w7-rlcd-seed1-argmax-noisy
+--- perm probe rlcd-seed1 (gate=0.90) at 2026-10-07T10:52:16+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave7_rlcd_seed1/checkpoint-39)
+disagreement vs canonical, per shuffled grid: [511, 512, 512]
+min_mass=0.9473 (require_mass=0.0)
+wrote results/eval/w7-rlcd-seed1-perm.json
+--- PROBE rlcd-seed1: gate failed or errored (recorded in the JSON; continuing)
+--- eval w7-sft-seed2-argmax-step (step/argmax) at 2026-10-07T10:53:42+02:00
+w7-sft-seed2-argmax-step: runs=1 mean=26,038 min=26,038 max=26,038 parse_fail=0 min_mass=0.96989 wall=3.5s -> results/eval/w7-sft-seed2-argmax-step.jsonl
+--- ok w7-sft-seed2-argmax-step
+--- eval w7-sft-seed2-sampled-step (step/sampled) at 2026-10-07T10:53:54+02:00
+w7-sft-seed2-sampled-step: runs=30 mean=47,566 min=10,866 max=105,456 parse_fail=0 min_mass=0.96938 wall=166.7s -> results/eval/w7-sft-seed2-sampled-step.jsonl
+--- ok w7-sft-seed2-sampled-step
+--- eval w7-sft-seed2-argmax-noisy (noisy/argmax) at 2026-10-07T10:56:48+02:00
+w7-sft-seed2-argmax-noisy: runs=30 mean=25,970 min=23,495 max=31,307 parse_fail=0 min_mass=0.97039 wall=166.2s -> results/eval/w7-sft-seed2-argmax-noisy.jsonl
+--- ok w7-sft-seed2-argmax-noisy
+--- perm probe sft-seed2 (gate=0.90) at 2026-10-07T10:59:42+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave7_sft_seed2/checkpoint-119)
+disagreement vs canonical, per shuffled grid: [490, 498, 457]
+min_mass=0.9695 (require_mass=0.0)
+wrote results/eval/w7-sft-seed2-perm.json
+--- PROBE sft-seed2: gate failed or errored (recorded in the JSON; continuing)
+--- eval w7-rlcd-seed2-argmax-step (step/argmax) at 2026-10-07T11:01:08+02:00
+w7-rlcd-seed2-argmax-step: runs=1 mean=27,778 min=27,778 max=27,778 parse_fail=0 min_mass=0.98311 wall=3.5s -> results/eval/w7-rlcd-seed2-argmax-step.jsonl
+--- ok w7-rlcd-seed2-argmax-step
+--- eval w7-rlcd-seed2-sampled-step (step/sampled) at 2026-10-07T11:01:19+02:00
+w7-rlcd-seed2-sampled-step: runs=30 mean=31,043 min=10,808 max=49,896 parse_fail=0 min_mass=0.98175 wall=166.0s -> results/eval/w7-rlcd-seed2-sampled-step.jsonl
+--- ok w7-rlcd-seed2-sampled-step
+--- eval w7-rlcd-seed2-argmax-noisy (noisy/argmax) at 2026-10-07T11:04:12+02:00
+w7-rlcd-seed2-argmax-noisy: runs=30 mean=27,727 min=27,310 max=28,222 parse_fail=0 min_mass=0.98265 wall=166.1s -> results/eval/w7-rlcd-seed2-argmax-noisy.jsonl
+--- ok w7-rlcd-seed2-argmax-noisy
+--- perm probe rlcd-seed2 (gate=0.90) at 2026-10-07T11:07:06+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave7_rlcd_seed2/checkpoint-39)
+disagreement vs canonical, per shuffled grid: [491, 512, 512]
+min_mass=0.9812 (require_mass=0.0)
+wrote results/eval/w7-rlcd-seed2-perm.json
+--- PROBE rlcd-seed2: gate failed or errored (recorded in the JSON; continuing)
+--- artifacts ---
+-rw-r--r--. 1 20234428 umbrella 54188 Oct  7 11:04 w7-rlcd-seed2-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   371 Oct  7 11:04 w7-rlcd-seed2-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 52896 Oct  7 10:30 w7-sft-seed0-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella   358 Oct  7 10:30 w7-sft-seed0-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella  1743 Oct  7 10:24 w7-sft-seed0-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   354 Oct  7 10:24 w7-sft-seed0-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 14685 Oct  7 10:31 w7-sft-seed0-perm.json
+-rw-r--r--. 1 20234428 umbrella 53236 Oct  7 10:27 w7-sft-seed0-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   369 Oct  7 10:27 w7-sft-seed0-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 54048 Oct  7 10:44 w7-sft-seed1-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella   369 Oct  7 10:44 w7-sft-seed1-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella  1781 Oct  7 10:39 w7-sft-seed1-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   354 Oct  7 10:39 w7-sft-seed1-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 14707 Oct  7 10:46 w7-sft-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella 53419 Oct  7 10:41 w7-sft-seed1-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   358 Oct  7 10:41 w7-sft-seed1-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 53723 Oct  7 10:59 w7-sft-seed2-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella   369 Oct  7 10:59 w7-sft-seed2-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella  1802 Oct  7 10:53 w7-sft-seed2-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   354 Oct  7 10:53 w7-sft-seed2-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 15240 Oct  7 11:01 w7-sft-seed2-perm.json
+-rw-r--r--. 1 20234428 umbrella 53322 Oct  7 10:56 w7-sft-seed2-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   369 Oct  7 10:56 w7-sft-seed2-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 50679 Oct  7 10:22 w7-untrained-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella   377 Oct  7 10:22 w7-untrained-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella  1693 Oct  7 10:18 w7-untrained-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   362 Oct  7 10:18 w7-untrained-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 14877 Oct  7 10:24 w7-untrained-perm.json
+-rw-r--r--. 1 20234428 umbrella 52506 Oct  7 10:20 w7-untrained-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella   377 Oct  7 10:20 w7-untrained-sampled-step.summary.json
+=== wave7-eval done at 2026-10-07T11:08:33+02:00 failed=0 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+398422        COMPLETED                       
+398422.batch  COMPLETED   1161564K   1161564K 
+398422.exte+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

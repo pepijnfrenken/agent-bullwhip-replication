@@ -1,0 +1,17 @@
+{
+  "completed": 30,
+  "config": "baseline",
+  "failed": 0,
+  "failure_rate": 0.0,
+  "max_cost": 105456.0,
+  "mean_cost": 49317.8,
+  "min_cost": 21268.0,
+  "min_mass": 0.9612266421318054,
+  "model": "w7-sft-seed1",
+  "n_runs": 30,
+  "parse_fail": 0,
+  "require_mass": 0.0,
+  "runs": 30,
+  "tag": "w7-sft-seed1-sampled-step",
+  "wall_sec": 166.1404275894165
+}
