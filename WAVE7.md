@@ -11,8 +11,10 @@ jsonl wins (no disagreement found — see §9 check note in §1).
 arm — all six are *worse* than the untrained readout, several at 0/30 wins. The pre-registered
 permutation gate fails at 0.000 invariance on all six trained arms. The one real positive is the
 interface: the closed-choice readout removes the free-form rogue tail that dominated the wave-6
-evals (rogue orders 0 across 61 wave-7 runs vs 7–188 per wave-6 arm), and the *untrained* readout
+evals (rogue orders 0 across all 21 wave-7 protocol arms (427 run records, 61,488 decisions) vs 7–188 per wave-6 arm), and the *untrained* readout
 lands in the C2 "strong" tier (10,464 ≤ 12.8k) on the single step-argmax game.
+
+**Revision note (2026-10-07).** Ten numeric slips in this doc were found by the independent verifier (`VERIFY-W7-EVAL.md`, Item 6) and are corrected in place: R1 med-Δ range, R1 sampled-step p, the run/decision totals, one overstated RLCD constancy claim, the untrained label-mass min, SFT modal-share and edge-share ranges, the letter-step distance, the train top-1 start value, and the start of the full-vocab letter mass. No verdict, gate, or table changes.
 
 ---
 
@@ -35,7 +37,7 @@ probes"). Artifacts: `results/eval/` (49 files: 21 `<arm>-<mode>-<pattern>` json
 `results/wave7_{sft,rlcd}_seed{0,1,2}/` (adapters, `train_log.jsonl`, `state.json`),
 `results/wave7_floors.json`. The eval job ran at repo `HEAD=69bd364`; training ran at `2a8ff87`.
 
-Per-run hygiene from the eval log: **parse_fail=0 on all 21 runs**; label mass min 0.9977–0.9980
+Per-run hygiene from the eval log: **parse_fail=0 on all 21 runs**; label mass min 0.9976–0.9980
 (untrained, still asserted ≥ 0.99) and 0.9292–0.9831 (trained adapters, recorded not asserted per
 amendment A1 — exactly the erosion AUDIT-2 P0-1 predicted, benign here: all masses stay ≫ 0.9).
 Node: L4 22 GiB, MaxRSS ≈ 1.16 GB for the eval job.
@@ -139,8 +141,8 @@ between-seed cost gap "significant".
 ### R1 — SFT vs RLCD (paired, same seed)
 
 SPEC: adopt RLCD only if it wins beyond noise. It does not on the binding variant: argmax-noisy
-RLCD is worse in 26–30 of 30 games per seed (med Δ +1.7k to +17.2k, p=1.00). On sampled-step RLCD
-is better 21–23/30 (med Δ −10.6k…−13.8k, p ≤ 0.02) — but that arm fails C1 anyway. **The SFT line
+RLCD is worse in 26–30 of 30 games per seed (med Δ +2.1k to +17.2k, p=1.00). On sampled-step RLCD
+is better 21–23/30 (med Δ −10.6k…−13.8k, p ≤ 0.022) — but that arm fails C1 anyway. **The SFT line
 stays the story; RLCD joins only as the collapse illustration.**
 
 ## 4. Permutation gate + mechanism
@@ -180,7 +182,7 @@ shuffles × 512 states vs the canonical pick):
 | rlcd-seed1 | value 30 (P) | **P 494 · P 493 · P 472 · P 511** | 22.2 | **0.08** |
 | rlcd-seed2 | value 26 (N) | **N 512 · N 491 · N 512 · L 474** | 18.8 | **0.64** |
 
-Same picture in the protocol runs (argmax-noisy, 30 games, 4,320 decisions; distinct orders per
+Same picture in the protocol runs (argmax-noisy, 30 games, 4,320 decisions per arm; distinct orders per
 36-week role-game, modal order and its share):
 
 | arm | distinct orders/role | modal order | modal share |
@@ -201,19 +203,19 @@ the way the gate demanded.
 The RLCD arms are effectively **single-letter policies**: seed0 picks letter R in 512/512 states
 (order 34 on the canonical grid), seed1 letter P (494–511/512, order 30), seed2 letter N
 (474–512/512, order 26). Their protocol runs are near-constant — every role in every noisy game
-emits one order value for all 36 weeks — at exactly those bad values, which is why their costs sit
+emits one order value for all 36 weeks (28/30 runs exactly constant; seed1 runs 24 and 26 emit {30, 32}) — at exactly those bad values, which is why their costs sit
 at 27.7k–37.5k with CV 0.01. The letter each RLCD run locks onto is the letter SFT had sharpened
-(R = 34), or one step off it (P, N) after RLCD's mode-seeking PG pushed the already-dominant
+(R = 34), or two to four grid steps off it (P, N) after RLCD's mode-seeking PG pushed the already-dominant
 letter over the edge. That is collapse, not control: with λ=0.2 demand averaging ~8–10 units/week,
 a constant order of 26–34 units per role per week accumulates inventory faster than the game can
 absorb, and the cost floor for that regime is exactly the ~28k–37k observed.
 
-SFT ended in between (4–6 distinct orders/role, modal order 34 at share 0.56–0.86) but at the same
+SFT ended in between (4–6 distinct orders/role, modal order 34 at share 0.56–0.83) but at the same
 wrong modal value: the label set itself pushed the argmax letter toward R. The round-2 relabel
 targets are bimodal at the grid edges — target argmax at order 40 in 35–52% of states and at
-order 0 in 28–42% (`policy_labels_seed{0,1,2}.jsonl`; consistent with the labeler's measured
+order 0 in 27.5–41.7% (`policy_labels_seed{0,1,2}.jsonl`; consistent with the labeler's measured
 edge-argmin rate 0.71 and AUDIT-1's grid-truncation warning, risk 5) — and SFT's 120 steps moved
-train top-1 agreement only 0.03 → 0.13–0.25 while dragging the full-vocab letter mass from 0.995
+train top-1 agreement only 0.03 (seed 2: 0.00) → 0.13–0.25 while dragging the full-vocab letter mass from 0.997
 to 0.963–0.973 (the A1-predicted erosion, recorded in `train_log.jsonl`). The net was enough to
 shift the letter prior from E(8) to R(34) — a *worse* prior, since the game's mean demand is 8 —
 without installing state-conditioning. Hence C1's sign: trained < untrained everywhere.
@@ -272,7 +274,7 @@ Every one found, with the binding text:
 
 **Positive / real:**
 - **The closed-choice format kills the rogue tail.** 0 rogue orders (≥1e5) and parse_fail=0 across
-  all 61 wave-7 runs × 4,320+ decisions, vs wave-6 free-form arms with 58–188 rogue orders and
+  all 427 run records across the 21 arms, vs wave-6 free-form arms with 58–188 rogue orders and
   34–40% parse failures. Every C3 pairing wins raw, including untrained.
 - The **untrained** readout is a stable, state-slightly-varied policy at 11.4k–11.6k medians —
   C2 strong tier on the single step game (10,464). Demonstrably letter-luck (§4), but it shows the
