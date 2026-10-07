@@ -1,5 +1,22 @@
 # Changes & Audit Log
 
+## 2026-10-07 — Specs for the two agreed next experiments land in the repo (spec-only; nothing run)
+
+Both specs were written 2026-10-07 (mission `bullwhip-plans`; sources kept at `~/bullwhip-plans/`)
+and are now in-repo. Pre-registration drafts: no code changed, no run started, no numbers touched.
+
+- `waves/WAVE6-FIX_SPEC.md` — contract/format micro-probe on the wave-6 free-form lane: **A0** as-is
+  reference vs **A1** the paper's own `order_quantity` JSON answer contract applied through the chat
+  template vs **A2** plus a parse-aware reward; parse-rate gates decide whether the wave-6 null is a
+  training result or a request/parse artifact (≈14–24 GPU-h).
+- `waves/WAVE8_SPEC.md` — Clef-style decision-model arm: corrected 26-letter choice set `w8_g26`,
+  **R1** outcome-scored RL / **R2** soft-target SFT warm start / **R3** grid variants, computed
+  collapse gate, permutation gate, size ladder 0.6B → 1.7B → 4B, plus the GGUF CPU step (≈30–45 GPU-h).
+- `waves/SPECS-2026-10-07-README.md` — index for the two: inputs, dependencies, intended order, and
+  the note that they are independent except for WAVE8's G3 comparator.
+- Implementation follows as mission `bullwhip-impl`; output is meant to be staged by Pino to the
+  cluster (the hub has no route to it), so the specs stage exact sbatch/operator commands.
+
 ## 2026-10-07 — Repo cleanup + navigation (mission bullwhip-cleanup)
 
 Structural reorganization only — no numbers, verdicts, claims, code behavior, or dependencies

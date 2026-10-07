@@ -82,7 +82,7 @@ agent-bullwhip-replication/
 |---|---|
 | engine + agents + runners | `../agent_bullwhip/` |
 | wave-7 decision-native code | `../agent_bullwhip/decision_*.py`, `grpo_*.py` |
-| wave docs + specs | `waves/` (waves/WAVE5.md, waves/WAVE6_SPEC.md, waves/WAVE7.md, waves/WAVE7_SPEC.md, waves/W7-READY.md) |
+| wave docs + specs | `waves/` (waves/WAVE5.md, waves/WAVE6_SPEC.md, waves/WAVE7.md, waves/WAVE7_SPEC.md, waves/WAVE6-FIX_SPEC.md, waves/WAVE8_SPEC.md, waves/W7-READY.md) |
 | audits | `audits/` (audits/AUDIT.md…audits/AUDIT5.md, WAVE7-AUDIT-1/2.md, AUDIT-RUNTIME-*) |
 | fixes + verifications | `fixes/`, `verify/` |
 | historical mission logs | `missions/` (missions/PROGRESS.md, missions/PROGRESS_DESKTOP.md) |

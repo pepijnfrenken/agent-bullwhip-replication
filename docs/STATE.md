@@ -39,7 +39,9 @@ are working on.
 ## OPEN ISSUES
 
 > Recorded 2026-10-07 from the orchestrator's audit; not yet written up as a wave doc. Both
-> items are **agreed next steps, not started**. Do not start either experiment as part of a
+> items are **agreed next steps**. Specs written 2026-10-07 (`waves/WAVE6-FIX_SPEC.md`,
+> `waves/WAVE8_SPEC.md`; index and ordering notes: `waves/SPECS-2026-10-07-README.md`);
+> implementation underway as mission `bullwhip-impl`. Do not start either experiment as part of a
 > documentation/cleanup mission.
 
 1. **Wave-6 free-form lane validity.** Parse-fail is 84.5–86.7% across `a0_base` and its 4
@@ -49,7 +51,7 @@ are working on.
    checkpoint (Qwen3-0.6B) as raw continuation without its chat template, while wave-7's readout
    on the same checkpoint uses the template and has 0 parse failures. Consequence: wave-6
    numbers cannot yet be read as a test of the paper's GRPO claim.
-2. **Agreed next steps (not started):**
+2. **Agreed next steps (specs written 2026-10-07, implementation underway):**
    - (a) a contract/format micro-probe on the free-form lane — as-is vs chat-template + the
      paper's own `order_quantity` JSON answer contract vs + a parse-aware reward;
    - (b) a decision-model arm in the style of Cloudflare's Clef — fixed choice set + one-token
