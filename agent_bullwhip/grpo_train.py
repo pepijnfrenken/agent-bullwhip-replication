@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import random
 import shutil
@@ -45,13 +46,15 @@ import signal
 import subprocess
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Protocol
 
+from .contract import (build_contract_prompt, count_digit_tokens,
+                       has_loose_json, parse_contract)
 from .engine import SimConfig
-from .grpo_env import (group_normalize, has_int, run_episodes_batched,
-                       sample_curriculum_demand)
+from .grpo_env import (combine_parse_aware, group_normalize, has_int,
+                       run_episodes_batched, sample_curriculum_demand)
 from .grpo_trl import ep_result_to_rewards
 
 
@@ -144,6 +147,14 @@ class StepRollout:
     costs: list[float]                         # total_sys_cost per episode (G values)
     advantages: list[float]
     old_logprobs: list[list[float] | None]     # per-token rollout logp per decision (F4)
+    # WAVE6-FIX telemetry (all defaulted: legacy constructions stay valid)
+    parsed: list[bool] = field(default_factory=list)       # contract-parsed per row
+    agent_ids: list[int] = field(default_factory=list)
+    weeks: list[int] = field(default_factory=list)
+    episode_ids: list[int] = field(default_factory=list)
+    adv_cost: list[float] = field(default_factory=list)    # cost advantage before masking
+    adv_fmt: list[float] = field(default_factory=list)     # A2 format advantage (empty otherwise)
+    demand_sha: str = ""
 
 
 class PolicyLike(Protocol):
@@ -628,7 +639,9 @@ def warn_resume_lr_mismatch(cli_lr: float, saved_lr: float) -> str | None:
 
 def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
                  seed: int | None = None, temperature: float = 1.0,
-                 rollout_batch: int = 16, shared_demand: bool = True) -> StepRollout:
+                 rollout_batch: int = 16, shared_demand: bool = True,
+                 prompt_format: str = "raw", max_new: int = 8,
+                 parse_aware: bool = False, fmt_weight: float = 1.0) -> StepRollout:
     """Run G episodes under `policy`; returns one StepRollout (flat per-decision).
 
     Rollouts are **batched**: the decisions of one week (4 roles) across all G
@@ -653,7 +666,16 @@ def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
     Flat rows are ordered by episode then (t, agent_id) — length G * 4 * horizon —
     the same row order `grpo_step` consumes. `completion_ids`/`old_logprobs` are
     the F2/F4 sampled identities threaded through DecisionRecord.
+
+    WAVE6-FIX (docs/waves/WAVE6-FIX_SPEC.md): `prompt_format="chat_contract"` serves
+    the paper's JSON answer contract through the chat template and parses it
+    strictly (unparsed => order 0, as in wave 6); `max_new` is the rollout token
+    cap; `parse_aware=True` (A2) masks the cost advantage of unparsed rows and adds
+    `fmt_weight` x the per-(agent, week) z-scored parse indicator. Defaults are the
+    wave-6 behaviour, byte for byte.
     """
+    if parse_aware and prompt_format != "chat_contract":
+        raise ValueError("parse_aware reward requires prompt_format='chat_contract'")
     rng = random.Random(seed)
     if shared_demand:
         demand = sample_curriculum_demand(rng, curriculum, horizon)
@@ -662,36 +684,73 @@ def collect_step(policy: PolicyLike, G: int, curriculum: str, horizon: int = 36,
         demands = [sample_curriculum_demand(rng, curriculum, horizon) for _ in range(G)]
 
     def batch_policy(prompts: list[str]):
-        texts, ids, logps = policy.rollout(prompts, temperature=temperature)
+        texts, ids, logps = policy.rollout(prompts, temperature=temperature,
+                                           max_new=max_new)
         if ids is None:                       # hub stubs return (texts, None, None)
             ids = [None] * len(texts)
         if logps is None:
             logps = [None] * len(texts)
         return list(zip(texts, ids, logps))
 
+    extra: dict = {}
+    if prompt_format == "chat_contract":
+        extra = {"prompt_builder": build_contract_prompt,
+                 "parse": lambda t: parse_contract(t).value or 0}
+    elif prompt_format != "raw":
+        raise ValueError(f"unknown prompt_format {prompt_format!r}")
     episodes = run_episodes_batched(batch_policy, demands,
                                     SimConfig(horizon=horizon),
-                                    chunk=rollout_batch)
+                                    chunk=rollout_batch, **extra)
     rewards = [ep_result_to_rewards(e) for e in episodes]
     adv = group_normalize(rewards)
+    T = len(rewards[0][0]) if rewards else 0
+    parsed_map = [{k: [False] * T for k in r} for r in rewards]
+    for g, e in enumerate(episodes):
+        for rec in e.records:
+            parsed_map[g][rec.agent_id][rec.t] = \
+                parse_contract(rec.completion).value is not None
+    adv_row = adv
+    adv_fmt_map = None
+    if parse_aware:
+        adv_row, adv_fmt_map = combine_parse_aware(adv, parsed_map, fmt_weight)
     prompts_all: list[str] = []
     completions_all: list[str] = []
     ids_all: list[list[int] | None] = []
     orders_all: list[int] = []
     logps_all: list[list[float] | None] = []
     flat_adv: list[float] = []
-    for e, a in zip(episodes, adv):
+    flat_cost: list[float] = []
+    flat_fmt: list[float] = []
+    parsed_all: list[bool] = []
+    agent_ids: list[int] = []
+    weeks: list[int] = []
+    ep_ids: list[int] = []
+    for g, e in enumerate(episodes):
         for rec in e.records:
             prompts_all.append(rec.prompt)
             completions_all.append(rec.completion)
             ids_all.append(rec.completion_ids)
             orders_all.append(rec.order)
             logps_all.append(rec.token_logprobs)
-            flat_adv.append(a[rec.agent_id][rec.t])
+            flat_adv.append(adv_row[g][rec.agent_id][rec.t])
+            flat_cost.append(adv[g][rec.agent_id][rec.t])
+            if adv_fmt_map is not None:
+                flat_fmt.append(adv_fmt_map[g][rec.agent_id][rec.t])
+            parsed_all.append(parsed_map[g][rec.agent_id][rec.t])
+            agent_ids.append(rec.agent_id)
+            weeks.append(rec.t)
+            ep_ids.append(g)
+    if shared_demand:
+        dsha_src = ",".join(map(str, demands[0]))
+    else:
+        dsha_src = "|".join(",".join(map(str, d)) for d in demands)
     return StepRollout(prompts=prompts_all, completions=completions_all,
                        completion_ids=ids_all, orders=orders_all,
                        costs=[e.total_sys_cost for e in episodes],
-                       advantages=flat_adv, old_logprobs=logps_all)
+                       advantages=flat_adv, old_logprobs=logps_all,
+                       parsed=parsed_all, agent_ids=agent_ids, weeks=weeks,
+                       episode_ids=ep_ids, adv_cost=flat_cost, adv_fmt=flat_fmt,
+                       demand_sha=hashlib.sha256(dsha_src.encode()).hexdigest()[:16])
 
 
 # --------------------------------------------------------------------------- #
@@ -719,9 +778,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                          "recorded in state.json. Default 12345 — the audit's "
                          "a11_seed2 was a replicate, not a seed variant, because "
                          "no seed ever reached the RNG")
+    ap.add_argument("--prompt-format", choices=["raw", "chat_contract"], default="raw",
+                    help="raw = wave-6 raw continuation + first-integer parse (default); "
+                         "chat_contract = chat template (thinking off) + the paper's "
+                         "order_quantity JSON contract (WAVE6-FIX)")
+    ap.add_argument("--max-new", type=int, default=8,
+                    help="rollout new-token cap (wave 6: 8)")
+    ap.add_argument("--parse-aware-reward", type=int, choices=[0, 1], default=0,
+                    help="1 = WAVE6-FIX A2: mask cost advantage of unparsed rows + "
+                         "format advantage (requires --prompt-format chat_contract)")
+    ap.add_argument("--fmt-weight", type=float, default=1.0,
+                    help="weight w of the format advantage in A2")
+    ap.add_argument("--dump-completions-every", type=int, default=0,
+                    help="every N steps write completions_step<k>.jsonl (0 = never)")
     ap.add_argument("--out", default="results/grpo_a0")
     ap.add_argument("--resume", action="store_true")
-    return ap.parse_args(argv)
+    args = ap.parse_args(argv)
+    if args.max_new < 1:
+        ap.error("--max-new must be >= 1")
+    if args.parse_aware_reward and args.prompt_format != "chat_contract":
+        ap.error("--parse-aware-reward 1 requires --prompt-format chat_contract")
+    return args
 
 
 def _resolve_seed(args: argparse.Namespace) -> int:
@@ -774,6 +851,22 @@ def _atomic_write_json(path: Path, payload: dict) -> None:
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2, sort_keys=True))
     os.replace(tmp, path)
+
+
+CONTRACT_VERSION = "w6fix-1"
+
+
+def _w6fix_flags(args: argparse.Namespace) -> dict:
+    """The WAVE6-FIX knobs as recorded in state.json / run_info.json (legacy
+    values when the flags are off; bare test Namespaces fall back to defaults)."""
+    return {
+        "prompt_format": getattr(args, "prompt_format", "raw"),
+        "max_new": getattr(args, "max_new", 8),
+        "parse_aware_reward": int(getattr(args, "parse_aware_reward", 0)),
+        "fmt_weight": getattr(args, "fmt_weight", 1.0),
+        "dump_completions_every": getattr(args, "dump_completions_every", 0),
+        "contract_version": CONTRACT_VERSION,
+    }
 
 
 def save_checkpoint(policy: PolicyLike, ckpt_path: Path, state_path: Path, *,
@@ -831,6 +924,7 @@ def save_checkpoint(policy: PolicyLike, ckpt_path: Path, state_path: Path, *,
         "lr": args.lr,
         "beta_kl": args.beta_kl,
         "rollout_batch": args.rollout_batch,
+        **_w6fix_flags(args),
         "seed": _resolve_seed(args),         # F12: effective seed, always recorded
         "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
@@ -866,6 +960,82 @@ def sigterm_handler(stop: threading.Event) -> Callable[[int, object], None]:
     return _handler
 
 
+def _entropy_bits(values: list[int]) -> float:
+    """Shannon entropy (bits) of the empirical distribution of `values`; 0.0 if empty."""
+    n = len(values)
+    if n == 0:
+        return 0.0
+    counts: dict[int, int] = {}
+    for v in values:
+        counts[v] = counts.get(v, 0) + 1
+    return sum(-(c / n) * math.log2(c / n) for c in counts.values())
+
+
+def _w6fix_telemetry(roll: StepRollout, policy: PolicyLike, fl: dict) -> dict:
+    """WAVE6-FIX §6.1 per-step fields (rates over the step's n rows)."""
+    n = len(roll.completions)
+    contract_mode = fl["prompt_format"] == "chat_contract"
+    parsed_c = list(roll.parsed) if roll.parsed else \
+        [parse_contract(c).value is not None for c in roll.completions]
+    exact = sum(1 for c in roll.completions if parse_contract(c).exact)
+    lenient = sum(1 for c in roll.completions if has_int(c))
+    loose = sum(1 for c in roll.completions if has_loose_json(c))
+    own = parsed_c if contract_mode else [has_int(c) for c in roll.completions]
+    own_orders = [o for o, ok in zip(roll.orders, own) if ok]
+    adv_cost = roll.adv_cost or roll.advantages
+    if fl["parse_aware_reward"]:
+        cost_rows = sum(1 for a, f in zip(adv_cost, parsed_c) if f and a != 0.0)
+    else:
+        cost_rows = sum(1 for a in adv_cost if a != 0.0)
+    value_frac = None
+    tok = getattr(policy, "tok", None)
+    if tok is not None and hasattr(tok, "decode") and any(
+            i is not None for i in roll.completion_ids):
+        d, tot = count_digit_tokens(roll.completion_ids, parsed_c,
+                                    lambda i: tok.decode([i]))
+        value_frac = (d / tot) if tot else None
+    fmt_share = None
+    if fl["parse_aware_reward"]:
+        w = fl["fmt_weight"]
+        den = sum(abs(a) for a in roll.advantages)
+        fmt_share = (sum(abs(w * a) for a in roll.adv_fmt) / den) if den else 0.0
+    return {
+        "contract_parse_rate": (sum(parsed_c) / n) if n else 0.0,
+        "contract_exact_rate": (exact / n) if n else 0.0,
+        "parse_lenient_rate": (lenient / n) if n else 0.0,
+        "loose_json_rate": (loose / n) if n else 0.0,
+        "order_entropy_bits": round(_entropy_bits(own_orders), 6),
+        "n_orders_gt100": sum(1 for o in roll.orders if o > 100),
+        "cost_rows_frac": (cost_rows / n) if n else 0.0,
+        "value_token_frac": value_frac,
+        "fmt_adv_share": fmt_share,
+        "demand_sha": roll.demand_sha,
+        "first_prompt_sha256": (hashlib.sha256(roll.prompts[0].encode("utf-8")).hexdigest()
+                                if roll.prompts else None),
+    }
+
+
+def _dump_completions(path: Path, roll: StepRollout, orders: list[int]) -> None:
+    """All rows of one step: {i, e, agent_id, t, text, ids, order, parsed, adv_cost,
+    adv_fmt, adv} (superset of WAVE6-FIX §7.3 so §8.2.3 is recomputable from the dump)."""
+    n = len(roll.completions)
+    tmp = path.with_name(path.name + ".tmp")
+    with tmp.open("w") as f:
+        for i in range(n):
+            f.write(json.dumps({
+                "i": i,
+                "e": roll.episode_ids[i] if roll.episode_ids else None,
+                "agent_id": roll.agent_ids[i] if roll.agent_ids else None,
+                "t": roll.weeks[i] if roll.weeks else None,
+                "text": roll.completions[i], "ids": roll.completion_ids[i],
+                "order": orders[i],
+                "parsed": roll.parsed[i] if roll.parsed else None,
+                "adv_cost": roll.adv_cost[i] if roll.adv_cost else None,
+                "adv_fmt": roll.adv_fmt[i] if roll.adv_fmt else None,
+                "adv": roll.advantages[i]}) + "\n")
+    os.replace(tmp, path)
+
+
 def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
              ckpt_path: Path, start_step: int = 0, rng: random.Random | None = None,
              has_torch: Callable[[], bool] = _torch_available,
@@ -891,9 +1061,13 @@ def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
     seen_nonfinite = False
     for step in range(start_step, args.steps):
         curriculum = curricula[step % len(curricula)]
+        fl = _w6fix_flags(args)
         roll = collect_step(
             policy, G=args.group, curriculum=curriculum, horizon=args.horizon,
-            seed=rng.randint(0, 2**31), rollout_batch=args.rollout_batch)
+            seed=rng.randint(0, 2**31), rollout_batch=args.rollout_batch,
+            prompt_format=fl["prompt_format"], max_new=fl["max_new"],
+            parse_aware=bool(fl["parse_aware_reward"]),
+            fmt_weight=fl["fmt_weight"])
         out = policy.grpo_step(roll.prompts, roll.completions, roll.advantages,
                                lr=args.lr, beta_kl=args.beta_kl,
                                completion_ids=roll.completion_ids,
@@ -906,6 +1080,7 @@ def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
         n_unique_orders = len(set(orders))
         n_unique_completions = len(set(roll.completions))
         parse_failures = sum(1 for c in roll.completions if not has_int(c))
+        tele = _w6fix_telemetry(roll, policy, fl)
         samples = [
             {"prompt_hash": hashlib.sha256(p.encode("utf-8")).hexdigest()[:12],
              "text": c, "order": o, "ids": i}
@@ -932,9 +1107,14 @@ def run_loop(policy: PolicyLike, args: argparse.Namespace, log_path: Path,
             "order_std": round((sum((o - om) ** 2 for o in orders) / n) ** 0.5, 3) if n else None,
             "order_max": max(orders) if n else None,
             "mean_episode_cost": (sum(roll.costs) / len(roll.costs)) if roll.costs else None,
+            **tele,
             "samples": samples,
             "elapsed_s": round(time.time() - t0, 1),
         }
+        dump_every = fl["dump_completions_every"]
+        if dump_every and dump_every > 0 and step % dump_every == 0:
+            _dump_completions(log_path.parent / f"completions_step{step}.jsonl",
+                              roll, orders)
         with log_path.open("a") as f:
             f.write(json.dumps(rec) + "\n")
         if step % 10 == 0 or step == args.steps - 1:
@@ -1067,6 +1247,7 @@ def main(argv: list[str] | None = None) -> int:
         "group": args.group, "horizon": args.horizon,
         "curricula": args.curricula, "lr": args.lr, "beta_kl": args.beta_kl,
         "rollout_batch": args.rollout_batch,
+        **_w6fix_flags(args),
         "compile_knobs": getattr(policy, "compile_knobs", None),
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }

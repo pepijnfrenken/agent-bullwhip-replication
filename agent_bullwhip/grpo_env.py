@@ -230,7 +230,9 @@ def run_episodes_batched(batch_policy: Callable[[list[str]], list[tuple[str, lis
                          demands: list[list[int]],
                          sim_cfg: SimConfig | None = None, *,
                          prompt_variant: str = "default", chunk: int = 16,
-                         parse: Callable[[str], int] = extract_int) -> list[EpisodeResult]:
+                         parse: Callable[[str], int] = extract_int,
+                         prompt_builder: Callable[[str, dict], str] | None = None
+                         ) -> list[EpisodeResult]:
     """Run `len(demands)` episodes in lockstep, batching generate() across
     decisions that are causally independent.
 
@@ -263,6 +265,9 @@ def run_episodes_batched(batch_policy: Callable[[list[str]], list[tuple[str, lis
 
     `chunk` = max prompts per batch_policy call (<= 0 = every pending decision of
     the week in one call). Returns one EpisodeResult per demand, in order.
+
+    `prompt_builder(role, ctx) -> prompt` overrides the default `build_prompt`
+    (WAVE6-FIX: the contract prompt); None keeps the wave-6 call byte-identical.
     """
     cfg = sim_cfg or SimConfig(horizon=36)
     steppers = [GameStepper(demand, cfg) for demand in demands]
@@ -281,7 +286,8 @@ def run_episodes_batched(batch_policy: Callable[[list[str]], list[tuple[str, lis
             if stepper.done():
                 continue
             for role, ctx in stepper.observations().items():
-                p = build_prompt(role, ctx, prompt_variant)
+                p = (prompt_builder(role, ctx) if prompt_builder is not None
+                     else build_prompt(role, ctx, prompt_variant))
                 prompts[g][role].append(p)
                 pending.append((g, role, p))
         if not pending:
@@ -341,3 +347,31 @@ def group_normalize(rewards: list[dict[int, list[float]]],
             for i in range(G):
                 out[i].setdefault(k, [0.0] * T)[t] = (rewards[i][k][t] - mean) / std
     return out
+
+
+# --------------------------------------------------------------------------- #
+# WAVE6-FIX A2: parse-aware advantage (docs/waves/WAVE6-FIX_SPEC.md §4.4).
+# --------------------------------------------------------------------------- #
+def combine_parse_aware(adv_cost: list[dict[int, list[float]]],
+                        parsed: list[dict[int, list[bool]]], w: float,
+                        eps: float = 1e-4):
+    """Row advantage A_i = f_i * A^c_i + w * A^f_i.
+
+    `adv_cost` is `group_normalize(rewards)` output (G dicts {agent: [T]});
+    `parsed[g][agent][t]` is the contract-parse indicator f. A^f is the SAME
+    per-(agent, week) z-score across the G episodes applied to f in {0, 1}
+    (`group_normalize` itself, population std, eps) — all-parsed and
+    all-unparsed cells give exactly 0. Returns (combined, adv_fmt), same shape
+    as `adv_cost`; the unparsed rows' cost advantage is masked to 0.
+    """
+    f_rewards = [{k: [1.0 if x else 0.0 for x in v] for k, v in ep.items()}
+                 for ep in parsed]
+    adv_fmt = group_normalize(f_rewards, eps=eps)
+    combined: list[dict[int, list[float]]] = []
+    for g, ep in enumerate(adv_cost):
+        row: dict[int, list[float]] = {}
+        for k, series in ep.items():
+            row[k] = [(a if parsed[g][k][t] else 0.0) + w * adv_fmt[g][k][t]
+                      for t, a in enumerate(series)]
+        combined.append(row)
+    return combined, adv_fmt
