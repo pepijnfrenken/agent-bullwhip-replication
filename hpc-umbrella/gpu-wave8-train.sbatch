@@ -61,6 +61,7 @@ REPO_HEAD="$(git -C "${REPO_DIR}" rev-parse HEAD 2>/dev/null || echo unknown)"
 REPO_DIRTY="$(git -C "${REPO_DIR}" status --porcelain 2>/dev/null | wc -l)"
 echo "repo ${REPO_DIR} HEAD=${REPO_HEAD} dirty_files=${REPO_DIRTY}"
 : "${EXPECTED_COMMIT:?FATAL: EXPECTED_COMMIT not exported — set it from the hub (git rev-parse HEAD) before submitting}"
+EXPECTED_COMMIT="$(git -C "${REPO_DIR}" rev-parse "${EXPECTED_COMMIT}" 2>/dev/null || echo "${EXPECTED_COMMIT}")"
 if [ "${REPO_HEAD}" != "${EXPECTED_COMMIT}" ]; then
   echo "FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but repo HEAD=${REPO_HEAD} — refusing to run stale code" >&2
   exit 1

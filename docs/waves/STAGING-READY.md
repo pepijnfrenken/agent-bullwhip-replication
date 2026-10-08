@@ -131,6 +131,16 @@ git -C ~/projects/agent-bullwhip-replication rev-parse HEAD     # pinning an unp
                                                                  # at the OLD HEAD (observed 2026-10-08)
 ```
 
+Or skip the copy-paste entirely: derive the pin on the cluster AFTER the pull.
+The gate normalizes short SHAs (`git rev-parse` of the pin), so this always matches,
+and PIN_OK is the strong check (cluster HEAD == origin/master):
+
+```bash
+export EXPECTED_COMMIT="$(git -C "$R" rev-parse HEAD)"
+origin="$(git ls-remote origin refs/heads/master | cut -f1)"
+test "$EXPECTED_COMMIT" = "$origin" && echo "PIN_OK: cluster == origin/master"
+```
+
 Then on the login node:
 
 ```bash
