@@ -230,6 +230,16 @@ sbatch gpu-wave8-eval.sbatch        # default W8_EVAL_ARMS="r1"; add r2sft/r2rl 
 The job selects the R1 lr itself from `results/wave8_val/` (`scripts/wave8_analysis.py select-lr`),
 unless you override with `W8_LR=`. Gate readout afterwards, on the hub (§4).
 
+**If the eval exits 1 within seconds, it is a refusal, not a crash.** The three refusals and their fixes:
+`FATAL: … missing (F3 not frozen for this rung)` → run `gpu-wave8-preflight.sbatch` for that `W8_RUNG`;
+`FATAL: missing train output results/wave8_r1<SUF>_<lr>_seed<S>_round3/state.json` → the eval guessed the lr
+from `results/wave8_val/` and it does not match the tag the train job wrote (or that seed never reached round 3):
+resubmit with the explicit pair, e.g. `W8_LR=5e-5 W8_EVAL_SEEDS="0 1" sbatch gpu-wave8-eval.sbatch`;
+`FATAL: EXPECTED_COMMIT` → stale checkout on the cluster.
+One-command evidence bundle: `bash hpc-umbrella/diagnose-wave8.sh eval` (`ssh <user>@hpc.tue.nl 'bash -s' <
+hpc-umbrella/diagnose-wave8.sh eval > wave8-diag.txt`) — exit codes, the error lines, and the dir/adapter inventory
+that shows the mismatch directly.
+
 ### 2.6 R2 — only if R1 fails G1 (decision table §6.6)
 
 R2 = soft-target SFT warm start (one full epoch) + the same RL rounds anchored to the frozen SFT

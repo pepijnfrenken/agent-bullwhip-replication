@@ -356,6 +356,10 @@ Spec: `docs/waves/WAVE8_SPEC.md`; the operator checklist with the gate tables is
    `python3 scripts/wave8_analysis.py select-sft-lr`; then `W8_ARM=r2 W8_R2_LR=<winner> sbatch --array=0-2 gpu-wave8-train.sbatch`.
 5. **Eval**: `sbatch gpu-wave8-eval.sbatch` (selects the lr on the validation band, evaluates control + adapters,
    permutation + collapse + calibration reads).
+   **If it fails:** run `bash hpc-umbrella/diagnose-wave8.sh eval` (needs no config.sh; pipe it over ssh if the
+   cluster has no checkout). It prints the exit code, the error-shaped log lines and an inventory of every
+   prerequisite the eval checks — the fastest way to tell a *refusal* (missing gates / missing train output /
+   wrong lr tag, all exit 1 in seconds) from a *step failure* (a traceback after the first `--- eval …` line).
 6. **Send up + verify**: `bash hpc-umbrella/push_results.sh -m "wave-8 ... (job <id>)" <paths from STAGING-READY §4>`;
    hub: `git pull --ff-only`, `python3 hpc-umbrella/verify_pull.py ~/projects/agent-bullwhip-replication --size`
    (R1 round dirs are in EXPECT; R2/R3/ladder dirs show as extras), `python3 scripts/wave8_analysis.py --out results/wave8_report.md --json results/wave8_report.json`.
