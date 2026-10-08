@@ -150,6 +150,8 @@ export EXPECTED_COMMIT=<the sha printed on the hub>
 # 1. put the repo on that commit (first time: git clone; then:)
 git -C "$R" fetch --all --prune && git -C "$R" checkout master && git -C "$R" pull --ff-only
 test "$(git -C "$R" rev-parse HEAD)" = "$EXPECTED_COMMIT" || echo "STOP: cluster HEAD != $EXPECTED_COMMIT"
+# NOTE: run stage.sh and sbatch from $B (or anywhere OUTSIDE $B/kit) — stage.sh rm -rf's the
+# kit dir and replaces it; a shell sitting inside it dies on getcwd and sbatch never submits.
 
 # 2. stage from the freshly pulled repo copy (mirrors hpc-umbrella/ -> $B/kit, re-execs there,
 #    venv + weights idempotent). Run it from $R/hpc-umbrella, NOT from $B/kit:

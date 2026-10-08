@@ -53,6 +53,13 @@ if [ "$DRY" = 0 ] && [ "$(cd "${KIT_DIR}" && pwd)" != "$(cd "${BULLWHIP_ROOT}/ki
   # (the login node has NO rsync, so we mirror manually: rm -rf + fresh copy, where
   # rsync --delete used to prune removed files). The .sbatch files are always
   # submitted from the staged copy so SLURM_SUBMIT_DIR is stable.
+  # NEVER run this from inside the kit dir: rm -rf kit would delete the caller's CWD,
+  # and every later command in that shell dies with 'getcwd: No such file or directory'.
+  if case "$PWD" in "${BULLWHIP_ROOT}/kit"|"${BULLWHIP_ROOT}/kit"/*) true;; *) false;; esac; then
+    say "FATAL: your shell is inside '${BULLWHIP_ROOT}/kit', which staging replaces (rm -rf).
+  cd out first (e.g. 'cd \"${BULLWHIP_ROOT}\"'), then re-run stage.sh"
+    exit 1
+  fi
   doit "rm -rf '${BULLWHIP_ROOT}/kit' && mkdir -p '${BULLWHIP_ROOT}/kit' && tar -C '${KIT_DIR}' -cf - . | tar -C '${BULLWHIP_ROOT}/kit' -xf -"
   say "re-exec from the staged copy so the run uses scratch, not home"
   exec bash "${BULLWHIP_ROOT}/kit/stage.sh" "${ARGS[@]}"
