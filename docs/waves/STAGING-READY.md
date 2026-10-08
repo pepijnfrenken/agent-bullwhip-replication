@@ -261,11 +261,24 @@ one epoch, §1 row 6). The sbatch enforces the order: `W8_ARM=r2` stops after SF
 
 ```bash
 cd "$B/kit"
-sbatch cpu-wave8-label.sbatch                          # 26-candidate labels (tue.cpu3.q, 96 cores)
+sbatch cpu-wave8-label.sbatch                          # 26-candidate labels (tue.cpu3.q, 96 cores); the sweep
+                                                       # FATALs fast if labels.jsonl is missing, so wait for 406xxx to
+                                                       # COMPLETED before submitting the sweep
 W8_ARM=r2sweep sbatch --array=0-2 gpu-wave8-train.sbatch   # 500-step lr sweep {1e-5, 1e-4, 2e-4}, val every 100
-python3 "$R/scripts/wave8_analysis.py" select-sft-lr       # winner on validation NLL
-W8_ARM=r2 W8_R2_LR=<winner> sbatch --array=0-2 gpu-wave8-train.sbatch   # SFT full epoch + sft-gates (W8_R2_RL=0 default)
-W8_EVAL_ARMS="r2sft" W8_R2_LR=<winner> sbatch gpu-wave8-eval.sbatch     # protocol evals + perm + collapse-final + calibration
+```
+
+**Wait for the sweep to drain BEFORE selecting** (val events are written every 100 steps; the selector
+needs the run finished — running it early exits with "no validation events at step 499"):
+
+```bash
+squeue --me                                   # until nothing is left; or: sacct -j <array id> -X -o JobID,State
+python3 "$R/scripts/wave8_analysis.py" select-sft-lr \
+  --out "$R/results/wave8/sft_lr_selection.json" || { echo "STOP: selection failed - sweep not finished?"; exit 1; }
+WINNER="$(python3 -c "import json;print(json.load(open('$R/results/wave8/sft_lr_selection.json'))['winner'])")"
+test -n "$WINNER" || { echo "STOP: no winner - read the selection JSON"; exit 1; }
+echo "WINNER=$WINNER"
+W8_ARM=r2 W8_R2_LR="$WINNER" sbatch --array=0-2 gpu-wave8-train.sbatch   # SFT full epoch + sft-gates (W8_R2_RL=0 default)
+W8_EVAL_ARMS="r2sft" W8_R2_LR="$WINNER" sbatch gpu-wave8-eval.sbatch     # protocol evals + perm + collapse-final + calibration
 ```
 
 Then, on the hub: read the collapse-final (modals + perm + min_mass) and the band pairing —
