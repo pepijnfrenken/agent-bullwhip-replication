@@ -129,6 +129,9 @@ case "${W8_ARM}" in
     ;;
   r2)
     SEED="${IDX}"; LR="${W8_R2_LR:?FATAL: W8_ARM=r2 needs W8_R2_LR (from select-sft-lr)}"
+    LR="${LR#lr}"   # select-sft-lr returns the tag 'lr2e-4'; the runners want the plain float '2e-4'
+    python3 -c "float('${LR}')" 2>/dev/null \
+      || { echo "FATAL: W8_R2_LR='${W8_R2_LR}' -> lr '${LR}' is not a float" >&2; exit 1; }
     LABELS="${RESULTS_DIR}/wave8_labels/labels.jsonl"
     [ -s "${LABELS}" ] || { echo "FATAL: ${LABELS} missing — run cpu-wave8-label.sbatch first" >&2; exit 1; }
     SFT_DIR="results/wave8_r2sft_seed${SEED}"

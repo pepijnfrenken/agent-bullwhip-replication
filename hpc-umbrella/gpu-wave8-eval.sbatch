@@ -177,7 +177,9 @@ if [[ " ${EVAL_ARMS} " == *" r1 "* ]]; then
 fi
 R2_TAG=""
 if [[ " ${EVAL_ARMS} " == *" r2rl "* || " ${EVAL_ARMS} " == *" r2sft "* ]]; then
-  R2_TAG="lr$(python3 -c "print(('%g' % float('${W8_R2_LR:?FATAL: r2 arms need W8_R2_LR}')).replace('e-0','e-').replace('e+0','e+'))")"
+  R2_LR="${W8_R2_LR:?FATAL: r2 arms need W8_R2_LR}"
+  R2_LR="${R2_LR#lr}"   # select-sft-lr returns the tag 'lr2e-4'; float() wants the plain form
+  R2_TAG="lr$(python3 -c "print(('%g' % float('${R2_LR}')).replace('e-0','e-').replace('e+0','e+'))")"
 fi
 
 for ARM in ${EVAL_ARMS}; do

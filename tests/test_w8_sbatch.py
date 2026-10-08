@@ -181,6 +181,16 @@ def test_r2_runs_sft_then_gate_reads_then_rl_from_the_sft_final_checkpoint(tmp_p
     kit, _, e, calls = _setup(tmp_path / "b", env={"W8_ARM": "r2"})
     p = _run(kit, "gpu-wave8-train.sbatch", e)
     assert p.returncode != 0 and calls.read_text() == ""
+    # the selector returns a TAG ('lr2e-4'); the sbatch must accept it and the plain float (seam
+    # regression: W8_R2_LR=lr2e-4 used to hit argparse's float() parsing and die mid-run)
+    for tag in ("lr2e-4", "2e-4"):
+        kit, repo, e, calls = _setup(tmp_path / f"tag-{tag}", task=0,
+                                     env={"W8_ARM": "r2", "W8_R2_LR": tag})
+        (repo / "results/wave8_labels").mkdir()
+        (repo / "results/wave8_labels/labels.jsonl").write_text("{}\n")
+        p = _run(kit, "gpu-wave8-train.sbatch", e)
+        assert p.returncode == 0, p.stdout + p.stderr
+        assert _opt(calls.read_text().splitlines()[0], "--lr") == "2e-4"
 
 
 def test_r2_sweep_two_lrs_with_validation_every_100(tmp_path):
