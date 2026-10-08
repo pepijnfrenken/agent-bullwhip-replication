@@ -52,7 +52,8 @@ bw_w8_rung
 
 REPO_HEAD="$(git -C "${REPO_DIR}" rev-parse HEAD 2>/dev/null || echo unknown)"
 echo "repo ${REPO_DIR} HEAD=${REPO_HEAD} rung=${W8_RUNG:-0.6b}"
-if [ -n "${EXPECTED_COMMIT:-}" ] && [ "${REPO_HEAD}" != "${EXPECTED_COMMIT}" ]; then
+: "${EXPECTED_COMMIT:?FATAL: EXPECTED_COMMIT not exported — set it from the hub (git rev-parse HEAD) before submitting}"
+if [ "${REPO_HEAD}" != "${EXPECTED_COMMIT}" ]; then
   echo "FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but repo HEAD=${REPO_HEAD} — refusing to run stale code" >&2
   exit 1
 fi

@@ -169,6 +169,15 @@ stopped arms to round 3 + validate + the untrained curriculum-band control) so G
 seeds before R2's 14.5 GPU-h goes anywhere. Per-arm permutation probes for arms 2–6 are on disk
 (`results/eval/w8-r1-*-perm.json`) for the report.
 
+**Ruling, 2026-10-08 (both open items closed):** the marker is **terminal**; a resume past a stop
+needs a written override. The first override is already on the record: an accidental bare
+`sbatch --array=0-2 gpu-wave8-train.sbatch` (no `W8_ARM`, stale HEAD d7207017, `EXPECTED_COMMIT`
+unset) re-ran the r1 arm and resumed the two stopped lr1e-5 arms (seeds 1, 2) into round 3
+(~0.7 GPU-h each). That is now recorded as the **sanctioned R1 completion run** for those seeds —
+they write their band entries and give lr1e-5 its third seed. The remaining stopped arms
+(lr5e-5 s1, s2) stay stopped unless a written override says otherwise. The sbatches now hard-refuse
+without `EXPECTED_COMMIT`, so this class of accident is gone.
+
 ## 10. External-reference audit (Unsloth "decision model" guide, 2026-10-08)
 
 Reference: unsloth.ai — train a Clef/Jev-class decision model (0.8B in ~42 min to 73-81% on
