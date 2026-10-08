@@ -172,6 +172,10 @@ def test_r2_sweep_two_lrs_with_validation_every_100(tmp_path):
 def test_eval_sbatch_tags_adapters_and_lr_selection(tmp_path):
     kit, repo, e, calls = _setup(tmp_path, sbatch="gpu-wave8-eval.sbatch",
                                  env={"W8_EVAL_SEEDS": "0 1"})
+    band = repo / "results/wave8_val"
+    band.mkdir(parents=True)
+    for s in (0, 1):                                    # select-lr reads the band first
+        (band / f"w8-val-r1-lr5e-5-seed{s}.jsonl").write_text("{}\n")
     for s in (0, 1):
         d = repo / f"results/wave8_r1_lr5e-5_seed{s}_round3"
         d.mkdir(parents=True)
@@ -194,6 +198,58 @@ def test_eval_sbatch_tags_adapters_and_lr_selection(tmp_path):
     p2 = _run(kit2, "gpu-wave8-eval.sbatch", e2)
     assert p2.returncode == 1 and "missing train output" in p2.stderr
     assert "select-lr" not in calls2.read_text()                 # W8_LR override skips selection
+
+
+def test_eval_refuses_without_a_validation_band_before_any_python(tmp_path):
+    """Select-lr SystemExits on an empty band; the sbatch must refuse in seconds instead.
+
+    Regression for the 2026-10-08 job 405888: the control evals ran for 6 minutes, then the job
+    died on 'no w8-val-*.jsonl under results/wave8_val' with nothing pointing at the train array.
+    """
+    kit, repo, e, calls = _setup(tmp_path, sbatch="gpu-wave8-eval.sbatch")
+    (repo / "results/wave8_val").mkdir(parents=True)          # exists but empty
+    p = _run(kit, "gpu-wave8-eval.sbatch", e)
+    assert p.returncode == 1
+    assert "no validation band" in p.stderr
+    assert "W8_LR=" in p.stderr                               # the workaround is spelled out
+    assert calls.read_text() == ""                            # nothing ran: no control, no select-lr
+
+
+def test_eval_with_an_explicit_lr_needs_no_band(tmp_path):
+    kit, repo, e, calls = _setup(tmp_path, sbatch="gpu-wave8-eval.sbatch",
+                                 env={"W8_EVAL_SEEDS": "0", "W8_LR": "1e-5"})
+    d = repo / "results/wave8_r1_lr1e-5_seed0_round3"
+    d.mkdir(parents=True)
+    (d / "state.json").write_text(json.dumps({"checkpoint_dir": "checkpoint-169"}))
+    p = _run(kit, "gpu-wave8-eval.sbatch", e)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "select-lr" not in calls.read_text()               # override skips selection entirely
+
+
+def test_eval_notes_a_single_lr_band(tmp_path):
+    kit, repo, e, _ = _setup(tmp_path, sbatch="gpu-wave8-eval.sbatch",
+                             env={"W8_EVAL_SEEDS": "0"})
+    band = repo / "results/wave8_val"
+    band.mkdir(parents=True)
+    (band / "w8-val-r1-lr1e-5-seed0.jsonl").write_text("{}\n")   # one lr only
+    d = repo / "results/wave8_r1_lr5e-5_seed0_round3"
+    d.mkdir(parents=True)
+    (d / "state.json").write_text(json.dumps({"checkpoint_dir": "checkpoint-169"}))
+    p = _run(kit, "gpu-wave8-eval.sbatch", e)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "covers 1 lr" in p.stderr                          # non-fatal, but stated
+
+
+def test_eval_r2_only_arms_do_not_require_the_r1_band(tmp_path):
+    kit, repo, e, calls = _setup(tmp_path, sbatch="gpu-wave8-eval.sbatch",
+                                 env={"W8_EVAL_ARMS": "r2sft", "W8_R2_LR": "1e-4",
+                                      "W8_EVAL_SEEDS": "0"})
+    d = repo / "results/wave8_r2sft_seed0"
+    (d / "checkpoint-2826").mkdir(parents=True)
+    (d / "state.json").write_text(json.dumps({"checkpoint_dir": "checkpoint-2826"}))
+    p = _run(kit, "gpu-wave8-eval.sbatch", e)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "w8-r2sft-seed0-argmax-step" in calls.read_text()
 
 
 def test_eval_rung_suffix_in_control_tags(tmp_path):

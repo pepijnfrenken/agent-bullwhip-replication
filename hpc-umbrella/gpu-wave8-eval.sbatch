@@ -70,6 +70,37 @@ PERM_CASES="${W8_PERM_CASES:-results/wave8/S_nom.jsonl}"
 LABELS_FOR_CAL=""
 [ -s results/wave8_labels/labels.jsonl ] && LABELS_FOR_CAL="results/wave8_labels/labels.jsonl"
 
+# --- precondition: an lr can only be selected from a validation band that exists -------------
+# Each R1 arm writes its band entry (w8-val-r1<SUF>-<lrtag>-seed<S>.jsonl) in its FINAL `validate`
+# stage, i.e. only after that arm's round 3 finishes. With no band, `wave8_analysis.py select-lr`
+# raises SystemExit — which used to cost 6 minutes of control evals before the job died with a
+# one-line reason. Fail in two seconds instead, and say why.
+if [ -z "${W8_LR:-}" ] && [[ " ${EVAL_ARMS} " == *" r1 "* ]]; then
+  BAND=(results/wave8_val/w8-val-r1${SUF}-*.jsonl)
+  if [ ! -e "${BAND[0]}" ]; then
+    echo "FATAL: no validation band — results/wave8_val/w8-val-r1${SUF}-*.jsonl does not exist." >&2
+    echo "       An R1 arm only writes it in its final 'validate' stage, after round 3 completes." >&2
+    echo "       If the train array is still running, wait for it. A collapse stop-loss ends an arm" >&2
+    echo "       BEFORE its validate stage, so a stopped arm never populates the band." >&2
+    if command -v squeue >/dev/null 2>&1; then
+      echo "       bw8-train tasks still in the queue:" >&2
+      squeue -u "${USER}" -h -o "         %i %T %M %j" 2>/dev/null | grep -i bw8 \
+        || echo "         (none — so the band is missing for a different reason)"
+    fi
+    echo "       Workaround, only if a single lr has round-3 adapters:" >&2
+    echo "         W8_LR=<lr> W8_EVAL_SEEDS=\"<seeds with adapters>\" sbatch gpu-wave8-eval.sbatch" >&2
+    exit 1
+  fi
+  echo "validation band: $(ls -1 results/wave8_val/w8-val-r1${SUF}-*.jsonl | wc -l) file(s)"
+  ls -1 results/wave8_val/w8-val-r1${SUF}-*.jsonl | sed 's/^/  /'
+  NLRS="$(basename -a results/wave8_val/w8-val-r1${SUF}-*.jsonl \
+          | sed -E 's/^.*-(lr[0-9.]+e[-+]?[0-9]+)-seed[0-9]+\.jsonl$/\1/' | sort -u | wc -l)"
+  if [ "${NLRS}" -lt 2 ]; then
+    echo "NOTE: the band covers ${NLRS} lr — select-lr then has nothing to compare (a single" >&2
+    echo "      candidate is not a selection; say so in the write-up if that is what you run)." >&2
+  fi
+fi
+
 final_ckpt() {  # final_ckpt <train-out-dir> -> path of the last adapter dir (state.json)
   python3 -c "import json,sys;print(sys.argv[1]+'/'+json.load(open(sys.argv[1]+'/state.json'))['checkpoint_dir'])" "$1"
 }
