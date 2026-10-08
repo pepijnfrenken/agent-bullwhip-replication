@@ -5,9 +5,11 @@
 #   W8_ARM=r1     (default) outcome-scored RL from the untrained readout, 3 rounds. Array tasks
 #                 enumerate (lr, seed): idx -> LR=W8_LRS[idx / W8_SEEDS], SEED=idx % W8_SEEDS.
 #                 Default `sbatch --array=0-5` = lrs {1e-5, 5e-5} x seeds {0,1,2}.
-#   W8_ARM=r2     soft-target SFT warm start (one full epoch) + post-hoc gate reads, then the
-#                 R2+RL rounds anchored to the frozen SFT adapter. W8_R2_LR required; array 0-2 = seeds.
-#   W8_ARM=r2sweep  the 500-step SFT lr sweep (seed 0; lrs 1e-5, 1e-4; array 0-1).
+#   W8_ARM=r2     soft-target SFT warm start (one full epoch) + post-hoc gate reads; the R2+RL
+#                 rounds anchored to the frozen SFT adapter run ONLY with W8_R2_RL=1 (audit
+#                 2026-10-08: SFT-first, RL gated on the SFT reads — the reference recipe for this
+#                 model class is SFT-only). W8_R2_LR required; array 0-2 = seeds.
+#   W8_ARM=r2sweep  the 500-step SFT lr sweep (seed 0; lrs 1e-5, 1e-4, 2e-4; array 0-2).
 #   W8_RUNG=0.6b|1.7b|4b  model rung (config.sh pins); 4B: set W8_MICRO_BATCH (smoke first!).
 #
 #   Submit:  cd /scratch-shared/$USER/bullwhip/kit && sbatch --array=0-5 gpu-wave8-train.sbatch
@@ -79,6 +81,7 @@ W8_GRAD_CKPT="${W8_GRAD_CKPT:-1}"
 W8_SAVE_EVERY="${W8_SAVE_EVERY:-10}"
 W8_MICRO_BATCH="${W8_MICRO_BATCH:-0}"
 W8_SFT_STEPS="${W8_SFT_STEPS:-2827}"
+W8_R2_RL="${W8_R2_RL:-0}"          # 1 = also run the R2+RL rounds in the same job (gate them on the SFT reads first)
 
 # pre-flight gates: F0 + F1 (hub) and this rung's frozen F3 must be on disk and passing
 python3 - "${RUNG_GATES}" <<'PY' || exit 1
@@ -136,18 +139,22 @@ case "${W8_ARM}" in
     run_py -m agent_bullwhip.decision_rounds sft-gates --sft-dir "${SFT_DIR}" --gates "${RUNG_GATES}" \
       "${COMMON[@]}" || RC=$?
     [ "${RC}" -eq 0 ] || { echo "sft-gates failed rc=${RC}" >&2; exit "${RC}"; }
-    SFT_FINAL="${SFT_DIR}/$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['checkpoint_dir'])" "${SFT_DIR}/state.json")"
-    echo "=== wave8 r2rl seed=${SEED}: RL rounds from ${SFT_FINAL} at $(date -Is) ==="
-    run_py -m agent_bullwhip.decision_rounds run --arm r2rl --seed "${SEED}" --lr "${LR}" "${COMMON[@]}" \
-      --base-adapter "${SFT_FINAL}" --rung-suffix="${RUNG_SUFFIX}" --rounds "${W8_ROUNDS}" \
-      --steps-per-round "${W8_STEPS_PER_ROUND}" --batch "${W8_BATCH}" --micro-batch "${W8_MICRO_BATCH}" \
-      --max-length "${W8_MAX_LEN}" --grad-ckpt "${W8_GRAD_CKPT}" --save-every "${W8_SAVE_EVERY}" \
-      --processes "${SLURM_CPUS_PER_TASK}" --gates "${RUNG_GATES}" || RC=$?
-    echo "=== r2rl seed=${SEED} exit=${RC} at $(date -Is) ==="
+    if [ "${W8_R2_RL}" = "1" ]; then
+      SFT_FINAL="${SFT_DIR}/$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['checkpoint_dir'])" "${SFT_DIR}/state.json")"
+      echo "=== wave8 r2rl seed=${SEED}: RL rounds from ${SFT_FINAL} at $(date -Is) ==="
+      run_py -m agent_bullwhip.decision_rounds run --arm r2rl --seed "${SEED}" --lr "${LR}" "${COMMON[@]}" \
+        --base-adapter "${SFT_FINAL}" --rung-suffix="${RUNG_SUFFIX}" --rounds "${W8_ROUNDS}" \
+        --steps-per-round "${W8_STEPS_PER_ROUND}" --batch "${W8_BATCH}" --micro-batch "${W8_MICRO_BATCH}" \
+        --max-length "${W8_MAX_LEN}" --grad-ckpt "${W8_GRAD_CKPT}" --save-every "${W8_SAVE_EVERY}" \
+        --processes "${SLURM_CPUS_PER_TASK}" --gates "${RUNG_GATES}" || RC=$?
+      echo "=== r2rl seed=${SEED} exit=${RC} at $(date -Is) ==="
+    else
+      echo "=== r2 SFT-only (W8_R2_RL=0): read sft-gates + eval on the hub before scheduling the RL rounds ==="
+    fi
     ;;
   r2sweep)
-    SWEEP=(1e-5 1e-4); LR="${SWEEP[${IDX}]:-}"
-    [ -n "${LR}" ] || { echo "FATAL: r2sweep tasks are 0-1" >&2; exit 1; }
+    SWEEP=(1e-5 1e-4 2e-4); LR="${SWEEP[${IDX}]:-}"
+    [ -n "${LR}" ] || { echo "FATAL: r2sweep tasks are 0-2" >&2; exit 1; }
     LABELS="${RESULTS_DIR}/wave8_labels/labels.jsonl"
     [ -s "${LABELS}" ] || { echo "FATAL: ${LABELS} missing — run cpu-wave8-label.sbatch first" >&2; exit 1; }
     TAG="lr${LR}"

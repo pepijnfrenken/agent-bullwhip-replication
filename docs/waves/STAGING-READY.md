@@ -42,7 +42,7 @@ login node:  pull → stage.sh → config.sh --check
              └── WAVE8     : sbatch  gpu-wave8-preflight.sbatch            (§2.3, F2+F3)
                              sbatch --array=0-5 gpu-wave8-train.sbatch      (§2.4, R1)
                              sbatch gpu-wave8-eval.sbatch                   (§2.5)
-                             ├─ only if R1 fails G1: R2 path                (§2.6)
+                             ├─ only if R1 fails G1: R2 path (SFT-first, RL gated)  (§2.6)
                              └─ only if budgets/EVAL allow: ladder          (§2.7)
 hub, after results: GGUF/CPU step                                        (§2.8)
 ```
@@ -230,6 +230,12 @@ sbatch gpu-wave8-eval.sbatch        # default W8_EVAL_ARMS="r1"; add r2sft/r2rl 
 The job selects the R1 lr itself from `results/wave8_val/` (`scripts/wave8_analysis.py select-lr`),
 unless you override with `W8_LR=`. Gate readout afterwards, on the hub (§4).
 
+The eval also emits the **untrained curriculum control** for the band
+(`results/wave8_val/w8-untrained-curriculum-argmax-curriculum.jsonl`: argmax, 30 runs, seeds
+9500..9529, no adapter) so every band number has an untrained counterpart (audit 2026-10-08,
+`W8-R1-DRAINED.md` §8 — the band is `curriculum`, the C0 protocol control is `step`/`noisy`, so
+they are not comparable without this file).
+
 **If the eval exits 1 within seconds, it is a refusal, not a crash.** The four refusals and their fixes:
 `FATAL: no validation band — results/wave8_val/w8-val-r1<SUF>-*.jsonl does not exist` → the train array has not
 finished (each arm writes its band entry in its final `validate` stage); wait for `squeue` to drain, then resubmit —
@@ -244,17 +250,52 @@ One-command evidence bundle: `bash hpc-umbrella/diagnose-wave8.sh eval` (`ssh <u
 hpc-umbrella/diagnose-wave8.sh eval > wave8-diag.txt`) — exit codes, the error lines, and the dir/adapter inventory
 that shows the mismatch directly.
 
-### 2.6 R2 — only if R1 fails G1 (decision table §6.6)
+### 2.6 R2 — only if R1 fails G1 (decision table §6.6) — SFT-first, RL gated
 
-R2 = soft-target SFT warm start (one full epoch) + the same RL rounds anchored to the frozen SFT
-adapter. **Skip it entirely if R1 passes G1 on ≥ 2/3 seeds.** Two extra steps, in this order:
+R2 = soft-target SFT warm start (one full epoch). **Skip it entirely if R1 passes G1 on ≥ 2/3
+seeds.** Do NOT schedule the RL rounds until the SFT reads are in — audit 2026-10-08 (Unsloth
+decision-model guide, `W8-R1-DRAINED.md` §10): the reference recipe for this model class is pure
+SFT, and R1's letter-lock is confounded with RL-from-cold-start (the only SFT ever run was 4.2 % of
+one epoch, §1 row 6). The sbatch enforces the order: `W8_ARM=r2` stops after SFT + post-hoc
+`sft-gates` unless `W8_R2_RL=1`.
 
 ```bash
 cd "$B/kit"
-sbatch cpu-wave8-label.sbatch                          # 26-candidate round-1 labels (tue.cpu3.q, 96 cores)
-W8_ARM=r2sweep sbatch --array=0-1 gpu-wave8-train.sbatch   # 500-step lr sweep {1e-5, 1e-4}, val every 100
-python3 "$R/scripts/wave8_analysis.py" select-sft-lr       # -> winner on validation NLL
-W8_ARM=r2 W8_R2_LR=<winner> sbatch --array=0-2 gpu-wave8-train.sbatch   # SFT + sft-gates + RL rounds
+sbatch cpu-wave8-label.sbatch                          # 26-candidate labels (tue.cpu3.q, 96 cores)
+W8_ARM=r2sweep sbatch --array=0-2 gpu-wave8-train.sbatch   # 500-step lr sweep {1e-5, 1e-4, 2e-4}, val every 100
+python3 "$R/scripts/wave8_analysis.py" select-sft-lr       # winner on validation NLL
+W8_ARM=r2 W8_R2_LR=<winner> sbatch --array=0-2 gpu-wave8-train.sbatch   # SFT full epoch + sft-gates (W8_R2_RL=0 default)
+W8_EVAL_ARMS="r2sft" W8_R2_LR=<winner> sbatch gpu-wave8-eval.sbatch     # protocol evals + perm + collapse-final + calibration
+```
+
+Then, on the hub: read the collapse-final (modals + perm + min_mass) and the band pairing —
+untrained vs the winner on the 30 shared curriculum runs (paired, one-sided sign test):
+
+```bash
+cd ~/projects/agent-bullwhip-replication && git pull --ff-only
+python3 - <<'PY'
+import json, math, statistics as st
+def costs(p):
+    d = {}
+    for ln in open(p):
+        r = json.loads(ln)
+        if r.get("total_cost") is not None and r.get("orders"):
+            d[int(r["run"])] = float(r["total_cost"])
+    return d
+U = costs("results/wave8_val/w8-untrained-curriculum-argmax-curriculum.jsonl")
+T = costs("results/wave8_val/w8-val-r1-<lrtag>-seed0.jsonl")   # or the winning LRSFT band name
+ks = sorted(set(U) & set(T)); wins = sum(1 for k in ks if T[k] < U[k]); n = len(ks)
+p = sum(math.comb(n, i) for i in range(wins, n + 1)) / 2 ** n
+print(f"paired runs n={n}  trained cheaper in {wins}/{n}  sign p={p:.3g}")
+PY
+```
+
+Only if the SFT reads trip (collapse / perm / min_mass fails): rerun the r2 array with the RL
+rounds, then eval `r2rl`:
+
+```bash
+W8_ARM=r2 W8_R2_RL=1 W8_R2_LR=<winner> sbatch --array=0-2 gpu-wave8-train.sbatch
+W8_EVAL_ARMS="r1 r2sft r2rl" W8_R2_LR=<winner> sbatch gpu-wave8-eval.sbatch
 ```
 
 The label job is **not** needed for R1 (R1 labels its own on-policy states each round).
@@ -409,7 +450,7 @@ are §3.
 | WAVE8 pre-flight (F2+F3) | `tue.gpu.q -C l4` | 1 h | minutes (tokenizer check + 1,024 states) |
 | WAVE8 R1, 6 tasks in parallel | `tue.gpu.q -C l4` | 8 h each | **≈ 1.1 h per (lr, seed)** = 170×3 steps × ~4.7 s + 3 collects (~1.5 min) + 3 relabels (~7 min on 8 CPU) → ≈ 7 GPU-h total |
 | WAVE8 labeler (R2 only) | `tue.cpu3.q`, 96 cores | 1 h | ≈ 4 min `[INFERENCE]` (wave-7 186.7 s at 21 candidates, scaled 26/21) |
-| WAVE8 R2 (SFT + RL) | `tue.gpu.q -C l4` | 8 h | ≈ 3.7 h SFT (2,827 steps) + 3 RL rounds; lr sweep 1.3 GPU-h extra |
+| WAVE8 R2 (SFT-first; RL gated) | `tue.gpu.q -C l4` | 8 h | SFT 3 seeds × 2,827 steps ≈ 3 × 3.7 GPU-h; lr sweep {1e-5, 1e-4, 2e-4} ≈ 2 GPU-h (500 steps × 3 lrs); RL rounds (+~2.1 GPU-h) only with `W8_R2_RL=1` after the SFT reads |
 | WAVE8 eval | `tue.gpu.q -C l4` | 4 h | ≈ 50 min for 3 modes × (control + 3 seeds) + probes |
 | Ladder 1.7B (3 seeds) | `tue.gpu.q -C l4` | 8 h | ≈ 1.8 h/seed `[INFERENCE]` → ≈ 5.5 GPU-h |
 | Ladder 4B (2 seeds, micro-batched) | `tue.gpu.q -C l4` | 8 h | ≈ 4.4 h/seed `[INFERENCE]` → ≈ 9 GPU-h |
