@@ -281,12 +281,17 @@ W8_ARM=r2sweep sbatch --array=0-2 gpu-wave8-train.sbatch   # 500-step lr sweep {
 ```
 
 **Wait for the sweep to drain BEFORE selecting** (val events are written every 100 steps; the selector
-needs the run finished — running it early exits with "no validation events at step 499"):
+reads the *last* val event of each sweep dir, so an unfinished run yields a misleading NLL — running it
+early exits with "no validation events"):
 
 ```bash
 squeue --me                                   # until nothing is left; or: sacct -j <array id> -X -o JobID,State
 python3 "$R/scripts/wave8_analysis.py" select-sft-lr \
   --out "$R/results/wave8/sft_lr_selection.json" || { echo "STOP: selection failed - sweep not finished?"; exit 1; }
+python3 -c "
+import json; d=json.load(open('$R/results/wave8/sft_lr_selection.json'))
+print('candidates:', d['n_candidates'], d['val_nll_last'])   # expect 3 (1e-5, 1e-4, 2e-4)
+assert d['n_candidates']==3, 'STOP: selector saw fewer lrs than the sweep launched'"
 WINNER="$(python3 -c "import json;print(json.load(open('$R/results/wave8/sft_lr_selection.json'))['winner'])")"
 test -n "$WINNER" || { echo "STOP: no winner - read the selection JSON"; exit 1; }
 echo "WINNER=$WINNER"
