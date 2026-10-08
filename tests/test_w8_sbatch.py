@@ -40,6 +40,11 @@ def _setup(tmp_path, *, gates=True, f3=True, env=None, sbatch="gpu-wave8-train.s
     for d in (kit, repo, bin_):
         d.mkdir(parents=True, exist_ok=True)
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    # a REAL commit: the commit gate compares rev-parse output, so the fixture needs a real HEAD
+    subprocess.run(["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t",
+                    "commit", "-q", "--allow-empty", "-m", "fixture"], check=True)
+    repo_head = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"],
+                               capture_output=True, text=True, check=True).stdout.strip()
     shutil.copy(KITSRC / sbatch, kit)
     (kit / "config.sh").write_text(
         f'. "{KITSRC / "config.sh"}"\nREPO_DIR="{repo}"\nRESULTS_DIR="{repo}/results"\n'
@@ -63,7 +68,10 @@ def _setup(tmp_path, *, gates=True, f3=True, env=None, sbatch="gpu-wave8-train.s
     e = {k: v for k, v in os.environ.items() if not k.startswith(("W8_", "SLURM_", "EXPECTED_COMMIT"))}
     e.update({"PATH": f"{bin_}{os.pathsep}{e['PATH']}", "SLURM_SUBMIT_DIR": str(kit),
               "SLURM_ARRAY_TASK_ID": str(task), "SLURM_CPUS_PER_TASK": "3",
-              "W8_CALLS": str(calls), "W8_PY": sys.executable})
+              "W8_CALLS": str(calls), "W8_PY": sys.executable,
+              # the gate is part of the product now: default the pin to the fixture's own HEAD so
+              # every non-gate test still exercises it; a test that wants a refusal overrides this
+              "EXPECTED_COMMIT": repo_head})
     e.update(env or {})
     return kit, repo, e, calls
 
@@ -129,6 +137,13 @@ def test_commit_gate_and_exit_codes(tmp_path):
     kit, _, e, calls = _setup(tmp_path, env={"EXPECTED_COMMIT": "deadbeef"})
     p = _run(kit, "gpu-wave8-train.sbatch", e)
     assert p.returncode == 1 and calls.read_text() == "" and "EXPECTED_COMMIT" in p.stderr
+    # a SHORT pin of the right commit must be accepted (regression: job 407040 died on
+    # 'EXPECTED_COMMIT=af1d6d0 but repo HEAD=af1d6d0d6ec...' — the gate now rev-parses the pin)
+    kit, repo, e, calls = _setup(tmp_path / "short", env={"EXPECTED_COMMIT": "SHORT"})
+    e["EXPECTED_COMMIT"] = subprocess.run(["git", "-C", str(repo), "rev-parse", "--short", "HEAD"],
+                                          capture_output=True, text=True, check=True).stdout.strip()
+    p = _run(kit, "gpu-wave8-train.sbatch", e)
+    assert p.returncode == 0, p.stdout + p.stderr
     kit, _, e, calls = _setup(tmp_path / "b", env={"W8_FAIL_RC": "75"})
     p = _run(kit, "gpu-wave8-train.sbatch", e)
     assert p.returncode == 75 and "EXIT 75" in p.stdout
@@ -140,15 +155,25 @@ def test_commit_gate_and_exit_codes(tmp_path):
 
 
 def test_r2_runs_sft_then_gate_reads_then_rl_from_the_sft_final_checkpoint(tmp_path):
+    # default (no W8_R2_RL): SFT + gate reads only — RL is gated behind W8_R2_RL=1 (0fa8ba9)
     kit, repo, e, calls = _setup(tmp_path, task=1, env={"W8_ARM": "r2", "W8_R2_LR": "1e-4"})
     (repo / "results/wave8_labels").mkdir()
     (repo / "results/wave8_labels/labels.jsonl").write_text("{}\n")
     p = _run(kit, "gpu-wave8-train.sbatch", e)
     assert p.returncode == 0, p.stdout + p.stderr
-    sft, gates, rl = calls.read_text().splitlines()
+    sft, gates = calls.read_text().splitlines()
     assert "decision_rounds sft " in sft and _opt(sft, "--seed") == "1" and _opt(sft, "--steps") == "2827"
     assert _opt(sft, "--out") == "results/wave8_r2sft_seed1" and _opt(sft, "--lr") == "1e-4"
     assert "decision_rounds sft-gates " in gates and _opt(gates, "--sft-dir") == "results/wave8_r2sft_seed1"
+    assert "r2rl" not in calls.read_text()                       # gated off by default
+    # W8_R2_RL=1: the RL rounds anchored to the frozen SFT final checkpoint
+    kit, repo, e, calls = _setup(tmp_path / "rl", task=1, env={"W8_ARM": "r2", "W8_R2_LR": "1e-4",
+                                                               "W8_R2_RL": "1"})
+    (repo / "results/wave8_labels").mkdir()
+    (repo / "results/wave8_labels/labels.jsonl").write_text("{}\n")
+    p = _run(kit, "gpu-wave8-train.sbatch", e)
+    assert p.returncode == 0, p.stdout + p.stderr
+    sft, gates, rl = calls.read_text().splitlines()
     assert "decision_rounds run --arm r2rl " in rl
     assert _opt(rl, "--base-adapter") == "results/wave8_r2sft_seed1/checkpoint-2826"
     assert _opt(rl, "--lr") == "1e-4"

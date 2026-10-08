@@ -185,6 +185,12 @@ def test_select_lr_and_sft_lr(tmp_path):
             json.dumps({"event": "val", "step": 99, "nll": 9.0}) + "\n"
             + json.dumps({"event": "val", "step": 499, "nll": nll}) + "\n")
     assert an.select_sft_lr(res)["winner"] == "lr1e-4"
+    # a third sweep lr must be seen, not silently dropped (the arm swept {1e-5,1e-4,2e-4})
+    d = res / "wave8_r2sft_lrsweep_lr2e-4"
+    d.mkdir(parents=True)
+    (d / "train_log.jsonl").write_text(json.dumps({"event": "val", "step": 499, "nll": 0.5}) + "\n")
+    r = an.select_sft_lr(res)
+    assert r["winner"] == "lr2e-4" and r["n_candidates"] == 3
 
 
 def test_analysis_runs_on_the_real_checkout_without_w8_files(capsys):

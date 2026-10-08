@@ -124,7 +124,10 @@ fi
 
 say "verify"
 doit "bash '${BULLWHIP_ROOT}/kit/config.sh' --check || true"
-doit "cd '${REPO_DIR}' && python3 -m pytest tests/ -q -x -k 'not torch_available' || true"
+# full run, no -x: with -x a stale test hides every failure behind it (observed 2026-10-08: one
+# real failure masked a second one for hours). Non-blocking — a red suite warns loudly, it does
+# not stop staging, so a GPU job is never lost to a test-only problem.
+doit "cd '${REPO_DIR}' && python3 -m pytest tests/ -q -k 'not torch_available' || echo '[stage] WARNING: pytest reported failures above — read them before trusting a run'"
 doit "cd '${REPO_DIR}' && python3 -c \"import torch,transformers,peft;print('torch',torch.__version__,'transformers',transformers.__version__,'peft',peft.__version__,'cuda',torch.cuda.is_available())\" || echo 'python stack incomplete (expected until the module stack is right)'"
 
 say "next:"

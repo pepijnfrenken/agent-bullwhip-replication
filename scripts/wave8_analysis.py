@@ -249,21 +249,28 @@ def select_lr_from_val(val_dir: Path, default: str = LR_DEFAULT, family: str = "
 
 
 def select_sft_lr(results: Path) -> dict:
-    """lr from {1e-5, 1e-4} by validation NLL at step 499 of the 500-step sweeps (seed 0)."""
+    """lr from the 500-step SFT sweeps (seed 0) by validation NLL at the last val event.
+
+    The sweep set is discovered on disk (results/wave8_r2sft_lrsweep_<tag>/) rather than
+    hardcoded: the arm swept {1e-5, 1e-4, 2e-4} and a hardcoded pair silently ignored any
+    lr outside it, which would pick a winner from an incomplete comparison.
+    """
     nll = {}
-    for tag in ("lr1e-5", "lr1e-4"):
-        p = results / f"wave8_r2sft_lrsweep_{tag}" / "train_log.jsonl"
-        if not p.exists():
-            continue
+    for p in sorted(results.glob("wave8_r2sft_lrsweep_*/train_log.jsonl")):
+        tag = p.parent.name.replace("wave8_r2sft_lrsweep_", "")
         vals = [json.loads(l) for l in p.read_text().splitlines() if l.strip()]
-        v = [r for r in vals if r.get("event") == "val" and r.get("step") == 499]
-        if v:
-            nll[tag] = v[-1]["nll"]
+        v = [r for r in vals if r.get("event") == "val"]
+        if not v:
+            continue
+        last = max(v, key=lambda r: r.get("step", -1))          # val_every=100, steps=500 -> step 499
+        nll[tag] = last["nll"]
     if not nll:
-        raise SystemExit("no validation events at step 499 in results/wave8_r2sft_lrsweep_*")
+        raise SystemExit("no validation events in results/wave8_r2sft_lrsweep_*/train_log.jsonl "
+                         "(sweep not finished, or train_log.jsonl missing)")
     best = min(nll.values())
     winners = [k for k, x in nll.items() if x == best]
-    return {"val_nll_step499": nll, "winner": LR_DEFAULT if LR_DEFAULT in winners else sorted(winners)[0]}
+    return {"val_nll_last": nll, "n_candidates": len(nll),
+            "winner": LR_DEFAULT if LR_DEFAULT in winners else sorted(winners)[0]}
 
 
 # -------------------------------------------------------------- rendering ----
