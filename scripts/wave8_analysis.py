@@ -348,7 +348,8 @@ def main(argv=None) -> int:
         res = select_sft_lr(Path(a.results))
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
-        print(f"SFT lr selection: winner {res['winner']} val nll {res['val_nll_step499']}")
+        print(f"SFT lr selection: winner {res['winner']} over {res['n_candidates']} candidate(s), "
+              f"val nll {res['val_nll_last']}")
         return 0
     res = analyse(Path(a.eval_dir), Path(a.wave8), Path(a.floors), Path(a.c3_step), Path(a.c3_noisy))
     text = render(res)
