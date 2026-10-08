@@ -125,7 +125,10 @@ cluster *after* the pull — that is circular):
 
 ```bash
 # on the HUB, after the final push:
-git -C ~/projects/agent-bullwhip-replication rev-parse HEAD     # -> $EXPECTED_COMMIT
+git push origin master && test -z "$(git status -sb | grep ahead)"   # pushing first is NOT optional:
+git -C ~/projects/agent-bullwhip-replication rev-parse HEAD     # pinning an unpushed commit makes the
+                                                                 # cluster's pull say "Already up to date"
+                                                                 # at the OLD HEAD (observed 2026-10-08)
 ```
 
 Then on the login node:
