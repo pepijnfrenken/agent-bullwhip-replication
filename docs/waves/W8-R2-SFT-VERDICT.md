@@ -270,6 +270,35 @@ ladder". The S_nom argmax histogram peaks for seed2 are indices 13, 1 and 19 (le
 so the mid-letter branch applies: **R2+RL is the licensed next run, and R3 (grid) is not licensed.**
 The ladder stays licensed as the §6.6 exit.
 
+### 10.3 The §6.6 edge check on all three seeds, and a correction to §10.2
+
+Full 1,024-state argmax histograms (bins 0 to 25, letters A to Z; A is order 0):
+
+```
+seed0 [129, 46,  1, 59,  4, 75, 58, 14, 22, 15,  5, 12, 11, 34, 94, 49, 87, 37, 59, 74, 23, 39,  0, 50,  0, 27]
+seed1 [ 81,163, 12,  1,  7, 10, 50, 24, 92,  1, 29, 48, 20, 24, 43, 22, 16,161,  0, 34, 47, 53,  0,  0, 17, 69]
+seed2 [ 52,115, 34,  3, 14, 44, 76,  6, 48, 17,  1, 50,  8,135, 23, 15, 68, 48, 18,113,  3, 56, 10, 12,  1, 54]
+```
+
+* Modal bin: **seed0 = A (id 0), 129 = 3.28x uniform. seed1 = id 1, 163 = 4.10x, with a second peak at
+  id 17 (161 = 4.10x). seed2 = id 13, 135 = 3.34x.** The mode moves with the seed.
+* Share at A: 0.126 / 0.079 / 0.051. Share at Z: 0.026 / 0.067 / 0.053, so Z is at or below uniform in
+  two of three seeds and never the mode.
+* Bottom four bins (orders 0 to 6): 0.229 / 0.251 / 0.199, against 0.154 uniform. Top four (ids 22 to
+  25): 0.075 / 0.084 / 0.075, against 0.154 uniform. All three tilt low and none piles up high.
+
+Consequence: **§10.2 above is wrong to award the mid-letter branch**, because it read the branch off
+seed2's top three bins alone. My summariser had truncated each array at six values, so seed0's A-peak
+was invisible. With the full arrays the branch test does not select cleanly: the edge test is positive
+on seed0, mid on seed2, and seed1 is bimodal. R3 is therefore **not** ruled out by the histogram, and
+neither is R2. The cost verdict is unaffected, because it is decisive on its own.
+
+The deeper point is a gate-design finding, of the same family as §5's F-C to F-E: **§6.6's branch is
+written for a locked arm (edge vs mid), and a diffuse arm whose modal bin changes with the seed has no
+side of that dichotomy.** Seed-to-seed disagreement about *which* letter to default to is itself
+evidence that what the SFT learned is not a function of the state, and it is a sharper statement than
+either branch would have produced. Recording it here rather than forcing a branch.
+
 ## 11. Paired G1 statistics (needs the per-path files)
 
 ```bash
