@@ -206,3 +206,93 @@ mean=[sum(p[a] for p in P)/len(P) for a in range(K)]; hb=sum(H(p) for p in P)/le
 print("H_target_mean %.4f H_mean_p %.4f I_target %.4f logK %.4f"%(hb,H(mean),H(mean)-hb,math.log(K)))
 PY
 ```
+
+## 10. Protocol eval, job 418889 (2026-10-12): the arm is worse than the base model
+
+Nine modes across three seeds, `completed` 30/30 each, `failed=0`, `parse_fail=0`. So the parse half
+of G7 passes; everything else fails, and the primary metric fails in the wrong direction.
+
+| mode | untrained (405888) | seed0 | seed1 | seed2 |
+| --- | --- | --- | --- | --- |
+| step/argmax (n=1) | 13,048 | 21,358 | 29,950 | 45,514 |
+| noisy/argmax (n=30, binding for G1/G2) | 14,194 | 21,806 | 33,041 | 40,923 |
+| step/sampled (n=30, G4) | 26,112 | 47,982 | 80,712 | 59,576 |
+
+* **G1 FAIL on 3/3 seeds** (the arm needs 2/3). The gate asks for a median cost reduction of at least
+  15 % against the arm's own untrained readout; every seed sits 54 % to 188 % *above* it. The paired
+  medians, wins and sign-test still need the per-path files (§11), but no pairing can rescue a 1.5x
+  to 2.9x worse mean.
+* **G2 FAIL at every tier on 3/3.** Against the `wf_tuned` floor 5,346: seed0 4.08x (the *strong* tier
+  is <= 4x, so it misses even the weakest tier by 2 %), seed1 6.18x, seed2 7.65x. The untrained
+  reference is 2.16x.
+* **G4 FAIL on 3/3.** The sampled mean is 2.2x to 3.6x the untrained sampled median (22,207) where the
+  gate wants a >= 20 % reduction, and the spread is far wider than the untrained CV 0.48 (seed1: min
+  17,346, max 345,882, mean 80,712).
+* **G6 recorded:** collapse tripped on 3/3 (I 0.0810 / 0.0905 / 0.0923, bar I_hi0 0.096992, branch
+  high, reason "diffuse and state-blind"), permutation gate FAIL on 3/3 (invariance 0.00195 / 0.00000
+  / 0.00586 against gate 0.90), with the permuted grids disagreeing with the canonical choice in
+  460 to 491 of 512 states. The base model fails the same probe at 0.000, so the failure is inherited
+  rather than SFT-induced: **the choice tracks the letter's position in the list, not the option's
+  value.**
+* **G7:** parse half passes, `min_mass` 0.466 to 0.629 across all nine runs against a bar of 0.9
+  (wave-7 observed 0.924 to 0.982). By the spec's own phrasing the readout has left the label set.
+
+Do not compare the §3 S_nom yardsticks (206 / 239 / 1503) to these `mean_cost` numbers: the yardsticks
+are teacher cost J per state over the 1,024 nominal states, these are realised multi-week episode
+costs over the validation band. Different currency, not comparable.
+
+### 10.1 Correction to §2 and §4: the checkpoint reads are a 256-state subsample
+
+`sft-gates` invokes the collapse read with `--n 256` over `results/wave8/S_nom.jsonl`
+(`decision_rounds.py:445`), while the eval's `collapse-final` reads all 1,024 states. S_nom is every
+second state of 16 nominal episodes, so a 256-state draw is a narrower slice of state space and
+understates I: the *same* final checkpoint reads I 0.0352 in the 256-state read and I 0.0905 in the
+1,024-state read. Both sit below the 0.096992 bar, so every branch is unchanged, but the magnitude to
+quote is the full read, **I 0.0810 to 0.0923, which is the untrained model's own level (I0 0.0907)**.
+
+That refines §4. The SFT did not destroy state information; it retained about as little as the base
+model had and rewrote the marginal. The untrained model puts 0.877 of its argmax on one letter; the
+trained models spread it to a modal share of 0.126 to 0.159, with a heavy load on the *minimum* order
+(letter A) in greedy decoding on the mixed band (`zero_letter_share` 0.451 to 0.644, versus 0.031 to
+0.038 in sampled mode). That is where the episode cost comes from: a diffuse policy that defaults to
+ordering nothing accumulates backlog, while a concentrated one at a middling order does not.
+
+`calibration_table`'s `accuracy` means "the chosen candidate's J is within 1 % of that state's
+minimum J": 47.5 to 47.9 % per seed, with auroc 0.56 to 0.69 and ece 0.42 against a mean confidence of
+0.052. One-step near-optimality in roughly half the rows coexists with a 1.6x to 3.5x worse episode
+cost, so the damage is concentrated in the weeks where the choice is not near-optimal.
+
+### 10.2 The spec's own branch
+
+WAVE8 §6.6 maps "R1 fails G1 and collapse tripped **mid-letter**" to "letter-lock = objective or lr,
+not grid -> run R2 (warm start); if R2+RL also locks -> INCONCLUSIVE-negative at 0.6B, go to the
+ladder". The S_nom argmax histogram peaks for seed2 are indices 13, 1 and 19 (letter A is 0, Z is 25),
+so the mid-letter branch applies: **R2+RL is the licensed next run, and R3 (grid) is not licensed.**
+The ladder stays licensed as the §6.6 exit.
+
+## 11. Paired G1 statistics (needs the per-path files)
+
+```bash
+python3 - <<'PY'
+import json, glob, statistics as st, math
+def costs(p):
+    out = []
+    for line in open(p):
+        r = json.loads(line)
+        out.append(r.get("cost", r.get("mean_cost")))
+    return out
+base = costs("results/eval/w8-untrained-argmax-noisy.jsonl")
+print(f"untrained n={len(base)} median={st.median(base):.1f}")
+for p in sorted(glob.glob("results/eval/w8-r2sft-seed*-argmax-noisy.jsonl")):
+    t = costs(p); k = min(len(base), len(t))
+    d = [t[i] - base[i] for i in range(k)]
+    wins = sum(1 for x in d if x < 0)
+    pv = sum(math.comb(k, i) for i in range(wins, k + 1)) / 2 ** k
+    red = (st.median(base[:k]) - st.median(t[:k])) / st.median(base[:k])
+    print(f"{p.split('/')[-1]:44s} median={st.median(t):.1f} ratio_of_medians_red={red:+.1%} "
+          f"median_of_per_path_red={st.median([(base[i]-t[i])/base[i] for i in range(k)]):+.1%} wins={wins}/{k} sign_p={pv:.4f}")
+PY
+```
+
+G1 wants `ratio_of_medians_red` and `median_of_per_path_red` both >= +15 %, `wins >= 20/30` and
+`sign_p < 0.02`.
