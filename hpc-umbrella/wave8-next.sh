@@ -54,6 +54,9 @@ stale="$(git -C "$R" rev-list --count "master..origin/master" 2>/dev/null || ech
 [ "$stale" = "0" ] || die "local master is behind origin/master by $stale commits (pull did not land)"
 
 note "stage 0b: stage the kit (from OUTSIDE the kit dir — stage.sh replaces it)"
+# $TUE_USER is not set in a plain login shell; config.sh builds SCRATCH_ROOT=/scratch-shared/$TUE_USER
+# from it. Export the same user wave8-next pins (20234428) so stage.sh and this script agree on root.
+export TUE_USER=20234428
 bash "$R/hpc-umbrella/stage.sh"
 bash "$K/config.sh" --check | tail -1
 diff -q "$K/gpu-wave8-train.sbatch" "$R/hpc-umbrella/gpu-wave8-train.sbatch" \
