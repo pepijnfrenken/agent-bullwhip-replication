@@ -6,16 +6,15 @@
 # this cluster, so pasting it twice never double-spends. Stops (exit 1) at the
 # first stage that fails its gate instead of continuing into the GPU budget.
 #
-# Run from the login node:
-#   export BULLWHIP_ROOT=/scratch-shared/$TUE_USER/bullwhip
-#   bash "$BULLWHIP_ROOT/agent-bullwhip-replication/hpc-umbrella/wave8-next.sh"
+# Run from the login node (no exports needed — the user is hardcoded):
+#   bash /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/hpc-umbrella/wave8-next.sh
 #
 # The hub pull for the results side is documented in that same block (§4).
 # =============================================================================
 
 set -euo pipefail
 
-B="${BULLWHIP_ROOT:-/scratch-shared/$TUE_USER/bullwhip}"
+B="${BULLWHIP_ROOT:-/scratch-shared/20234428/bullwhip}"   # 20234428 = the cluster user; plain $TUE_USER is not set in a login shell
 R="$B/agent-bullwhip-replication"
 K="$B/kit"
 CAP_GH=60          # stop submitting when the wave has spent more than this of the 70 GPU-h cap

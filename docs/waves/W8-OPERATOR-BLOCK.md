@@ -9,9 +9,12 @@ below. The spec, the gates and the 70 GPU-h cap are unchanged.
 ## The one command to paste (cluster login node)
 
 ```bash
-export BULLWHIP_ROOT=/scratch-shared/$TUE_USER/bullwhip
-bash "$BULLWHIP_ROOT/agent-bullwhip-replication/hpc-umbrella/wave8-next.sh"
+bash /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/hpc-umbrella/wave8-next.sh
 ```
+
+(The cluster user is hardcoded — `20234428`; `$TUE_USER` is not set in a plain login shell, which
+is why the export form failed. `BULLWHIP_ROOT` still overrides if you ever need to point the
+script elsewhere.)
 
 The script is idempotent: each stage is skipped when its evidence file already exists on the
 cluster, so pasting it twice never double-spends. It exits (status 1) at the first failed gate
@@ -47,7 +50,7 @@ script by hand instead of silently burning 13.5 GPU-h.
 
 ```bash
 cd ~/projects/agent-bullwhip-replication && git pull --ff-only
-mkdir -p results/wave8_logs; cp "$BULLWHIP_ROOT"/logs/wave8-*.log results/wave8_logs/ # cluster side, then:
+mkdir -p results/wave8_logs; cp /scratch-shared/20234428/bullwhip/logs/wave8-*.log results/wave8_logs/ # cluster side, then:
 bash hpc-umbrella/push_results.sh -m "wave8: A2 + ladder submits (idempotent wave8-next.sh)" \
      results/wave8_r2rl_seed* results/wave8_logs results/wave8/gates_1.7b.json
 python3 hpc-umbrella/verify_pull.py ~/projects/agent-bullwhip-replication --size
