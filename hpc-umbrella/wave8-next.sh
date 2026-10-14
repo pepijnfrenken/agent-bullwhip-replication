@@ -97,6 +97,7 @@ fi
 
 # -----------------------------------------------------------------------------
 note "stage B1: ladder weights (login node has egress; compute nodes are offline)"
+cd "$B"   # A2's sbatch block left the shell inside $K; stage.sh refuses to run there
 if compgen -G "$B/hf/models--Qwen--Qwen3-1.7B" >/dev/null; then
   note "stage B1: SKIPPED — 1.7B snapshot already downloaded"
 else
