@@ -24,12 +24,24 @@ die() { echo "STOP: $*" >&2; exit 1; }
 note(){ echo "=== $* ==="; }
 have(){ [ -e "$1" ]; }
 
-gh_hash() { sacct -S 2026-10-01 -X -P -o ElapsedRaw 2>/dev/null | awk '{s+=$1} END {printf "%.1f", s/3600}'; }
+# GPU-h accounting: wave 8 ONLY. WAVE8 §6.5 caps the wave at 70 GPU-h, not the user's whole
+# account (my first cut summed every job since Oct 1 = 212.9 GPU-h, which counted wave-6 and
+# anything else on the username — that number is irrelevant to this cap).
+# bw8-* job names, GPU partitions only (bw8-label runs on tue.cpu3.q with no GPU), since Oct 7
+# (the wave's first cluster job: the 0.6B pre-flight).
+gh_hash() {
+  sacct -S 2026-10-07 -X -P -n -o JobName%24,JobID,Partition,ElapsedRaw 2>/dev/null \
+    | awk -F'[,|]' '$1 ~ /^bw8-(train|preflight|eval)/ && $3 ~ /[.]?gpu[.]?/ {print $4}' \
+    || true
+}
+gh_total() {
+  gh_hash | awk -F'[-:]' 'NF==4 {s+=$1*86400+$2*3600+$3*60+$4} NF==3 {s+=$1*3600+$2*60+$3} NF==1 {s+=$1} END {printf "%.1f", s/3600}'
+}
 budget_block() {
-  local used; used="$(gh_hash)"
-  note "GPU-h since Oct 1: ${used}"
+  local used; used="$(gh_total)"
+  note "wave-8 GPU-h (bw8-* on GPU partitions, since Oct 7): ${used}"
   awk -v u="$used" -v c="$CAP_GH" 'BEGIN { exit !(u+0 <= c+0) }' \
-    || die "budget: ${used} GPU-h already spent, cap for new submits is ${CAP_GH} — nothing below was submitted"
+    || die "budget: wave-8 has spent ${used} GPU-h, cap for new submits is ${CAP_GH} — nothing below was submitted"
 }
 
 # -----------------------------------------------------------------------------
