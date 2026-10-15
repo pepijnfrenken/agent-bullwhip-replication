@@ -1,0 +1,20 @@
+{
+  "adapter_saved": true,
+  "anchor": "external",
+  "batch": 32,
+  "beta_kl": 0.02,
+  "checkpoint_dir": "checkpoint-169",
+  "epochs": null,
+  "grid_id": "w8_g26b",
+  "init": "adapter",
+  "labels_sha": "5e1c6b4340c0fa87b3d29b27ebecd2c65f567fc1b223a13dad5ba3e1992524e3",
+  "lr": 0.0002,
+  "model": "Qwen/Qwen3-0.6B",
+  "optimizer_saved": true,
+  "permute_options": 1,
+  "permute_p": 0.5,
+  "phase": "rlcd",
+  "saved_at": "2026-10-12T18:42:21+0200",
+  "seed": 0,
+  "step": 169
+}

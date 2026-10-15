@@ -1,0 +1,12 @@
+{
+ "I": 0.475314314959685,
+ "adapter": "results/wave8_r2rl_lr0.0002_seed2_round3/checkpoint-169",
+ "branch": null,
+ "collapsed": false,
+ "median_entropy": 2.584734681234585,
+ "min_mass": 0.7006737589836121,
+ "modal_argmax_share": 0.3671875,
+ "n_checked": 256,
+ "n_states": 256,
+ "reasons": []
+}
