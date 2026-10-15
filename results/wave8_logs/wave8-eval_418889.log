@@ -1,0 +1,137 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b rung=0.6b
+--- eval w8-untrained-argmax-step (step/argmax) at 2026-10-12T15:28:36+02:00
+w8-untrained-argmax-step: runs=1 mean=13,048 min=13,048 max=13,048 parse_fail=0 min_mass=0.99720 wall=3.1s -> results/eval/w8-untrained-argmax-step.jsonl
+--- ok w8-untrained-argmax-step
+--- eval w8-untrained-sampled-step (step/sampled) at 2026-10-12T15:28:48+02:00
+w8-untrained-sampled-step: runs=30 mean=26,112 min=10,632 max=52,808 parse_fail=0 min_mass=0.99719 wall=130.4s -> results/eval/w8-untrained-sampled-step.jsonl
+--- ok w8-untrained-sampled-step
+--- eval w8-untrained-argmax-noisy (noisy/argmax) at 2026-10-12T15:31:04+02:00
+w8-untrained-argmax-noisy: runs=30 mean=14,194 min=12,722 max=16,128 parse_fail=0 min_mass=0.99683 wall=129.0s -> results/eval/w8-untrained-argmax-noisy.jsonl
+--- ok w8-untrained-argmax-noisy
+--- perm probe untrained at 2026-10-12T15:33:21+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=untrained)
+disagreement vs canonical, per shuffled grid: [512, 512, 250]
+min_mass=0.9951 (require_mass=0.99)
+wrote results/eval/w8-untrained-perm.json
+--- PERM untrained: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final untrained at 2026-10-12T15:34:29+02:00
+collapse-final untrained: collapsed=False argmax-histogram top3=[(4, 898), (7, 113), (3, 8)] -> results/wave8/untrained-S_nom.json
+--- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at 2026-10-12T15:37:33+02:00
+untrained-curriculum: runs=30 mean=21,762 min=11,998 max=30,702 parse_fail=0 min_mass=0.99683 wall=129.2s -> results/wave8_val/untrained-curriculum.jsonl
+--- ok untrained curriculum control
+--- eval w8-r2sft-seed0-argmax-step (step/argmax) at 2026-10-12T15:39:50+02:00
+w8-r2sft-seed0-argmax-step: runs=1 mean=21,358 min=21,358 max=21,358 parse_fail=0 min_mass=0.48669 wall=4.2s -> results/eval/w8-r2sft-seed0-argmax-step.jsonl
+--- ok w8-r2sft-seed0-argmax-step
+--- eval w8-r2sft-seed0-sampled-step (step/sampled) at 2026-10-12T15:40:02+02:00
+w8-r2sft-seed0-sampled-step: runs=30 mean=47,982 min=18,106 max=196,504 parse_fail=0 min_mass=0.54709 wall=185.6s -> results/eval/w8-r2sft-seed0-sampled-step.jsonl
+--- ok w8-r2sft-seed0-sampled-step
+--- eval w8-r2sft-seed0-argmax-noisy (noisy/argmax) at 2026-10-12T15:43:14+02:00
+w8-r2sft-seed0-argmax-noisy: runs=30 mean=21,806 min=20,850 max=23,218 parse_fail=0 min_mass=0.48991 wall=182.5s -> results/eval/w8-r2sft-seed0-argmax-noisy.jsonl
+--- ok w8-r2sft-seed0-argmax-noisy
+--- perm probe r2sft-seed0 at 2026-10-12T15:46:25+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=1 rate=0.002 gate=0.90 FAIL (arm=results/wave8_r2sft_seed0/checkpoint-2826)
+disagreement vs canonical, per shuffled grid: [460, 491, 473]
+min_mass=0.6812 (require_mass=0.0)
+wrote results/eval/w8-r2sft-seed0-perm.json
+--- PERM r2sft-seed0: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final r2sft-seed0 at 2026-10-12T15:47:57+02:00
+collapse-final r2sft-seed0: collapsed=True argmax-histogram top3=[(0, 129), (14, 94), (16, 87)] -> results/wave8/r2sft-seed0-S_nom.json
+--- eval w8-r2sft-seed1-argmax-step (step/argmax) at 2026-10-12T15:52:10+02:00
+w8-r2sft-seed1-argmax-step: runs=1 mean=29,950 min=29,950 max=29,950 parse_fail=0 min_mass=0.48182 wall=4.3s -> results/eval/w8-r2sft-seed1-argmax-step.jsonl
+--- ok w8-r2sft-seed1-argmax-step
+--- eval w8-r2sft-seed1-sampled-step (step/sampled) at 2026-10-12T15:52:23+02:00
+w8-r2sft-seed1-sampled-step: runs=30 mean=80,712 min=17,346 max=345,882 parse_fail=0 min_mass=0.48912 wall=186.1s -> results/eval/w8-r2sft-seed1-sampled-step.jsonl
+--- ok w8-r2sft-seed1-sampled-step
+--- eval w8-r2sft-seed1-argmax-noisy (noisy/argmax) at 2026-10-12T15:55:36+02:00
+w8-r2sft-seed1-argmax-noisy: runs=30 mean=33,041 min=31,074 max=36,001 parse_fail=0 min_mass=0.46589 wall=183.2s -> results/eval/w8-r2sft-seed1-argmax-noisy.jsonl
+--- ok w8-r2sft-seed1-argmax-noisy
+--- perm probe r2sft-seed1 at 2026-10-12T15:58:47+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.90 FAIL (arm=results/wave8_r2sft_seed1/checkpoint-2826)
+disagreement vs canonical, per shuffled grid: [484, 433, 465]
+min_mass=0.6723 (require_mass=0.0)
+wrote results/eval/w8-r2sft-seed1-perm.json
+--- PERM r2sft-seed1: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final r2sft-seed1 at 2026-10-12T16:00:19+02:00
+collapse-final r2sft-seed1: collapsed=True argmax-histogram top3=[(1, 163), (17, 161), (8, 92)] -> results/wave8/r2sft-seed1-S_nom.json
+--- eval w8-r2sft-seed2-argmax-step (step/argmax) at 2026-10-12T16:04:32+02:00
+w8-r2sft-seed2-argmax-step: runs=1 mean=45,514 min=45,514 max=45,514 parse_fail=0 min_mass=0.57563 wall=4.2s -> results/eval/w8-r2sft-seed2-argmax-step.jsonl
+--- ok w8-r2sft-seed2-argmax-step
+--- eval w8-r2sft-seed2-sampled-step (step/sampled) at 2026-10-12T16:04:44+02:00
+w8-r2sft-seed2-sampled-step: runs=30 mean=59,576 min=16,656 max=197,100 parse_fail=0 min_mass=0.62881 wall=185.7s -> results/eval/w8-r2sft-seed2-sampled-step.jsonl
+--- ok w8-r2sft-seed2-sampled-step
+--- eval w8-r2sft-seed2-argmax-noisy (noisy/argmax) at 2026-10-12T16:07:56+02:00
+w8-r2sft-seed2-argmax-noisy: runs=30 mean=40,922 min=28,064 max=44,529 parse_fail=0 min_mass=0.57469 wall=183.0s -> results/eval/w8-r2sft-seed2-argmax-noisy.jsonl
+--- ok w8-r2sft-seed2-argmax-noisy
+--- perm probe r2sft-seed2 at 2026-10-12T16:11:07+02:00
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=3 rate=0.006 gate=0.90 FAIL (arm=results/wave8_r2sft_seed2/checkpoint-2826)
+disagreement vs canonical, per shuffled grid: [480, 480, 477]
+min_mass=0.7441 (require_mass=0.0)
+wrote results/eval/w8-r2sft-seed2-perm.json
+--- PERM r2sft-seed2: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final r2sft-seed2 at 2026-10-12T16:12:39+02:00
+collapse-final r2sft-seed2: collapsed=True argmax-histogram top3=[(13, 135), (1, 115), (19, 113)] -> results/wave8/r2sft-seed2-S_nom.json
+--- artifacts ---
+-rw-r--r--. 1 20234428 umbrella   15478 Oct  8 11:18 w8-r1-lr5e-5-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella   15406 Oct  8 11:20 w8-r1-lr5e-5-seed2-perm.json
+-rw-r--r--. 1 20234428 umbrella 2456430 Oct 12 15:46 w8-r2sft-seed0-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     553 Oct 12 15:46 w8-r2sft-seed0-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   81849 Oct 12 15:40 w8-r2sft-seed0-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     547 Oct 12 15:40 w8-r2sft-seed0-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   15252 Oct 12 15:47 w8-r2sft-seed0-perm.json
+-rw-r--r--. 1 20234428 umbrella 2478835 Oct 12 15:43 w8-r2sft-seed0-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     564 Oct 12 15:43 w8-r2sft-seed0-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2460562 Oct 12 15:58 w8-r2sft-seed1-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     562 Oct 12 15:58 w8-r2sft-seed1-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   81953 Oct 12 15:52 w8-r2sft-seed1-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     546 Oct 12 15:52 w8-r2sft-seed1-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   15209 Oct 12 16:00 w8-r2sft-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella 2482964 Oct 12 15:55 w8-r2sft-seed1-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     553 Oct 12 15:55 w8-r2sft-seed1-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2459407 Oct 12 16:11 w8-r2sft-seed2-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     561 Oct 12 16:11 w8-r2sft-seed2-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   81954 Oct 12 16:04 w8-r2sft-seed2-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     545 Oct 12 16:04 w8-r2sft-seed2-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   15412 Oct 12 16:12 w8-r2sft-seed2-perm.json
+-rw-r--r--. 1 20234428 umbrella 2480830 Oct 12 16:07 w8-r2sft-seed2-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     553 Oct 12 16:07 w8-r2sft-seed2-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2409560 Oct 12 15:33 w8-untrained-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     521 Oct 12 15:33 w8-untrained-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   80250 Oct 12 15:28 w8-untrained-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     517 Oct 12 15:28 w8-untrained-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   15079 Oct 12 15:34 w8-untrained-perm.json
+-rw-r--r--. 1 20234428 umbrella 2423756 Oct 12 15:31 w8-untrained-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     537 Oct 12 15:31 w8-untrained-sampled-step.summary.json
+=== wave8-eval done at 2026-10-12T16:16:52+02:00 failed=0 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+418889        COMPLETED                       
+418889.batch  COMPLETED   1901944K   1901944K 
+418889.exte+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

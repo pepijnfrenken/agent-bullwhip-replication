@@ -1,0 +1,73 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b dirty_files=3
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
+=== wave8 r2 seed=1 lr=2e-4: SFT 2827 steps at 2026-10-12T19:19:32+02:00 ===
+=== r2 sft exit=0 at 2026-10-12T19:19:49+02:00 ===
+=== wave8 r2rl seed=1: RL rounds from results/wave8_r2sft_seed1/checkpoint-2826 at 2026-10-12T19:19:49+02:00 ===
+collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed1/round1/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed1/round1/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.5897 entropy=2.405 wall=57.5s
+states=1360 flat=0.0000 edge=0.4390 entropy=2.624 wall=42.2s
+{'n': 5440, 'labels_sha': 'ef77a03f0b8021d0d50d0775068729007a8db1dca923e657e53913eab9e020b3'}
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+collapse-check results/wave8_r2rl_lr0.0002_seed1_round1/checkpoint-169: collapsed=False medH=1.586 modal_share=0.207 I=1.3213 []
+collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed1/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed1/round2/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.5444 entropy=2.624 wall=57.1s
+states=1360 flat=0.0007 edge=0.4191 entropy=2.731 wall=41.4s
+{'n': 5440, 'labels_sha': '6126bd986da906561415a4d8c0e2e7fdbba6c6f021a1903d915266fc1b2ea1b2'}
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+collapse-check results/wave8_r2rl_lr0.0002_seed1_round2/checkpoint-169: collapsed=False medH=2.334 modal_share=0.340 I=0.2444 []
+collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed1/round3/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed1/round3/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.5838 entropy=2.416 wall=58.8s
+states=1360 flat=0.0000 edge=0.3846 entropy=2.714 wall=42.3s
+{'n': 5440, 'labels_sha': '08b32c66b69166826463317cbc2f37a648f0b3901e4c44464c6997b76ccbd999'}
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+collapse-check results/wave8_r2rl_lr0.0002_seed1_round3/checkpoint-169: collapsed=False medH=2.260 modal_share=0.363 I=0.5385 []
+w8-val-r2rl-lr0.0002-seed1: runs=30 mean=31,952 min=15,232 max=57,747 parse_fail=0 min_mass=0.41879 wall=182.3s -> results/wave8_val/w8-val-r2rl-lr0.0002-seed1.jsonl
+=== r2rl seed=1 exit=0 at 2026-10-12T20:33:05+02:00 ===
+results/wave8_r1_lr1e-5_seed0
+results/wave8_r1_lr1e-5_seed0_round1
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed0_round3
+results/wave8_r1_lr1e-5_seed1
+results/wave8_r1_lr1e-5_seed1_round1
+results/wave8_r1_lr1e-5_seed1_round2
+results/wave8_r1_lr1e-5_seed1_round3
+results/wave8_r1_lr1e-5_seed2
+results/wave8_r1_lr1e-5_seed2_round1
+results/wave8_r1_lr1e-5_seed2_round2
+results/wave8_r1_lr1e-5_seed2_round3
+results/wave8_r1_lr5e-5_seed0
+results/wave8_r1_lr5e-5_seed0_round1
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed0_round3
+results/wave8_r1_lr5e-5_seed1
+results/wave8_r1_lr5e-5_seed1_round1
+results/wave8_r1_lr5e-5_seed1_round2
+results/wave8_r1_lr5e-5_seed2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+419129_1      COMPLETED                       
+419129_1.ba+  COMPLETED   3693180K   3693180K 
+419129_1.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

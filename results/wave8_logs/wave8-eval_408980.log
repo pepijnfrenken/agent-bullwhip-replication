@@ -1,0 +1,19 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b rung=0.6b
+/var/spool/slurmd/job408980/slurm_script: line 55: EXPECTED_COMMIT: FATAL: EXPECTED_COMMIT not exported — set it from the hub (git rev-parse HEAD) before submitting
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+408980           FAILED                       
+408980.batch     FAILED     15188K     15188K 
+408980.exte+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

@@ -1,0 +1,48 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa dirty_files=3
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
+=== wave8 r1 task 2: lr=1e-5 seed=2 rung=0.6b rounds=3x170 at 2026-10-08T09:35:11+02:00 ===
+collected 2160 policy states -> results/wave8_r1_lr1e-5_seed2/round1/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 2160 policy states -> results/wave8_r1_lr1e-5_seed2/round1/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.4370 entropy=2.053 wall=95.4s
+states=1360 flat=0.0000 edge=0.4066 entropy=2.690 wall=65.7s
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+collapse-check results/wave8_r1_lr1e-5_seed2_round1/checkpoint-169: collapsed=True medH=0.396 modal_share=0.961 I=0.1310 ['low-entropy: modal argmax share > m_hi']
+collected 2160 policy states -> results/wave8_r1_lr1e-5_seed2/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 2160 policy states -> results/wave8_r1_lr1e-5_seed2/round2/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.7789 entropy=2.212 wall=96.6s
+states=1360 flat=0.0000 edge=0.3051 entropy=2.816 wall=66.5s
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+collapse-check results/wave8_r1_lr1e-5_seed2_round2/checkpoint-169: collapsed=True medH=0.896 modal_share=0.633 I=0.5023 ['low-entropy: modal argmax share > m_hi']
+STOPPED: collapse gate tripped at two consecutive reads (round 2)
+=== r1 seed=2 lr=1e-5 exit=0 at 2026-10-08T10:21:19+02:00 ===
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed1_round2
+results/wave8_r1_lr1e-5_seed2
+results/wave8_r1_lr1e-5_seed2_round1
+results/wave8_r1_lr1e-5_seed2_round2
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed1_round2
+results/wave8_r1_lr5e-5_seed2
+results/wave8_r1_lr5e-5_seed2_round1
+results/wave8_r1_lr5e-5_seed2_round2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+405887_2      COMPLETED                       
+405887_2.ba+  COMPLETED   2775024K   2775024K 
+405887_2.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

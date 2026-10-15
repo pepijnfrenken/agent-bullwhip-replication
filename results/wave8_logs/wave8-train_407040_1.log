@@ -1,0 +1,19 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=af1d6d0d6ec7fac1ad54dda8ad2d7982dd5b49b1 dirty_files=3
+FATAL: EXPECTED_COMMIT=af1d6d0 but repo HEAD=af1d6d0d6ec7fac1ad54dda8ad2d7982dd5b49b1 — refusing to run stale code
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+407040_1         FAILED                       
+407040_1.ba+     FAILED     17424K     17424K 
+407040_1.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

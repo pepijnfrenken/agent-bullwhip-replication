@@ -1,0 +1,160 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b dirty_files=3
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
+=== wave8 r2 seed=2 lr=2e-4: SFT 2827 steps at 2026-10-08T15:45:11+02:00 ===
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+=== r2 sft exit=0 at 2026-10-08T19:55:29+02:00 ===
+collapse-check results/wave8_r2sft_seed2/checkpoint-249: collapsed=True medH=3.249 modal_share=0.711 I=0.0069 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-249)
+disagreement vs canonical, per shuffled grid: [512, 408, 504]
+min_mass=0.5636 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-249_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-499: collapsed=True medH=3.201 modal_share=0.477 I=0.0013 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-499)
+disagreement vs canonical, per shuffled grid: [480, 506, 512]
+min_mass=0.7787 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-499_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-749: collapsed=True medH=3.135 modal_share=0.469 I=0.0055 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-749)
+disagreement vs canonical, per shuffled grid: [475, 477, 509]
+min_mass=0.8937 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-749_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-999: collapsed=True medH=3.113 modal_share=0.367 I=0.0073 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-999)
+disagreement vs canonical, per shuffled grid: [482, 512, 512]
+min_mass=0.7751 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-999_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-1249: collapsed=True medH=3.125 modal_share=0.465 I=0.0087 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=1 rate=0.002 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-1249)
+disagreement vs canonical, per shuffled grid: [507, 409, 291]
+min_mass=0.8691 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-1249_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-1499: collapsed=True medH=3.065 modal_share=0.328 I=0.0217 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-1499)
+disagreement vs canonical, per shuffled grid: [502, 503, 479]
+min_mass=0.7791 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-1499_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-1749: collapsed=True medH=3.099 modal_share=0.531 I=0.0166 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-1749)
+disagreement vs canonical, per shuffled grid: [509, 485, 365]
+min_mass=0.7917 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-1749_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-1999: collapsed=True medH=3.101 modal_share=0.523 I=0.0168 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-1999)
+disagreement vs canonical, per shuffled grid: [415, 505, 450]
+min_mass=0.7891 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-1999_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-2249: collapsed=True medH=3.117 modal_share=0.293 I=0.0086 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-2249)
+disagreement vs canonical, per shuffled grid: [486, 482, 480]
+min_mass=0.7950 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-2249_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-2499: collapsed=True medH=3.110 modal_share=0.262 I=0.0095 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-2499)
+disagreement vs canonical, per shuffled grid: [425, 501, 480]
+min_mass=0.7100 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-2499_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-2749: collapsed=True medH=3.138 modal_share=0.445 I=0.0145 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=0 rate=0.000 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-2749)
+disagreement vs canonical, per shuffled grid: [507, 506, 466]
+min_mass=0.7446 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-2749_perm.json
+collapse-check results/wave8_r2sft_seed2/checkpoint-2826: collapsed=True medH=3.151 modal_share=0.207 I=0.0153 ['diffuse and state-blind']
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=3 rate=0.006 gate=0.00 PASS (arm=results/wave8_r2sft_seed2/checkpoint-2826)
+disagreement vs canonical, per shuffled grid: [480, 480, 477]
+min_mass=0.7441 (require_mass=0.0)
+wrote results/wave8_r2sft_seed2/gate_checkpoint-2826_perm.json
+=== r2 SFT-only (W8_R2_RL=0): read sft-gates + eval on the hub before scheduling the RL rounds ===
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed1_round2
+results/wave8_r1_lr1e-5_seed2
+results/wave8_r1_lr1e-5_seed2_round1
+results/wave8_r1_lr1e-5_seed2_round2
+results/wave8_r1_lr1e-5_seed2_round3
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed1_round2
+results/wave8_r1_lr5e-5_seed2
+results/wave8_r1_lr5e-5_seed2_round1
+results/wave8_r1_lr5e-5_seed2_round2
+results/wave8_r2sft_lrsweep_lr1e-4
+results/wave8_r2sft_lrsweep_lr1e-5
+results/wave8_r2sft_lrsweep_lr2e-4
+results/wave8_r2sft_seed0
+results/wave8_r2sft_seed1
+results/wave8_r2sft_seed2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+407398_0      COMPLETED                       
+407398_0.ba+  COMPLETED   2842164K   2842164K 
+407398_0.ex+  COMPLETED                       
+407398_1        RUNNING                       
+407398_1.ba+    RUNNING                       
+407398_1.ex+    RUNNING                       
+407398_2      COMPLETED                       
+407398_2.ba+  COMPLETED   2796524K   2796524K 
+407398_2.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

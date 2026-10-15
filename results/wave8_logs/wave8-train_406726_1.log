@@ -1,0 +1,54 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=d7207017033787cb6a0ed70fdabd13405380699e dirty_files=3
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
+=== wave8 r1 task 1: lr=1e-5 seed=1 rung=0.6b rounds=3x170 at 2026-10-08T12:11:38+02:00 ===
+collected 2160 policy states -> results/wave8_r1_lr1e-5_seed1/round3/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 2160 policy states -> results/wave8_r1_lr1e-5_seed1/round3/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.7441 entropy=2.275 wall=95.2s
+states=1360 flat=0.0000 edge=0.3846 entropy=2.714 wall=66.9s
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+  warnings.warn(
+collapse-check results/wave8_r1_lr1e-5_seed1_round3/checkpoint-169: collapsed=False medH=1.584 modal_share=0.414 I=0.5879 []
+w8-val-r1-lr1e-5-seed1: runs=30 mean=56,766 min=47,313 max=65,915 parse_fail=0 min_mass=0.04834 wall=184.2s -> results/wave8_val/w8-val-r1-lr1e-5-seed1.jsonl
+=== r1 seed=1 lr=1e-5 exit=0 at 2026-10-08T12:38:25+02:00 ===
+results/wave8_r1_lr1e-5_seed0
+results/wave8_r1_lr1e-5_seed0_round1
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed0_round3
+results/wave8_r1_lr1e-5_seed1
+results/wave8_r1_lr1e-5_seed1_round1
+results/wave8_r1_lr1e-5_seed1_round2
+results/wave8_r1_lr1e-5_seed1_round3
+results/wave8_r1_lr1e-5_seed2
+results/wave8_r1_lr1e-5_seed2_round1
+results/wave8_r1_lr1e-5_seed2_round2
+results/wave8_r1_lr1e-5_seed2_round3
+results/wave8_r1_lr5e-5_seed0
+results/wave8_r1_lr5e-5_seed0_round1
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed0_round3
+results/wave8_r1_lr5e-5_seed1
+results/wave8_r1_lr5e-5_seed1_round1
+results/wave8_r1_lr5e-5_seed1_round2
+results/wave8_r1_lr5e-5_seed2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+406726_1      COMPLETED                       
+406726_1.ba+  COMPLETED   2013040K   2013040K 
+406726_1.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

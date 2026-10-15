@@ -1,0 +1,145 @@
+=== 1. sacct, exact per-task exit ===
+JobID|State|ExitCode|Elapsed|End
+429581_0|COMPLETED|0:0|00:00:20|2026-10-15T01:14:46
+429581_1|COMPLETED|0:0|00:00:19|2026-10-15T01:14:45
+429581_2|COMPLETED|0:0|00:00:18|2026-10-15T01:15:04
+=== 2. the three job logs, tail -40 each ===
+--- 429581_0 ---
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed0_round3
+results/wave8_r1_lr5e-5_seed0
+results/wave8_r1_lr5e-5_seed0_round1
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed0_round3
+results/wave8_r2rl_lr0.0002_seed0
+results/wave8_r2rl_lr0.0002_seed0_round1
+results/wave8_r2rl_lr0.0002_seed0_round2
+results/wave8_r2rl_lr0.0002_seed0_round3
+results/wave8_r2rl_lr0.0002_seed1
+results/wave8_r2rl_lr0.0002_seed1_round1
+results/wave8_r2rl_lr0.0002_seed1_round2
+results/wave8_r2rl_lr0.0002_seed1_round3
+results/wave8_r2rl_lr0.0002_seed2
+results/wave8_r2rl_lr0.0002_seed2_round1
+results/wave8_r2rl_lr0.0002_seed2_round2
+results/wave8_r2rl_lr0.0002_seed2_round3
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+429581_0      COMPLETED                       
+429581_0.ba+  COMPLETED   1958012K   1958012K 
+429581_0.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
+--- 429581_1 ---
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed0_round3
+results/wave8_r1_lr1e-5_seed1
+results/wave8_r1_lr1e-5_seed1_round1
+results/wave8_r1_lr1e-5_seed1_round2
+results/wave8_r1_lr1e-5_seed1_round3
+results/wave8_r1_lr1e-5_seed2
+results/wave8_r1_lr1e-5_seed2_round1
+results/wave8_r1_lr1e-5_seed2_round2
+results/wave8_r1_lr1e-5_seed2_round3
+results/wave8_r1_lr5e-5_seed0
+results/wave8_r1_lr5e-5_seed0_round1
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed0_round3
+results/wave8_r1_lr5e-5_seed1
+results/wave8_r1_lr5e-5_seed1_round1
+results/wave8_r1_lr5e-5_seed1_round2
+results/wave8_r1_lr5e-5_seed2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+429581_1      COMPLETED                       
+429581_1.ba+  COMPLETED   1961528K   1961528K 
+429581_1.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
+--- 429581_2 ---
+results/wave8_r1_lr5e-5_seed2
+results/wave8_r1_lr5e-5_seed2_round1
+results/wave8_r1_lr5e-5_seed2_round2
+results/wave8_r2rl_lr0.0002_seed0
+results/wave8_r2rl_lr0.0002_seed0_round1
+results/wave8_r2rl_lr0.0002_seed0_round2
+results/wave8_r2rl_lr0.0002_seed0_round3
+results/wave8_r2rl_lr0.0002_seed1
+results/wave8_r2rl_lr0.0002_seed1_round1
+results/wave8_r2rl_lr0.0002_seed1_round2
+results/wave8_r2rl_lr0.0002_seed1_round3
+results/wave8_r2rl_lr0.0002_seed2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+429581_0      COMPLETED                       
+429581_0.ba+  COMPLETED   1958012K   1958012K 
+429581_0.ex+  COMPLETED                       
+429581_1      COMPLETED                       
+429581_1.ba+  COMPLETED   1961528K   1961528K 
+429581_1.ex+  COMPLETED                       
+429581_2      COMPLETED                       
+429581_2.ba+  COMPLETED   1958776K   1958776K 
+429581_2.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
+=== 3. what the r2 arm dirs look like right now ===
+checkpoint-1249
+checkpoint-1499
+checkpoint-1749
+checkpoint-1999
+checkpoint-2249
+checkpoint-249
+checkpoint-2499
+checkpoint-2749
+checkpoint-2826
+checkpoint-499
+wave8_r2sft_seed0/state.json -> {'step': 2826, 'checkpoint_dir': 'checkpoint-2826'}
+wave8_r2sft_seed1/state.json -> {'step': 2826, 'checkpoint_dir': 'checkpoint-2826'}
+wave8_r2sft_seed2/state.json -> {'step': 2826, 'checkpoint_dir': 'checkpoint-2826'}
+=== 4. GitHub auth sanity (push_results needs a working push) ===
+5a3a739af876fe3cfa83987eb8509344a59aa249	refs/heads/master

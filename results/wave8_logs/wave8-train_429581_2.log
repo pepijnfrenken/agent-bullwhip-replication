@@ -1,0 +1,54 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=6127a1eab9622875fcb66b13c13d85c718ca93a4 dirty_files=3
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
+=== wave8 r2 seed=2 lr=2e-4: SFT 2827 steps at 2026-10-15T01:14:48+02:00 ===
+=== r2 sft exit=0 at 2026-10-15T01:15:04+02:00 ===
+=== wave8 r2rl seed=2: RL rounds from results/wave8_r2sft_seed2/checkpoint-2826 at 2026-10-15T01:15:04+02:00 ===
+=== r2rl seed=2 exit=0 at 2026-10-15T01:15:04+02:00 ===
+results/wave8_r1_lr1e-5_seed0_round2
+results/wave8_r1_lr1e-5_seed1_round2
+results/wave8_r1_lr1e-5_seed2
+results/wave8_r1_lr1e-5_seed2_round1
+results/wave8_r1_lr1e-5_seed2_round2
+results/wave8_r1_lr1e-5_seed2_round3
+results/wave8_r1_lr5e-5_seed0_round2
+results/wave8_r1_lr5e-5_seed1_round2
+results/wave8_r1_lr5e-5_seed2
+results/wave8_r1_lr5e-5_seed2_round1
+results/wave8_r1_lr5e-5_seed2_round2
+results/wave8_r2rl_lr0.0002_seed0
+results/wave8_r2rl_lr0.0002_seed0_round1
+results/wave8_r2rl_lr0.0002_seed0_round2
+results/wave8_r2rl_lr0.0002_seed0_round3
+results/wave8_r2rl_lr0.0002_seed1
+results/wave8_r2rl_lr0.0002_seed1_round1
+results/wave8_r2rl_lr0.0002_seed1_round2
+results/wave8_r2rl_lr0.0002_seed1_round3
+results/wave8_r2rl_lr0.0002_seed2
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed0/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr1e-5_seed2/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed1/STOPPED_collapse.json
+NOTE: stop-loss marker results/wave8_r1_lr5e-5_seed2/STOPPED_collapse.json
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+429581_0      COMPLETED                       
+429581_0.ba+  COMPLETED   1958012K   1958012K 
+429581_0.ex+  COMPLETED                       
+429581_1      COMPLETED                       
+429581_1.ba+  COMPLETED   1961528K   1961528K 
+429581_1.ex+  COMPLETED                       
+429581_2      COMPLETED                       
+429581_2.ba+  COMPLETED   1958776K   1958776K 
+429581_2.ex+  COMPLETED                       
+
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
