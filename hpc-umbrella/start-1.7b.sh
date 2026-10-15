@@ -138,8 +138,7 @@ PY
     exit 1
   fi
   cd "${B}"   # never run stage.sh while standing inside the kit dir (getcwd bug)
-  bash "${B}/agent-bullwhip-replication/hpc-umbrella/stage.sh" --skip-ladder 2>/dev/null \
-    || bash "${B}/agent-bullwhip-replication/hpc-umbrella/stage.sh"
+  bash "${B}/agent-bullwhip-replication/hpc-umbrella/stage.sh" --skip-weights
   cd "${OLDPWD:-$HOME}"
   echo "[1.7b] B2: submitting the 1.7B pre-flight (job ~1 GPU-h)"
   sbatch --export=ALL,W8_RUNG=1.7b "${KIT}/gpu-wave8-preflight.sbatch"
