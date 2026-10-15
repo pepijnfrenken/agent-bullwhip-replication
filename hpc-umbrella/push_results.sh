@@ -47,17 +47,29 @@ done
 
 if [ "${DRY}" -eq 1 ]; then
   echo "[push] dry run — would force-add (results/ is gitignored):"
-  git add -f -n -- "${PATHS[@]}"
+  git add -f -n -- "${PATHS[@]}" ":(exclude,glob)results/**/checkpoint-*/**"
   echo "[push] would commit: ${MSG}"
   echo "[push] would run: git push"
   exit 0
 fi
 
-git add -f -- "${PATHS[@]}"
+git add -f -- "${PATHS[@]}" ":(exclude,glob)results/**/checkpoint-*/**"
 if git diff --cached --quiet; then
   echo "[push] nothing staged — the given content is already committed; nothing to push"
   exit 0
 fi
+
+# Blob-size guard: GitHub rejects any object over 100 MiB; check before commit, not after.
+BIG=0
+for sha in $(git diff --cached --name-only | xargs -r git ls-files -s -- 2>/dev/null | awk '{print $2}' | sort -u); do
+  sz=$(git cat-file -s "${sha}" 2>/dev/null || echo 0)
+  if [ "${sz}" -gt 104857600 ]; then
+    echo "[push] refusing: staged blob over 100 MiB (object ${sha}, ${sz} bytes)" >&2
+    BIG=1
+  fi
+done
+[ "${BIG}" -eq 0 ] || { echo "[push] drop the oversized file from the path list and retry" >&2; exit 1; }
+
 git commit -m "${MSG}"
 git push
 echo "[push] done. Hub side: git -C ~/projects/agent-bullwhip-replication pull --ff-only"
