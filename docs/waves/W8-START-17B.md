@@ -24,10 +24,12 @@ What each rerun does, depending on where you are:
 2. **B2** - `sbatch --export=ALL,W8_RUNG=1.7b kit/gpu-wave8-preflight.sbatch`
    (~1 GPU-h; job-name bw8-preflight). Produces `results/wave8/gates_1.7b.json`
    (F2 tokenizer prompt_sha + F3 frozen) plus `S_nom_control-1.7b.json`.
-3. **C** - when `gates_1.7b.json` shows F2 pass + F3 frozen, submits
-   `sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3 --array=0 kit/gpu-wave8-train.sbatch`
-   (seed 0 only, ~1.7 GPU-h). When seed0 completes cleanly, rerun this script in a commit
-   with the remaining seeds.
+3. **C** - when `gates_1.7b.json` shows F2 pass + F3 frozen and no bw8-train job is
+   queued, submits `sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3
+   --array=0 kit/gpu-wave8-train.sbatch` (seed 0 only, ~1.7 GPU-h).
+4. **C rerun** - when seed0's arm dir has its DONE marker and nothing is queued, submits
+   `--array=1-2` for the remaining seeds. A rerun never double-submits: queued jobs stop it,
+   DONE gates the second wave.
 
 Built-in guard: stops everything when `bw8-*` GPU-h since 2026-10-07 reaches 60 (wave cap
 70; GPU-h count printed each run).
