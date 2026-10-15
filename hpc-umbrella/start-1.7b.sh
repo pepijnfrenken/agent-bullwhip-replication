@@ -147,9 +147,28 @@ PY
   exit 0
 fi
 
-# ---- C: 1.7B ladder, seed 0 first --------------------------------------------
-echo "[1.7b] C: submitting 1.7B r1 seed0 (lr 5e-5, array 0-0)"
-sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3 \
-      --array=0 "${KIT}/gpu-wave8-train.sbatch"
-echo "[1.7b] seed0 submitted. After it completes, rerun this script to launch seeds 1-2."
+# ---- C: 1.7B ladder, seed 0 first, seeds 1-2 only after it reads clean --------
+seed0_clean() {
+  # "done" = the arm dir train.sbatch leaves behind has its DONE marker; missing = not started
+  python3 - <<'PY'
+import glob, os, sys
+cand = sorted(glob.glob("results/wave8_r1*1.7b_seed0"))
+sys.exit(0 if cand and os.path.isfile(os.path.join(cand[-1], "DONE")) else 1)
+PY
+}
+if [ -z "$(squeue --me -h -n bw8-train 2>/dev/null)" ] && seed0_clean; then
+  echo "[1.7b] C: seed0 done and clean - submitting the remaining seeds (array 1-2)"
+  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3 \
+        --array=1-2 "${KIT}/gpu-wave8-train.sbatch"
+  echo "[1.7b] seeds 1-2 submitted."
+else
+  if squeue --me -h -n bw8-train 2>/dev/null | grep -q .; then
+    echo "[1.7b] a bw8-train job is already queued or running - rerun when it completes."
+    exit 0
+  fi
+  echo "[1.7b] C: submitting 1.7B r1 SEED0 ONLY (lr 5e-5, --array=0) - measure s/step first"
+  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3 \
+        --array=0 "${KIT}/gpu-wave8-train.sbatch"
+  echo "[1.7b] seed0 submitted. When it completes cleanly, rerun this script for seeds 1-2."
+fi
 exit 0
