@@ -1,60 +1,63 @@
-# Wave-8 results pull, step by step (v2 — first run after A2 + ladder submits)
+# Wave-8 results pull, step by step (v3 — after the 429581 no-op diagnosis, 2026-10-15)
 
-**Run everything from the cluster login node.** You are `20234428`; the repo is
-`/scratch-shared/20234428/bullwhip/agent-bullwhip-replication` (= `$R` below). Do NOT run
-`wave8-next.sh` again unless I say so: it submits jobs. Right now we only ship back what the
-jobs have produced.
+## What the logs showed (already read on the hub)
+
+* The R2+RL rounds **already ran on 2026-10-12** (job 419129, submitted from the SFT-verdict tree
+  before `wave8-next.sh` existed): all three seeds completed 3 rounds of real RL with collapse
+  reads and the curriculum-validation band. Everything A2 wanted already exists on the cluster.
+* 429581 and 432642 (2026-10-15) were **correct no-ops**: the resume logic found the SFT at step
+  2827 and the RL rounds already had round state, so they exited in seconds. My skip-check glob
+  (`wave8_r2rl_seed*`) missed the actual arm naming (`wave8_r2rl_lr0.0002_seedN`), so the array
+  resubmitted twice for nothing. Bookkeeping bug in the script, zero wasted GPU (both tasks no-op'd).
+* The 1.7B preflight (432656) **crashed in the HF download path** (weights not reachable on the
+  compute node — needs the B1 snapshot verified before a resubmit).
+
+## What to run on the login node now (one block, ships everything back)
 
 ```bash
 R=/scratch-shared/20234428/bullwhip/agent-bullwhip-replication
 B=/scratch-shared/20234428/bullwhip
-cd "$R"
+cd "$R" && git pull --ff-only
+
+bash hpc-umbrella/push_results.sh -m "wave8: r2rl arms + val bands (job 419129) + preflight 432656" \
+     results/wave8_r2rl_lr0.0002_seed0 \
+     results/wave8_r2rl_lr0.0002_seed0_round1 \
+     results/wave8_r2rl_lr0.0002_seed0_round2 \
+     results/wave8_r2rl_lr0.0002_seed0_round3 \
+     results/wave8_r2rl_lr0.0002_seed1 \
+     results/wave8_r2rl_lr0.0002_seed1_round1 \
+     results/wave8_r2rl_lr0.0002_seed1_round2 \
+     results/wave8_r2rl_lr0.0002_seed1_round3 \
+     results/wave8_r2rl_lr0.0002_seed2 \
+     results/wave8_r2rl_lr0.0002_seed2_round1 \
+     results/wave8_r2rl_lr0.0002_seed2_round2 \
+     results/wave8_r2rl_lr0.0002_seed2_round3 \
+     results/wave8_r2sft_seed0/state.json \
+     results/wave8_r2sft_seed1/state.json \
+     results/wave8_r2sft_seed2/state.json \
+     results/wave8_val/w8-val-r2rl-lr0.0002-seed0.jsonl \
+     results/wave8_val/w8-val-r2rl-lr0.0002-seed1.jsonl \
+     results/wave8_val/w8-val-r2rl-lr0.0002-seed2.jsonl \
+     results/wave8_logs/wave8-train_419129_0.log \
+     results/wave8_logs/wave8-train_419129_1.log \
+     results/wave8_logs/wave8-train_419129_2.log \
+     results/wave8_logs/wave8-preflight_432656.log
+
+git log --oneline -1    # paste this back to me
 ```
 
-## 1. Check what exists (read-only)
+## What I do on the hub once this lands
 
-```bash
-squeue --me                                    # is job 429581 (A2) still running?
-sacct -j 429581 -X -o JobID,State,Elapsed,End
-echo "--- A2 stop markers (STOPPED_collapse.json = the expected outcome)"
-ls -la results/wave8_r2rl_seed*/STOPPED_collapse.json 2>/dev/null || echo "none yet"
-ls results/wave8_r2rl_seed*/
-echo "--- anything wave-8 submitted today (preflight/eval/train)"
-sacct -S 2026-10-14 -X -P -o JobID,JobName%24,State,Elapsed | grep -E 'bw8|wave8' || echo none
-```
+1. Paired G1 read on the three band files vs the untrained control (the exact statistic in
+   `W8-R2-SFT-VERDICT.md` section 11).
+2. Per-round collapse rows -> the section 6.6 R2+RL verdict ("also locks -> INCONCLUSIVE-negative
+   at 0.6B, go to the ladder" or the alternative).
+3. Diagnose the 1.7B preflight crash and patch wave8-next.sh's skip-glob so the next rerun is
+   genuinely idempotent.
 
-If a job is still RUNNING: wait for it to finish before pushing (a partial push shows as
-INCOMPLETE in verify_pull and just gets re-read next cycle). If everything is COMPLETED, continue.
+## Do NOT run now
 
-## 2. Copy the Slurm logs into the repo (results/ does not see them by itself)
-
-```bash
-mkdir -p results/wave8_logs
-cp -v "$B"/logs/wave8-*.log results/wave8_logs/ 2>/dev/null | tail -20
-ls results/wave8_logs/
-```
-
-## 3. Push over git (the transfer channel, operator sheet section 4)
-
-```bash
-cd "$R"
-git status --short                             # should be clean apart from results/ noise
-bash hpc-umbrella/push_results.sh -m "wave8: A2 R2+RL results (job 429581)" \
-     results/wave8_r2rl_seed* results/wave8_logs || true
-# Only if the 1.7B preflight already produced its gates file (stage B2):
-bash hpc-umbrella/push_results.sh -m "wave8: 1.7B preflight gates (F2/F3)" \
-     results/wave8/gates_1.7b.json 2>/dev/null \
-     || echo "(no preflight gates yet - fine, that stage runs after B1 downloads weights)"
-```
-
-## 4. Confirm it is on origin (do not skip)
-
-```bash
-git log --oneline -3
-git status -sb | head -1                       # must NOT say 'ahead'
-```
-
-Paste me back the full output of steps 1-4. On the hub I then run the gate reads myself:
-verify_pull.py, the STOPPED_collapse markers, the round-2 collapse rows in train_log.jsonl,
-and (if present) the 1.7B F2/F3 read. The verdict and the next submit are mine to produce; you
-never need to interpret a gate.
+* Anything that submits jobs (`wave8-next.sh`, sbatch). The R2+RL class is complete; the 1.7B
+  preflight needs the B1 weight investigation first.
+* A second eval (`gpu-wave8-eval.sbatch`). The band files from 419129 hold the answer; an eval job
+  would re-derive the same numbers.
