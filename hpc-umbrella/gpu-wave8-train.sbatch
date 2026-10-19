@@ -39,9 +39,12 @@
 
 set -euo pipefail
 
-KIT_DIR="${SLURM_SUBMIT_DIR:-}"
+KIT_DIR="${W8_KIT_DIR:-}"
 if [ -z "${KIT_DIR}" ] || [ ! -r "${KIT_DIR}/config.sh" ]; then
-  KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  KIT_DIR="${SLURM_SUBMIT_DIR:-}"
+fi
+if [ -z "${KIT_DIR}" ] || [ ! -r "${KIT_DIR}/config.sh" ]; then
+  KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 fi
 if [ ! -r "${KIT_DIR}/config.sh" ]; then
   echo "FATAL: config.sh not found in KIT_DIR=${KIT_DIR} — submit from the kit dir (cd <kit> && sbatch <file>)" >&2

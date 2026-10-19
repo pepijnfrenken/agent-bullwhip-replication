@@ -145,7 +145,7 @@ PY
   bash "${B}/agent-bullwhip-replication/hpc-umbrella/stage.sh" --skip-weights
   cd "${OLDPWD:-$HOME}"
   echo "[1.7b] B2: submitting the 1.7B pre-flight (job ~1 GPU-h)"
-  sbatch --export=ALL,W8_RUNG=1.7b "${KIT}/gpu-wave8-preflight.sbatch"
+  sbatch --export=ALL,W8_RUNG=1.7b,W8_KIT_DIR="${KIT}" "${KIT}/gpu-wave8-preflight.sbatch"
   echo "[1.7b] pre-flight submitted. Rerun this script when it completes; check: squeue --me"
   exit 0
 fi
@@ -161,7 +161,7 @@ PY
 }
 if [ -z "$(squeue --me -h -n bw8-train 2>/dev/null)" ] && seed0_clean; then
   echo "[1.7b] C: seed0 done and clean - submitting the remaining seeds (array 1-2)"
-  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3 \
+  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3,W8_KIT_DIR="${KIT}" \
         --array=1-2 "${KIT}/gpu-wave8-train.sbatch"
   echo "[1.7b] seeds 1-2 submitted."
 else
@@ -170,7 +170,7 @@ else
     exit 0
   fi
   echo "[1.7b] C: submitting 1.7B r1 SEED0 ONLY (lr 5e-5, --array=0) - measure s/step first"
-  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3 \
+  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3,W8_KIT_DIR="${KIT}" \
         --array=0 "${KIT}/gpu-wave8-train.sbatch"
   echo "[1.7b] seed0 submitted. When it completes cleanly, rerun this script for seeds 1-2."
 fi
