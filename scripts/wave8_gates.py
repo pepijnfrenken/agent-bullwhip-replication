@@ -127,8 +127,10 @@ def readout_probs(model: str, revision: str | None, adapter: str | None, grid_id
     remain fatal. Pass untrained_require_mass to change/restore it."""
     from agent_bullwhip.decision_readout import ReadoutModel
     rm = ReadoutModel(model, adapter_dir=adapter, revision=revision, grid_id=grid_id)
-    require = 0.99 if adapter else (untrained_require_mass
-                                    if untrained_require_mass is not None else 0.0)
+    # WAVE8-A1: neither path asserts. Untrained min_mass is recorded in F2/F3
+    # (measured: 1.7B base cannot hold 0.99; fp32 probe min 0.348). Trained min_mass
+    # is recorded too and flows into G7 (>= 0.9 pass, < 0.9 flagged) per wave-7 A1.
+    require = untrained_require_mass if untrained_require_mass is not None else 0.0
     P, masses = [], []
     for lo in range(0, len(ctxs), batch):
         prompts = [render_prompt(c, rm.tokenizer, grid_id=grid_id) for c in ctxs[lo:lo + batch]]
