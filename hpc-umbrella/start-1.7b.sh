@@ -111,9 +111,13 @@ preflight_ok() {
   python3 - "$GATES" <<'PY'
 import json, sys
 g = json.load(open(sys.argv[1]))
-f2 = (g.get("F2") or {}).get("verdict") or {}
-f3 = (g.get("F3") or {}).get("verdict") or {}
-sys.exit(0 if (f2.get("pass") and f3.get("pass")) else 1)
+f2 = g.get("F2") or {}
+f3 = g.get("F3") or {}
+# wave8_gates.py control writes bare dicts (no "verdict" wrapper): F2 pass = ids
+# contiguous + prompt sha equal; F3 pass = frozen control stats present with min_mass.
+f2ok = bool(f2.get("contiguous") and f2.get("prompt_sha_equal"))
+f3ok = all(k in f3 for k in ("H_lo", "H_hi", "m_hi", "min_mass"))
+sys.exit(0 if (f2ok and f3ok) else 1)
 PY
 }
 if preflight_ok; then
