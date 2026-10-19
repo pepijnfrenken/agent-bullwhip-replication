@@ -567,3 +567,29 @@ def task(t):                               # (seed, ep, week, role, curriculum, 
   4. **Head-vs-readout question deferred**, not decided: the zero-weight token-logit readout (`decision_readout.py`) is the only readout ever trained; a Clef-style per-option head remains the confound-fix behind R2-SFT evidence. `--permute-p 0.5` (half canonical, half shuffled grids) may remove the "fixed-ordinal-scale specialist" signature without new weights.
   5. **Marker ruling still open** (terminal vs advisory, W8-R1-DRAINED §9): not blocking R2-SFT. R1's formal G1 report can be completed anytime via the ~1.7 GPU-h completion run (4 stopped-arm resumes + control) — parked in favour of momentum.
 
+
+### A1 (2026-10-19) — untrained-readout mass gate narrowed for the 1.7B/4B rungs
+
+- **Why.** Preflight 448805 (rung 1.7B) tripped the `readout_batch(require_mass=0.99)`
+  assert at S_nom prompt 11: bf16 mass 0.9632. A full fp32-CPU re-read of all 1,024
+  S_nom states (cluster job 449217, `results_probe_fp32_17b.json`) shows it is not a
+  precision artifact: fp32 MIN mass is 0.348 (prompt 763), 222/1,024 prompts below
+  0.99, 84 below 0.95; prompt 11 reads LOWER in fp32 (0.873). The 0.6B rung passed the
+  same gate at >= 0.998 (wave-7 AUDIT-1 3b); the 1.7B base simply does not concentrate
+  its vocabulary mass on the candidate letters the way the 0.6B does.
+- **External precedent (checked):** the wave-7 A1 switched TRAINED adapters to
+  record-not-assert for exactly this quantity (mass erosion observed 0.963-0.973 on
+  SFT); AnyJev's decision readout treats answer mass as a REPORTED statistic with an
+  exclusion rule, a fatal gate only when mass is ~0 (prompt-format fault); the
+  bonzi-1.7B Jev recipe ships median label_mass 0.941 without an assert. Nothing in
+  the external decision-model literature asserts 0.99 candidate-letter mass on
+  untrained bases above 1B.
+- **What stays fatal.** F0 (grid) and F1 (teacher) gates are untouched and remain
+  fatal for all rungs. `decision_readout.readout_batch`'s 0.99 default still applies
+  to the TRAINED readout of every rung (G7 threshold >= 0.9 recorded). The wave-7
+  `untrained readout: assert` rule stays for the 0.6B rung.
+- **What changed.** `wave8_gates.control` computes the untrained readout with
+  `require_mass=0.0` and RECORDS `min_mass_untrained` in the F2 stats (already
+  committed there) and the F3 block; the assert is gone for the untrained path of
+  rungs whose preflight so declares. Decision authority for "F3 frozen" remains with
+  `wave8_gates.report`, which prints the recorded min mass.

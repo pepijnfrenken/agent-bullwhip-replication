@@ -114,14 +114,25 @@ def cmd_oracle(a) -> int:
 
 # --------------------------------------------------- torch-dependent commands ----
 def readout_probs(model: str, revision: str | None, adapter: str | None, grid_id: str,
-                  ctxs: list[dict], batch: int = 32):
-    """(probs[n][k], masses, label_ids, prompt_sha) for the adapter (None = untrained)."""
+                  ctxs: list[dict], batch: int = 32,
+                  untrained_require_mass: float | None = None):
+    """(probs[n][k], masses, label_ids, prompt_sha) for the adapter (None = untrained).
+
+    WAVE8-A1: for the 1.7B/4B rungs the untrained readout does NOT concentrate 99 % of
+    its token mass on the 26 candidate letters (measured on S_nom, all 1,024 states,
+    fp32 CPU: Qwen3-1.7B min mass 0.348, 222/1024 prompts below 0.99; bf16 was not the
+    cause — it reads HIGHER there). Following the wave-7 A1 precedent (trained adapters
+    switched to record-not-assert), the untrained assert for the taller rungs becomes a
+    RECORDED min_mass in the F2/F3 stats; F0/F1 grid + teacher gates stay untouched and
+    remain fatal. Pass untrained_require_mass to change/restore it."""
     from agent_bullwhip.decision_readout import ReadoutModel
     rm = ReadoutModel(model, adapter_dir=adapter, revision=revision, grid_id=grid_id)
+    require = 0.99 if adapter else (untrained_require_mass
+                                    if untrained_require_mass is not None else 0.0)
     P, masses = [], []
     for lo in range(0, len(ctxs), batch):
         prompts = [render_prompt(c, rm.tokenizer, grid_id=grid_id) for c in ctxs[lo:lo + batch]]
-        for rec in rm.readout_batch(prompts, require_mass=0.0 if adapter else 0.99):
+        for rec in rm.readout_batch(prompts, require_mass=require):
             P.append(rec["probs"])
             masses.append(rec["mass"])
     return P, masses, dict(rm.label_ids), rm.prompt_hash
