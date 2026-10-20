@@ -155,7 +155,7 @@ seed0_clean() {
   # "done" = the arm dir train.sbatch leaves behind has its DONE marker; missing = not started
   python3 - <<'PY'
 import glob, os, sys
-cand = sorted(glob.glob("results/wave8_r1*1.7b_seed0"))
+cand = sorted(glob.glob("results/wave8_r1-*1.7b_lr*_seed0"))
 sys.exit(0 if cand and os.path.isfile(os.path.join(cand[-1], "DONE")) else 1)
 PY
 }
