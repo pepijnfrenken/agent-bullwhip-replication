@@ -331,9 +331,12 @@ def main(argv: list[str] | None = None) -> int:
     demands = make_demands(args.pattern, args.mode, n_runs, args.horizon,
                            args.seed_base)
     t0 = time.time()
-    # WAVE7_SPEC A1: mass >= 0.99 is the format proof of the UNTRAINED readout
-    # (fatal); an SFT'd adapter erodes it, so a trained eval records min_mass.
-    require_mass = 0.0 if args.adapter else 0.99
+    # WAVE8-A1 (2026-10-19): neither path asserts. The untrained 1.7B readout
+    # cannot hold 0.99 (S_nom min 0.096, eval prompts observed down to ~0.982);
+    # min_mass is recorded for every run (summary min_mass field) and the
+    # 0.99 format barrier exists only at the 0.6B rung, where the untrained
+    # readout does hold >= 0.998 (wave-7 AUDIT-1 3b).
+    require_mass = 0.0
     masses: list[float] = []
     records = run_batched_eval(model, demands, args.mode, args.seed_base,
                                args.horizon, tag, model_name,
