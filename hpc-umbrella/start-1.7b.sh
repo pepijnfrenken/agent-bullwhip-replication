@@ -152,16 +152,24 @@ fi
 
 # ---- C: 1.7B ladder, seed 0 first, seeds 1-2 only after it reads clean --------
 seed0_clean() {
-  # "done" = the arm dir train.sbatch leaves behind has its DONE marker; missing = not started
+  # "done" = a seed0 arm dir with its DONE marker; the lr of that arm is echoed for
+  # reuse in the seeds 1-2 submit (5e-5 collapsed pre-round3 => only 1e-5 can be clean,
+  # so the cleaned arm IS the lr-selection outcome and no Hail Mary choice is made here).
   python3 - <<'PY'
-import glob, os, sys
+import glob, os, re, sys
 cand = sorted(glob.glob("results/wave8_r1-*1.7b_lr*_seed0"))
-sys.exit(0 if cand and os.path.isfile(os.path.join(cand[-1], "DONE")) else 1)
+for d in cand:
+    if os.path.isfile(os.path.join(d, "DONE")):
+        m = re.search(r"_lr(\S+?)_seed0$", d)
+        print(m.group(1) if m else "", end="")
+        sys.exit(0)
+sys.exit(1)
 PY
 }
 if [ -z "$(squeue --me -h -n bw8-train 2>/dev/null)" ] && seed0_clean; then
-  echo "[1.7b] C: seed0 done and clean - submitting the remaining seeds (array 1-2)"
-  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS=5e-5,W8_SEEDS=3,W8_KIT_DIR="${KIT}" \
+  SEED0_LR="$(seed0_clean)"
+  echo "[1.7b] C: seed0 done and clean (lr ${SEED0_LR}) - submitting the remaining seeds (array 1-2)"
+  sbatch --export=ALL,W8_RUNG=1.7b,W8_ARM=r1,W8_LRS="${SEED0_LR}",W8_SEEDS=3,W8_KIT_DIR="${KIT}" \
         --array=1-2 "${KIT}/gpu-wave8-train.sbatch"
   echo "[1.7b] seeds 1-2 submitted."
 else
