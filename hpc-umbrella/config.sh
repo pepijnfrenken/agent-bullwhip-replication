@@ -62,6 +62,8 @@ MODEL_ID_17B="Qwen/Qwen3-1.7B"
 MODEL_REVISION_17B="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
 MODEL_ID_4B="Qwen/Qwen3-4B"
 MODEL_REVISION_4B="1cfa9a7208912126459214e8b04321603b3df60c"
+MODEL_ID_8B="Qwen/Qwen3-8B"
+MODEL_REVISION_8B="b968826d9c46dd6066d109eabc6255188de91218"
 WALLTIME_W8_TRAIN="08:00:00"      # R1 ~1.1 h/run; R2 = SFT ~3.7 h + 3 RL rounds (W8 §4.2)
 
 # W8_RUNG selects the model: 0.6b (default) | 1.7b | 4b. Sets RUNG_MODEL / RUNG_REV /
@@ -71,7 +73,8 @@ bw_w8_rung() {
     0.6b) RUNG_MODEL="${MODEL_ID}";     RUNG_REV="${MODEL_REVISION}";     RUNG_SUFFIX="";      RUNG_GATES="results/wave8/gates.json" ;;
     1.7b) RUNG_MODEL="${MODEL_ID_17B}"; RUNG_REV="${MODEL_REVISION_17B}"; RUNG_SUFFIX="-1.7b"; RUNG_GATES="results/wave8/gates_1.7b.json" ;;
     4b)   RUNG_MODEL="${MODEL_ID_4B}";  RUNG_REV="${MODEL_REVISION_4B}";  RUNG_SUFFIX="-4b";   RUNG_GATES="results/wave8/gates_4b.json" ;;
-    *) echo "FATAL: W8_RUNG must be 0.6b|1.7b|4b (got '${W8_RUNG:-}')" >&2; return 2 ;;
+    8b)   RUNG_MODEL="${MODEL_ID_8B}";  RUNG_REV="${MODEL_REVISION_8B}";  RUNG_SUFFIX="-8b";   RUNG_GATES="results/wave8/gates_8b.json" ;;
+    *) echo "FATAL: W8_RUNG must be 0.6b|1.7b|4b|8b (got '${W8_RUNG:-}')" >&2; return 2 ;;
   esac
 }
 CAMPAIGN_W6FIX_TSV="${KIT_DIR}/campaign-w6fix.tsv"   # WAVE6-FIX probe rows (gpu-w6fix.sbatch)
