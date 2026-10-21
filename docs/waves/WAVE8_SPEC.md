@@ -414,6 +414,7 @@ For the best 0.6B arm (and rung 3 if it passes):
 | Ladder 1.7B (3 seeds, R1) | L4 | 4.7 s × (1.7/0.6) ≈ 13 s/step `[INFERENCE]` × 510 steps ≈ 1.8 h/seed | ≈ 5.5 GPU-h |
 | Ladder 4B (2 seeds, R1) | L4 (micro-batched) | 4.7 s × (4/0.6) ≈ 31 s/step `[INFERENCE]` × 510 ≈ 4.4 h/seed | ≈ 9 GPU-h |
 | Ladder 8B (2 seeds, R1) — **A2 amendment** | Snellius `gpu_a100` burst lane (A2: amplifies the 1.7b→4b phase-change question; L4 24G cannot hold 8B LoRA train; submit cap boost tied to this rung only) | 8B bf16 + LoRA + micro-batch; A100 80G; measured smoke step TBD | ≈ 18 GPU-h × A100 (2 seeds) + eval ≈ 4 |
+<!-- A2 pins: ModelId Qwen/Qwen3-8B, revision `b968826d9c46dd6066d109eabc6255188de91218` (snapshot pulled to Snellius 2026-10-21, 5 shards ~16 GB); venv torch 2.8.0+cu126 / transformers 4.57.6; kit overlay: `hpc-umbrella/config-snellius.sh` + `gpu-wave8-train-snl.sbatch` (no `-C l4`, `gpu_a100`, longer walltime); gates file `results/wave8/gates_8b.json` after a fresh F2/F3 preflight. -->
 | Evals (all arms, 3 modes + perm + calibration) | L4 | wave-7 eval job: 21 runs + 7 probes in ~50 min | ≈ 3 GPU-h |
 | GGUF + CPU serving | hub CPU | convert/quantize minutes; equivalence 2,000 states; full games | CPU, hours |
 | **Total GPU** | | | **≈ 30–45 GPU-h** (≤ 70 cap), wall ≈ 1–2 days with the 8-L4 pool |
