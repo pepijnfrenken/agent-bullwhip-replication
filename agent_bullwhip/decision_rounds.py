@@ -75,7 +75,7 @@ class RoundPlan:
     gates_json: str = "results/wave8/gates.json"
     results: str = "results"
     python: str = "python3"
-    suffix: str = ""              # ladder rung suffix: "" | "-1.7b" | "-4b"
+    suffix: str = ""              # ladder rung suffix: "" | "-1.7b" | "-4b" | "-8b"
 
     def __post_init__(self):
         if self.arm not in ("r1", "r2rl"):
@@ -478,7 +478,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--results", default="results")
     run.add_argument("--dry-run", action="store_true",
                      help="print the planned stage commands and exit")
-    run.add_argument("--rung-suffix", default="", choices=["", "-1.7b", "-4b"])
+    run.add_argument("--rung-suffix", default="", choices=["", "-1.7b", "-4b", "-8b"])
     sf = sub.add_parser("sft", help="run/resume the R2 SFT stage (or the 500-step lr sweep)")
     sf.add_argument("--labels", required=True)
     sf.add_argument("--seed", type=int, required=True)
