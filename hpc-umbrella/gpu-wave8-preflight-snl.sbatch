@@ -37,7 +37,6 @@ if [ ! -r "${KIT_DIR}/config-snellius.sh" ]; then
   exit 1
 fi
 # Snellius A2 overlay first (overrides cluster pins), then base config for the shared pins
-KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 # shellcheck source=config-snellius.sh
 . "${KIT_DIR}/config-snellius.sh"
 
