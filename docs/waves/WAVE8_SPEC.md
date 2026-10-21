@@ -413,6 +413,7 @@ For the best 0.6B arm (and rung 3 if it passes):
 | R3 (one pass if triggered) | L4 | | ≤ 7 GPU-h |
 | Ladder 1.7B (3 seeds, R1) | L4 | 4.7 s × (1.7/0.6) ≈ 13 s/step `[INFERENCE]` × 510 steps ≈ 1.8 h/seed | ≈ 5.5 GPU-h |
 | Ladder 4B (2 seeds, R1) | L4 (micro-batched) | 4.7 s × (4/0.6) ≈ 31 s/step `[INFERENCE]` × 510 ≈ 4.4 h/seed | ≈ 9 GPU-h |
+| Ladder 8B (2 seeds, R1) — **A2 amendment** | Snellius `gpu_a100` burst lane (A2: amplifies the 1.7b→4b phase-change question; L4 24G cannot hold 8B LoRA train; submit cap boost tied to this rung only) | 8B bf16 + LoRA + micro-batch; A100 80G; measured smoke step TBD | ≈ 18 GPU-h × A100 (2 seeds) + eval ≈ 4 |
 | Evals (all arms, 3 modes + perm + calibration) | L4 | wave-7 eval job: 21 runs + 7 probes in ~50 min | ≈ 3 GPU-h |
 | GGUF + CPU serving | hub CPU | convert/quantize minutes; equivalence 2,000 states; full games | CPU, hours |
 | **Total GPU** | | | **≈ 30–45 GPU-h** (≤ 70 cap), wall ≈ 1–2 days with the 8-L4 pool |
