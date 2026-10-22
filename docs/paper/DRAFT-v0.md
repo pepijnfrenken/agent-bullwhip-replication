@@ -43,9 +43,10 @@ the same pre-registered protocol: F0 synthetic-regret gate, F1 tokenizer check, 
 integrity, F3 collapse stopping rule, permutation-invariance gate, triple baseline
 (walk-forward floor / untuned formula / oracle).
 
-Headline claim: "Trained > untrained at 4B, but trained-8B under the same recipe is
-3.0x worse than our 4B result and worse than its own untrained baseline. The tuned-model
-claim is rung-dependent, not scale-free."
+Headline claim: "The tuned-model claim is rung-dependent, not scale-free: negative at
+0.6B (all six training arms fail C1, 0/30 wins vs an 11,569 untrained control), negative
+at 1.7B (collapse at 5e-5, 48,311 pooled at 1e-5), the single pass at 4B (~1.4-1.6x floor),
+and negative again at 8B (3.0x the trained-4B reference, worse than untrained)."
 
 The negative rungs are the point. A tuned 0.6B agent made things worse across all six
 training arms (WAVE7). A tuned 1.7B closed negative. A tuned 4B passed cleanly (2/2).
