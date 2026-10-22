@@ -17,357 +17,472 @@ A Scale Ladder (0.6B--8B) Under a Pre-Registered Protocol:\\
 One Rung Passes the Cost Gate, Three Fail}
 \author{Pepijn Frenken\\
 Independent researcher\\
-\texttt{pepijnfrenken@mailbox.org}
-}
-\date{October 22, 2026}
+\texttt{pepijnfrenken@mailbox.org}}
+\date{2026-10-22}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Post-training an LLM agent with reinforcement learning is the standard response to unreliable
-autonomous decision-making in supply-chain simulations. The original supporting claim in this
-line of work reports that a GRPO-tuned 4B agent beats its own untrained baseline on cost in a
-four-tier beer-game environment. We test whether that claim holds under a pre-registered
-protocol at four model scales, 0.6B, 1.7B, 4B, and 8B, with a fixed arm-selection rule: inside
-each pre-registered learning-rate arm, the seeds are pooled by mean validation cost; the arm
-must further beat its rung's matched untrained readout under the frozen paired-hoc test
-(median-ratio and paired-wins criteria). The outcome is rung-dependent with exactly one pass:
-0.6B failed (all six wave-7 training arms lost the paired test against their own untrained
-control, 0/30 wins each; a subsequent exact-gradient run at the same scale tripped the
-pre-registered collapse gate on 5 of 6 arm tasks), 1.7B failed hard (0/30 paired wins on all
-three seeds against the matched untrained-1.7B control; training made the rung worse), 4B
-passed the cost gate cleanly (both seeds: 30/30 paired wins, sign-test $p = 9.3\times 10^{-10}$,
-medians 8{,}315 and 7{,}612 vs control 21{,}578), and 8B is reported as a cross-rung cost
-regression: both 8B training arms are 3.0--5.9$\times$ costlier than the passing 4B arm and
-straddle the untrained-4B reference, but no matched untrained-8B control exists, so the
-within-size comparison is not evaluable. The pre-registered selection rule is the paper's
-methodological contribution: at 8B it refuses a favorable single-seed conclusion (one seed at
-12{,}444, below the untrained-4B permission baseline) that the same arm's other seed (35{,}289)
-contradicts. The full audit trail (specs, per-run JSON, sbatch ledger, commit SHAs) is
-available on request.
+An active recipe family post-trains LLM decision agents on operational cost signals; the motivation
+here is a published claim \cite{long2026} that a GRPO-tuned 4B agent beats its own untrained baseline
+on cost in a four-tier beer-game environment. We test a claim of that type under a pre-registered
+protocol at four model scales (0.6B, 1.7B, 4B, 8B). This is an \emph{adaptation} study: our training
+procedure and interface differ from the published recipe in enumerated, frozen ways
+(Appendix~\ref{app:deltas}), so the result bears on the type of claim, not on the original
+intervention verbatim. Arm selection was frozen before training: within each pre-registered
+learning-rate arm, seeds are pooled by mean validation cost on a curriculum-validation band. The
+outcome is rung-dependent with exactly one pass. At 0.6B all six wave-7 arms lost the paired test
+against their matched untrained control (0/30 wins on every arm--seed row), and a wave-8
+exact-gradient attempt at the same scale tripped the pre-registered collapse stop-loss on 5 of 6
+arm tasks (procedure stopped by its own rule). At 1.7B all three seeds regress against the matched
+untrained-1.7B control (medians $1.87\times$--$6.19\times$, 0/30 wins each). At 4B both evaluated
+seeds pass the frozen cost criteria in full: medians 8{,}315 and 7{,}612 vs control 21{,}578,
+30/30 paired wins per seed (no ties, no zero-control rows), one-sided sign-test
+$p = 2^{-30} = 9.3\times 10^{-10}$ per seed, median-ratio reductions 61.5\%/64.7\%, and
+median-of-per-path-reductions 62.9\%/64.8\%; the sign test's scope is 30 paired evaluations of a
+trained checkpoint, not 30 training seeds. At 8B no matched untrained-8B control evaluation exists
+(a frozen untrained-8B \emph{diagnostic} checkpoint does exist for gate thresholds) and the arm
+final-eval JSONLs did not reach the archive, so 8B is reported as document-recorded means with an
+explicit partial provenance tier, NOT EVALUABLE on the within-size test, and negative only as a
+cross-rung regression. The frozen selection rule is the methodological product: at 8B it refuses a
+favorable single-seed reading (one seed at 12{,}444 against the other arm seed's 35{,}289) that a
+per-seed report would have accepted. The spec, per-run JSON, sbatch ledger, and commit hashes are
+cited in the text; the repository is available on request (Section~\ref{sec:repro}).
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 Post-training LLM agents for operational decision problems is an active recipe family. The
-motivating published claim for this paper is \textit{Long, Simchi-Levi, Zhu, Su, du Pin Calmon
-and Calmon} (\texttt{arXiv:2605.17036}), which reports that a GRPO-tuned autoregressive 4B agent
-beats an untrained 4B on cost in a four-tier Beer-Game simulator. The open question is not
-whether such a claim can hold once at one scale, but whether it holds under \emph{pre-registered}
-controls \emph{and} whether it survives scaling.
+motivating published claim for this paper is \cite{long2026}: Long, Simchi-Levi, Zhu, Su,
+A.~P.~Calmon, and F.~P.~Calmon (\texttt{arXiv:2605.17036}, v4, 2026-10-22), which reports that a
+GRPO-tuned autoregressive 4B agent (Qwen-3 4B; mean total cost 1{,}585 untrained vs 952 trained,
+both across 30 identical MIT Beer Game runs, v4 \S5.2) beats the untrained 4B baseline on cost in a
+four-tier beer-game simulator. The open question is not whether such a claim can hold once at one
+scale, but whether a claim of that type holds under pre-registered controls and whether it survives
+scaling. We test that on a public four-tier beer-game style environment with our own adapted
+training procedure (Section~\ref{sec:method}). Facilities at the same echelon occasionally ordered
+enormous multiples of demand out of the box across repeated runs, which is the reliability symptom
+the original paper identifies and the symptom our readout redesign first attacks
+\cite{sterman,aimbench}.
 
-We test both on a public four-tier beer-game style environment. Our training objective
-(outcome-scored exact policy-gradient over a frozen closed choice set with a KL anchor, plus a
-closed-choice letter readout; Section~\ref{sec:method}) is applied unchanged at 0.6B, 1.7B, 4B,
-and 8B. Every rung inherits the same pre-registered gates and the same numeric selection rule.
-Deviations that had to be made along the way (a collapsed 0.6B run stopped by its own rule, an
+Deviations made along the way (a 0.6B run stopped by its own pre-registered stop-loss, an
 unresolved learning-rate provenance question at 1.7B, an 8B budget amendment) are documented in
 Section~\ref{sec:prov} rather than absorbed silently.
 
 \paragraph{Contributions.}
 \begin{itemize}
-  \item A pre-registered protocol instance for post-tuning a closed-choice decision readout on
-  a beer-game cost signal, with frozen pre-flight gates (grid-regret F0, tokenizer F1,
+  \item A pre-registered protocol instance for post-tuning a closed-choice decision readout
+  on a beer-game cost signal, with frozen pre-flight gates (grid regret F0, teacher F1,
   interface F2, control statistics F3), a frozen collapse detector, and a frozen paired
-  performance test; plus a documented amendment chronology.
+  performance test; plus a documented chronology that separates planned contingencies from
+  amendments, with commit hashes.
   \item A scale-ladder read (0.6B--8B) under that fixed protocol with per-rung matched
-  untrained controls where they exist. One rung (4B) passes the cost gate on both seeds.
-  \item A methodological result: the pre-registered selection rule blocks a favorable
-  single-seed reading at 8B that a per-seed report would have accepted.
-  \item A mechanism finding: the tuned policies are \emph{fixed-ordinal-scale specialists}.
-  Permutation invariance reads 0.000 on every trained arm (and on the untrained control), so
-  the interface claim ``the model reads option values'' is withheld for all arms, as the
-  pre-registered consequence clause specifies.
+  untrained controls where one exists. One rung (4B) passes the frozen cost criteria on both
+  evaluated seeds.
+  \item A methodological result: the frozen selection rule blocks a favorable single-seed
+  reading at 8B that a per-seed report would have accepted.
+  \item A diagnostic observation, not a mechanism claim: on the pre-registered
+  permutation-invariance check, no arm (and no control) preserved the argmax \emph{value} across
+  shuffled choice grids, so the interface claim ``the model reads option values'' is withheld for
+  every arm, per the pre-registered consequence clause. Interpretation is deferred to
+  Section~\ref{sec:analysis} with its limits stated.
 \end{itemize}
 
 \section{Environment}\label{sec:env}
 The environment is a four-tier (retailer / wholesaler / distributor / factory) Beer-Game
 simulator with stochastic weekly demand, bounded backorders, and a per-stage linear holding
-and stock-out cost. Agents output one order per stage per week on a frozen, closed ordinal
-choice grid of 26 letters mapping to fixed order quantities (\texttt{w8\_g26b}: step-2
-resolution 0--30 where the demand mean lives, geometric tail 36--200). This grid was revised
-once, from the candidate \texttt{w8\_g26}, after pre-flight gate F0 failed on 1{,}000 probe
-states per regime; the revision and the failing record were committed before any training
-started (\texttt{results/wave8/f0\_w8\_g26\_prereg.json}). Evaluation readout is exact
-expected per-action cost scoring over all 26 letters (no sampling), which matters for the
-train-time estimator and is listed as a delta from the original recipe's sampled-$K$.
+and stock-out cost (a Sterman-style \cite{sterman} environment; comparable LLM-inventory
+benchmarks are discussed in \cite{aimbench}). Agents output one order per stage per week on
+a frozen, closed ordinal choice grid of 26 letters mapping to fixed order quantities, cited
+from the implemented frozen revision \texttt{make\_w8\_g26b()} (verified from the artifact code,
+top=200):
+\begin{center}
+0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 36, 44, 54, 64, 78, 94, 114, 136, 166, 200.
+\end{center}
+Sixteen values cover the demand-mean band 0--30 in step-2 resolution; the ten tail values are the
+generated geometric ladder $v_k = 2\cdot\mathrm{round}(30(200/30)^{k/10}/2)$ for $k=1..10$ from the
+pre-registered revision record (\texttt{w8\_g26 -> w8\_g26b} after F0 failed on 1{,}000 probe states
+per regime; the failing record \texttt{results/wave8/f0\_w8\_g26\_prereg.json} and the revision were
+committed before any training, and the spec's \S3.1 pre-authorizes exactly that revision before
+training). Evaluation readout is exact per-action expected-cost scoring over all 26 letters (no
+sampling); this is one of the deliberate deltas from the reference recipe's sampled-$K$
+(Appendix~\ref{app:deltas}).
 
 \section{Protocol and Gates}\label{sec:gates}
-The protocol is commit-then-run: every gate and the selection rule are frozen in
-version-derived spec files (committed 2026-10-07) before any GPU is allocated. Amendments
-required along the way are listed in Section~\ref{sec:prov}. The frozen elements:
+The protocol is commit-then-run: every gate and the selection rule are frozen in version-derived
+spec files committed 2026-10-07 (sha \texttt{7d3260b}; cluster kit same day, sha \texttt{4b8bffb})
+before any GPU job for this wave (first training log 2026-10-08). Amendments, planned-contingency
+handling, and one open item are listed in Section~\ref{sec:prov}. The frozen gates:
 \begin{itemize}
-  \item \textbf{F0 grid regret.} The choice grid must express the sim's optimum in both
+  \item \textbf{F0 grid regret.} The choice grid must express the simulator's optimum in both
   demand regimes within pre-set regret and letter-mass bounds, checked on 1{,}000 states per
-  regime. The candidate \texttt{w8\_g26} failed F0; the revision to \texttt{w8\_g26b} was
-  made and committed before training, per the pre-registered amendment procedure.
+  regime. The candidate \texttt{w8\_g26} failed F0; the revision to \texttt{w8\_g26b} was made and
+  committed via the pre-authorized pre-F0-test procedure.
   \item \textbf{F1 teacher.} The one-step-improvement teacher must beat the continuation
-  floor on 30 paired curriculum paths, else no training arm is run.
+  floor on 30 paired curriculum paths, else no training arm is run (it passed: PI1 mean cost
+  4{,}591 vs floor 8{,}541, $30/30$ paths, seeds band 9000--9029, disjoint from eval band
+  1000--1029).
   \item \textbf{F2 interface.} All 26 answer letters are single tokens under the frozen
-  chat template; prompt SHA is pinned.
-  \item \textbf{F3 control statistics.} A fixed 1{,}024-state sample is frozen before
-  training; the untrained readout's entropy distribution, state-dependence, and modal-letter
-  share on that sample define the collapse detector's thresholds.
-  \item \textbf{Collapse detector (stop-loss).} A trained arm is \emph{collapsed} iff
-  (median entropy below the untrained 5th percentile AND state-blindness) OR (diffuse
-  entropy above the 95th percentile AND state-blindness). Low entropy alone is not collapse.
-  A collapsed arm's costs are reported but cannot support the success claim. This is a
-  first-class negative result, not an error.
+  chat template; prompt SHA pinned (\texttt{55bdc663…} for \texttt{w8\_g26b}).
+  \item \textbf{F3 control statistics.} A fixed 1{,}024-state sample (\texttt{S\_nom}, sha-pinned)
+  is frozen before training; the untrained readout's entropy quantiles, state-dependence, and
+  modal-argmax-letter share on that sample define the collapse detector's thresholds, per rung
+  (the readout is model-specific). An untrained-8B \emph{diagnostic} checkpoint exists for these
+  threshold inputs; no untrained-8B final \emph{control evaluation} was ever run.
+  \item \textbf{Collapse stop-loss (pre-planned).} A trained arm is \emph{collapsed} iff
+  (median entropy below the frozen low percentile AND state-blindness) OR (median entropy above
+  the frozen high percentile AND state-blindness); state-blindness is measured by the
+  state--answer mutual information at or below its frozen bootstrap percentile. Low entropy
+  alone is not collapse. A collapsed arm's costs are reported but cannot support the success
+  claim. The stop-loss handling is a planned contingency stated in the spec (\S6.5), not an
+  amendment.
   \item \textbf{Permutation invariance (diagnostic, pre-registered consequence).} Trained
-  arms are tested for preserving the argmax \emph{value} under three shuffled choice grids in
-  $\geq 0.90$ of 512 states. This is NOT part of the performance claim's conjunction: wave-7
-  already read 0.000 on every arm including the untrained control, so the pre-registered
-  consequence clause states that on a fail, the cost gates still decide the performance
-  claim, the interface claim ``the model reads option values'' is withheld, and the arm is
-  labelled a \emph{fixed-ordinal-scale specialist}. We keep that label for every arm here.
+  arms are tested for preserving the argmax \emph{value} under three shuffled choice grids on
+  512 states. This is explicitly NOT part of the performance-claim conjunction: wave 7 already
+  read 0.000 on every arm including its untrained control, so the pre-registered
+  consequence clause (frozen then, wave-7-informed, stated in the spec) says on a fail the cost
+  gates still decide the performance claim, the interface claim ``the model reads option values''
+  is withheld, and the arm is labelled a \emph{fixed-ordinal-scale specialist}. We keep that
+  label for every arm here. A pass is reported only as ``reads values, does not help'' when the
+  cost gate fails; no arm passed.
   \item \textbf{Selection rule (per learning-rate arm, frozen).} Within each pre-registered
-  learning-rate arm, seeds are pooled by mean validation cost on a fixed curriculum-validation
-  band; the arm with the lower pooled mean is selected and the other is reported as
-  sensitivity. The selected arm must then beat its rung's matched untrained control under the
-  frozen paired test G1: median-ratio and median-of-per-path-reductions criteria
-  ($\geq 15\%$ reduction in both), $\geq 20/30$ paired wins, one-sided sign test
-  $p < 0.02$; a seed passes iff all three hold, and the arm needs $\geq 2/3$ passing seeds.
+  learning-rate arm, seeds are pooled by \emph{mean} validation cost on the fixed
+  curriculum-validation band; the arm with the lower pooled mean is selected and the other is
+  reported as sensitivity. The selected arm must then beat its rung's matched untrained control
+  under the frozen paired test G1: median cost reduction $\geq 15\%$ AND
+  median-of-per-path-reductions $\geq 15\%$, $\geq 20/30$ paired wins, one-sided exact sign test
+  $p < 0.02$; a seed passes iff all three hold. The criteria have a redundancy we flag because
+  the auditor is right to surface it: at $n=30$ non-tied pairs, 20 wins gives
+  $p_{\mathrm{one-sided}} = 0.049$, 21 gives 0.021, and 22 gives 0.008, so the $p<0.02$ clause
+  implies $\geq 22/30$ wins. This redundancy is frozen, not accidental. Tie handling: a tie is
+  neither win nor loss; all 60 paired comparisons here had zero ties (checked from the raw
+  JSONLs), and rows with a zero control cost would be dropped from the denominator (none
+  occurred). ``A seed passes iff all three hold'' means exactly that; \textbf{the pass rule
+  ``the arm needs $\geq 2/3$ passing seeds''} is a fraction of planned seeds, and the planned
+  seed counts are \emph{run-specific and pre-registered}: three planned seeds at 1.7B ($\geq$
+  2 of 3 must pass), two planned seeds per learning-rate arm at 4B and 8B (both evaluated seeds
+  must pass; no third planned seed for those stages). Requiring both-of-two is equivalent to a
+  passing fraction of 1 on the planned two-seed set.
 \end{itemize}
 
 \section{Training objective}\label{sec:method}
 We deliberately avoid borrowing algorithm names for what we run. The trained objective at
-every rung is:
-\[
-L(\theta) = \frac{1}{N}\sum_{i}\sum_{a \in A} \pi_\theta(a \mid s_i)\,
-\frac{J(s_i,a)-\overline{J}}{\max(\mathrm{std}_{a}J,\,10^{-3})}
-+ \beta\, D_{\mathrm{KL}}\!\left(\pi_\theta(\cdot \mid s_i)\,\Vert\,\pi_{\mathrm{anchor}}(\cdot \mid s_i)\right),
-\]
-where $A$ is the frozen 26-letter choice set, $J(s_i,a)$ is the simulator's exact expected
-total cost of playing action $a$ from state $s_i$ and then continuing with the reference
-policy, $\overline{J}$ and $\mathrm{std}_a J$ are per-state statistics over the full choice
-set, and the anchor $\pi_{\mathrm{anchor}}$ is a frozen policy-independent reference (not an
-EMA of $\pi_\theta$). The per-state $z$-score over the full finite choice set makes the
-gradient a zero-variance estimator of this particular objective; it is exact enumeration,
-not the group-relative advantage of GRPO (no sampled group, no EMA anchor) and not the
-preference-model pipeline of published RLCD. We borrow the multi-round structure only:
-three rounds of policy-collection, re-labelling, and training per arm, with a LoRA adapter
-on the base model. We cite both GRPO and RLCD as related destination recipes, not as what we
-execute, and we list a verbatim re-run of either as future work.
+every rung is, per state $s_i$ and over the frozen 26-letter choice set $A$:
+\begin{align}
+L(\theta) &= \frac{1}{N}\sum_{i=1}^{N}\bigg[\sum_{a \in A} \pi_\theta(a \mid s_i)\, z_i(a)
++ \beta\, D_{\mathrm{KL}}\!\left(\pi_\theta(\cdot \mid s_i)\,\Vert\,\pi_{\mathrm{ref}}(\cdot \mid s_i)\right)\bigg],\\
+z_i(a) &= \frac{J(s_i,a)-\overline{J}_i}{\max(\mathrm{std}_{a}J_i,\,10^{-3})}.
+\end{align}
+Here $J(s_i,a)$ is the simulator's exact expected total cost of playing action $a$ from
+state $s_i$ and then continuing with the frozen reference policy for the remainder of the
+game; $\overline{J}_i$ and $\mathrm{std}_a J_i$ are per-state statistics over the full choice
+set; $\pi_{\mathrm{ref}}$ is a frozen policy-independent anchor. The KL term is averaged
+inside the state sum (one KL per state, then averaged over the $N$ states), and $\beta$ is
+the per-state KL coefficient as written. The gradient is \emph{exact} in a qualified sense:
+the action sum enumerates every member of the 26-value choice set, and $J$ is deterministic
+per (state, action) at scoring time; simulator-level stochasticity (demand draws inside $J$'s
+continuation) is part of $J$'s value, not resampled per gradient step. This is an
+exact-enumeration policy gradient over a closed choice set. Its deltas from the reference
+GRPO objective \cite{grpo,long2026} are enumerated in Appendix~\ref{app:deltas}; notably the
+reference objective (v4 eq.~2) also carries a frozen-KL term to its reference policy, which
+this recipe shares, and the reference normalizes advantages per sampled group while this
+recipe $z$-scores per state over the enumerated set. Published RLCD \cite{rlcd} builds
+contrastive preference pairs and a preference model; no preference model exists here. Both
+are cited as lineage, not as what we execute; a verbatim re-run of either is future work.
 
 \section{Results}\label{sec:results}
-Table~\ref{tab:ladder} is the headline result. Lower cost is better. Every trained-arm
-statistic below is the median (and mean) of the same 30-run noisy-argmax final-eval
-protocol against the matched rung control; paired wins are per-path, sign test one-sided.
-Where a cell cites doc-recorded numbers only (no JSON artifact reached the archive), we say
-so.
+Table~\ref{tab:ladder} is the headline table. Lower cost is better. Every row names its own
+estimand explicitly: the statistic, the evaluation generation, and the control it is compared
+to. Paired wins are per-path (paired on the demand path index), one-sided sign test.
 
 \begin{table}[ht]
 \centering
-\caption{Scale ladder under the pre-registered protocol. Statistic: median cost, noisy-argmax
-n=30 final eval (matched untrained control per rung where one exists). Paired wins = per-path
-wins of the trained arm vs the control.}
+\caption{Scale ladder. Each row states its estimand; ``final eval'' is the newest archived
+generation (same adapters as the wave8\_val selection band, checkpoint-169); medians are
+noisy-argmax $n=30$. ``doc-recorded'' = number read from a committed doc, raw JSONL not
+recovered.}
 \label{tab:ladder}
 \small
-\begin{tabular}{@{}lp{2.6cm}lp{3.4cm}l@{}}
+\begin{tabular}{@{}p{1.5cm}p{2.5cm}p{4.4cm}p{3.9cm}p{1.9cm}@{}}
 \toprule
-\textbf{Scale / wave} & \textbf{Arms} & \textbf{Trained medians} & \textbf{vs control} & \textbf{G1 verdict} \\
+\textbf{Rung} & \textbf{Arms} & \textbf{Estimand / statistic} & \textbf{Values vs control} & \textbf{Verdict} \\
 \midrule
-0.6B w7 & 3 SFT + 3 RLCD & (C1 protocol) & 0/30 wins, all 6 arms & NEG \\
-0.6B w8 R1 & exact-grad R1 & (no final eval) & 5/6 collapse-gated & NEG \\
-1.7B & R1, 3 seeds & 21{,}468 / 43{,}660 / 71{,}270 & ctl 11{,}508; 0/30 wins each & NEG, 0/3 \\
-4B & R1, 2 seeds & 8{,}315 / 7{,}612 & ctl 21{,}578; 30/30 wins each & \textbf{PASS, 2/2} \\
-8B & R1, 2$\times$2 & (doc-recorded means) & no matched untrained-8B & NOT EVAL. \\
+0.6B w7 & 3 SFT + 3 exact-grad & wave-7 C1; noisy-argmax n=30 per arm--seed & 0/30 wins on all six arm--seed rows & NEG \\
+0.6B w8 R1 & exact-grad & run stopped by stop-loss before final eval & 5/6 collapse-gated & STOPPED \\
+1.7B & exact-grad, 3 seeds & final-eval medians & ctl 11{,}508; 0/30 wins each & NEG (0/3 seeds) \\
+4B & exact-grad, 2 seeds & final-eval medians & ctl 21{,}578; 30/30 wins each & \textbf{PASS (2/2)} \\
+8B & exact-grad, $2\times2$ & doc-recorded final-eval means & no matched untrained-8B control eval & \textbf{NOT EVALUABLE} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{4B, the passing rung.} Both seeds pass the frozen G1 in full: median cost
-reduction $61.5\%$ and $64.7\%$ (criterion $\geq 15\%$), median of per-path reductions both
-above threshold, $30/30$ paired wins (criterion $\geq 20$), one-sided sign-test
-$p = 9.3\times 10^{-10}$ (criterion $<0.02$). Medians are 8{,}315 (seed 0) and 7{,}612
-(seed 1) against the matched untrained-4B control's 21{,}578 (mean 27{,}886). Against the
-G2 tier labels (pre-registered floor context, noisy walk-forward tuned floor 5{,}346), both
-seeds land in the ``headline'' tier at $1.42$--$1.56\times$ that floor. This rung's pass is
-the strongest result in the paper, and it is on the frozen rule, not a reinterpreted side
-analysis.
+\paragraph{4B, the passing rung, with both effect sizes.} Both seeds pass the frozen G1 in
+full on the final-eval generation vs the matched untrained-4B control:
+\begin{itemize}
+  \item median cost reduction: seed 0, $1-8{,}315/21{,}578 = 61.5\%$; seed 1,
+  $1-7{,}612/21{,}578 = 64.7\%$ (criterion $\geq 15\%$);
+  \item \emph{median of the 30 per-path proportional reductions}, computed from the raw paired
+  JSONLs on this run (definition: $\mathrm{median}_i(1 - c^{\mathrm{train}}_i/c^{\mathrm{ctl}}_i)$
+  over the 30 paired paths, dropping any path with zero control cost; zero such paths here, and
+  zero ties): seed 0 $= 62.9\%$, seed 1 $= 64.8\%$ (same criterion);
+  \item paired wins: 30/30 per seed, zero ties (threshold effectively $\geq 22$ from the
+  $p<0.02$ clause), one-sided exact sign test $p = 2^{-30} = 9.3\times10^{-10}$ per seed;
+  \item G2 tier (floor context, pre-registered report tier not a gate): calibrated against the
+  noisy walk-forward tuned heuristic floor 5{,}346 from \texttt{results/wave7\_floors.json};
+  the pre-registered tiers are \emph{headline} $\leq 2\times$ floor ($\leq 10{,}692$),
+  \emph{strong} $\leq 4\times$, \emph{floor-parity} $\leq 1.25\times$. Both 4B seeds sit inside
+  \emph{headline} at $1.42\times$--$1.56\times$ that floor. The floor is a tuned heuristic
+  benchmark, not a proven bound; G1, not G2, is the test of learning.
+\end{itemize}
+Inference scope of the sign test: it speaks to 30 paired evaluations of a trained checkpoint
+against the frozen control on the fixed demand paths; it is not evidence from 30 independent
+training seeds and not a test of a scaling claim. The two seed-level tests share the same
+control paths, so they are dependent reads, reported separately and never combined. Raw pairs
+are in the 4B arm JSONLs cited in Appendix~\ref{app:ledger}.
 
-\paragraph{1.7B, a hard negative with a matched control.} The rung's final-eval generation
-gives trained medians 21{,}468 / 43{,}660 / 71{,}270 (seeds 0/1/2) against a matched
-untrained-1.7B control of 11{,}508 (mean 11{,}405): $0/30$ paired wins on every seed, median
-regressions of $1.87\times$, $3.79\times$, $6.19\times$. A separate earlier curriculum-
-validation generation (means 47{,}125 / 36{,}734 / 61{,}073) recorded the arm used for the
-selection rule; both generations agree on the outcome, and neither is close to a pass.
-Training made this rung worse than its own starting readout, which is the strongest form of
-the negative available in this design. The pre-registered collapse gate additionally tripped
-on the 5e-5 arm $(\texttt{STOPPED\_collapse.json})$; the surviving 1e-5 arm is the one
-reported above.
+\paragraph{1.7B, a within-size regression with a matched control.} The rung's final-eval
+generation gives trained medians 21{,}468 / 43{,}660 / 71{,}270 (seeds 0/1/2) against a matched
+untrained-1.7B control of 11{,}508 (mean 11{,}405): 0/30 paired wins on every seed, median
+regressions $1.87\times$, $3.79\times$, $6.19\times$. A separate earlier curriculum-validation
+generation (means 47{,}125 / 36{,}734 / 61{,}073; pooled mean 48{,}311, the number the frozen
+selection rule used) exists; both generations agree on the outcome, and neither is close to
+a pass. Training made this rung worse than its own starting readout. The pre-registered
+collapse gate additionally tripped on the 5e-5 arm (\texttt{STOPPED\_collapse.json}); the 1e-5
+arm is the one reported above.
 
-\paragraph{0.6B, two training variants, one story.} Wave 7 ran six arms (three soft-target
-SFT, three exact-gradient R1) at matched seeds: all six fail the paired test against the
-matched untrained-0.6B control (0/30 wins each, perm gate n/a at that wave's protocol).
-Wave 8's R1 instance at the same scale tripped the pre-registered collapse gate on five of
-six arm tasks, and the whole R1 block was stopped by its own stop-loss rule
-(\texttt{W8-R1-DRAINED.md}, committed). So at 0.6B the answer is a measured negative under
-both recipe variants, not an inference.
+\paragraph{0.6B, two training variants.} Wave 7 ran six arms (three soft-target SFT, three
+exact-gradient R1) at three matched seeds each against the matched untrained-0.6B control
+(median 11{,}569): the wave-7 recomputation (\texttt{VERIFY-W7-EVAL.md}) shows 0/30 on
+\emph{every arm--seed row} of the binding noisy-argmax arm, not only an arm aggregate (arm
+medians 20{,}594 / 25{,}721 / 25{,}508 SFT and 37{,}384 / 32{,}516 / 27{,}652 exact-grad; sign
+$p = 1.0$ on each row; the RLCD arms also showed letter-lock, 1--2 distinct order values). The
+permutation gate's diagnostic consequence clause traces to wave-7 observation (state dates
+above). Wave 8's R1 instance at the same scale ran the same exact-gradient recipe: five of six
+(lr, seed) tasks trip the pre-registered collapse gate, the run is stopped by the
+pre-registered stop-loss, and no final eval exists for those arms. Trained-arm final-eval
+files for wave-8 0.6B did not reach the archive (named archive defect); the wave-7 arms and
+all untrained controls did.
 
-\paragraph{8B, a cross-rung cost regression with an incomplete control structure.} The four
+\paragraph{8B, a cross-rung cost regression with an explicit partial provenance tier.} The four
 8B arm tasks (2 lr $\times$ 2 seeds) ran across two external lanes (Snellius A100 jobs
-\texttt{28414248}, \texttt{28418615}; two Modal A100 legs). Doc-recorded final-eval means:
-5e-5 arm 35{,}289 / 12{,}444; 1e-5 arm 71{,}855 / 22{,}083. Three honest statements:
-(1) \emph{Cross-rung}: both 8B arms are $3.0\times$--$5.9\times$ the cost of the passing 4B
-arm under the same frozen protocol; the 8B rungs' best arm is $10.6\%$ \emph{above} the
-untrained-4B median it was previously (and incorrectly) compared to. (2) \emph{Seed spread
-inside the winning arm}: $35{,}289$ vs $12{,}444$, a $2.8\times$ ratio, and the 1e-5 arm's
-spread ratio is larger still $(3.25\times)$, reversed from an earlier draft's claim.
-(3) \emph{Within-size}: no matched untrained-8B control was ever evaluated, and the final
-eval JSONLs for these arms did not reach the archive, so G1 is not computable at 8B. The
-paper therefore reports 8B as NOT EVALUABLE on the within-size test and negative only as a
-cross-rung regression. The pre-registered selection rule still binds: selecting the 5e-5 arm
-(serial pooled mean) and refusing the cherry-pick of its better seed.
+\texttt{28414248} = 5e-5 seed 0, \texttt{28418615} = 1e-5 seed 0; two Modal A100 legs for the
+seed-1 legs after a budget amendment, Section~\ref{sec:prov}). Document-recorded final-eval
+means: 5e-5 arm 35{,}289 / 12{,}444; 1e-5 arm 71{,}855 / 22{,}083. Three descriptive claims, and
+only these:
+(1) \emph{Cross-rung}: under final-eval means, the 8B selected arm's seed-mean pooled
+$(35{,}289+12{,}444)/2 = 23{,}866.5$ vs the trained-4B arm's final-eval mean comparison basis,
+both under the same protocol; we deliberately withdraw the earlier median-vs-mean cross
+sentence, and the withdrawal reason is stated here so the direction flip is auditable: the
+same 23{,}866.5 sits \emph{below} the untrained-4B mean (27{,}886) but \emph{above} the
+untrained-4B median (21{,}578) by 10.6\%, so any median-vs-mean mixed statistic flips sign;
+mixed-statistic comparisons are omitted from every headline table row.
+(2) \emph{Seed spread inside the selected arm}: 35{,}289 vs 12{,}444, a $2.84\times$ ratio; the
+other arm's ratio is $3.25\times$ (larger). (3) \emph{Within-size}: no matched untrained-8B
+\emph{control evaluation} exists (the F3 threshold artifact is a diagnostic checkpoint, a
+different thing), and the 8B final-eval JSONLs did not reach the archive, so G1 is not
+computable at 8B. 8B is NOT EVALUABLE on the within-size test and negative only as a
+cross-rung regression. The frozen selection rule still binds: the pooled in-arm mean selects
+the 5e-5 arm, the better of its two seeds is refused as a headline, and no post-hoc
+substitution was applied.
 
-\paragraph{Mechanism: the tuned models are letter specialists.} The pre-registered
-consequence of a permutation-invariance fail is a label, and the label applies to every arm
-here: fixed-ordinal-scale specialist. Across three shuffled choice grids, trained arms keep
-the modal argmax \emph{letter} but not the argmax \emph{value}; the untrained control reads
-the same way. Training sharpened a fixed mapping from the visited state distribution onto
-that fixed output code, so the passing 4B arm is best described as a specialist scorer on
-the trained choice set, not a value-reading policy. This also explains why the pass did not
-transfer upward: at 8B the same recipe produced cost regressions on a grid specialization
-that only pays off where the 4B-scale state-action geometry lines up with it.
+\paragraph{Permutation diagnostic; what it does and does not show.} The pre-registered
+consequence of the shared 0.000 permutation-invariance read across trained arms and controls
+is a label and a withheld interface claim; the diagnostic itself is an observation about
+sensitivity to the answer mapping, not a mechanism. Zero value-preservations observed across
+512 states $\times$ 3 shuffles is not proof that the underlying preservation probability is
+zero. Our stated \emph{hypothesis} (proposed, not demonstrated) is that the passing 4B arm is
+a specialist scorer on the trained choice set: a fixed mapping from visited states to fixed
+output letters that happens to order well on the eval distribution. The shared diagnostic
+does not distinguish the passing rung from failing rungs and therefore does not by itself
+explain the between-size outcome difference; no intervention run isolates a mediator, so we
+offer no causal account of the 8B outcome.
 
-\paragraph{Interface-outperforms-training at small scale.} The largest measured improvement
-in the program is the \emph{readout}, not the gradient: closed-choice letter-logit readouts
-at 0.6B eliminated the free-form rogue-order tail entirely (0 rogue orders, parse failures 0
-across 21 arms and 427 run records, vs 7--188 rogue orders per wave-6 free-form arm), with
-no training step. The 4B pass is therefore best read jointly with that: the interface
-made the control stable and clean enough for a paired test to be run at all.
+\paragraph{Interface validity, precisely stated.} A 26-action constrained letter-logit readout
+structurally guarantees that the selected action is in the set; that is what the 0 rogue
+orders / 0 parse-failure counts demonstrate: on this program's own final-eval generations, 0
+rogue orders and 0 parse failures across 21 arms and 427 run records (a \emph{run} is one
+simulated game with $\sim$144 decisions; these counts are run-level, not
+independent-decision-level), against 7--188 rogue orders per arm in the wave-6 free-form lane
+under that lane's failure-handling rule (a free-form arm's out-of-contract order is dropped
+and flagged). A paired free-form-vs-closed-choice cost test was not run at matched conditions
+in this program, so no claim of superior total cost from the interface alone is made; the
+recorded effect is removal of an invalid-output failure mode shared by trained and untrained
+free-form policies. The 4B pass is best read jointly with this: the interface made the
+control and treatment stable enough for a paired test to be run at all.
 
 \section{Provenance and amendments}\label{sec:prov}
-We distinguish what was frozen before training, what was amended, and one item we could not
-fully verify from the artifacts:
+We separate planned contingencies (handling pre-written in the spec before results), actual
+amendments (documented at the time), and open items. Commit anchors and first-run timestamps:
 \begin{itemize}
-  \item \textbf{Frozen before any training (committed 2026-10-07).} The spec
-  (\texttt{WAVE8\_SPEC.md}), the failing-grid record
-  (\texttt{results/wave8/f0\_w8\_g26\_prereg.json}), the revised grid \texttt{w8\_g26b},
-  and F0/F1 passages were all committed before the first GPU job. Commit SHAs are cited
-  per rung in the artifact ledger.
-  \item \textbf{Documented amendments.} (a) 0.6B R1 stopped as a whole by the
-  pre-registered stop-loss rule after both lr arms' seeds tripped the
-  collapse gate; consequence pre-written in the spec (\S6.5); R3 was not
-  run. (b) 8B budget amendment: two seed-1 legs (one cancelled mid-run,
-  one auto-killed, reason=budget) were re-run on a second
-  lane after the first lane's budget ran out; gates stayed the frozen,
-  model-determined \texttt{gates\_8b.json}; the micro-batch difference is
-  a grad-accum split with equal effective batch 32 (documented, not an
-  optimizer confound). (c) 4B ran a single lr arm (5e-5) rather than
-  both: the operating plan stages each rung at the previous rung's
-  selected lr; we flag this as a deviation from a full-lr reading, so
-  the 4B pass is conditional on 5e-5 being the right arm. The 1.7B arm
-  at 1e-5, the other candidate, was much worse; that is the only
-  evidence we have that 5e-5 was the better choice.
-  \item \textbf{Open provenance item (flagged, not resolved).} The 1.7B operating plan
-  (\texttt{W8-START-17B.md}, \texttt{W8-NEXT-SUBMITS.md}) names 5e-5 as the planned lr;
-  the arm that actually ran is 1e-5, and no amendment note for that switch was found in
-  the committed docs. The validation files on disk carry both lr arms' names; the
+  \item \textbf{Frozen before wave-8 training.} Spec and wave-8 pre-registration committed
+  2026-10-07, sha \texttt{7d3260b}; the wave-8 spec text itself pins the failing-grid record
+  (\texttt{results/wave8/f0\_w8\_g26\_prereg.json}), the revised grid \texttt{w8\_g26b}, and
+  the F0/F1 passage hashes (\texttt{4b8bffb} cluster kit, same day). First wave-8 GPU job:
+  0.6B R1 training log starts 2026-10-08T13:19 (+02:00), i.e.\ after both commits. Wave-7
+  observations predate this and explicitly informed the permutation consequence clause, which
+  is therefore wave-7-provenance; its text was frozen in the wave-8 spec before wave-8 training.
+  \item \textbf{Planned contingencies, not amendments.} (a) 0.6B R1 stop: the spec pre-writes
+  (\S6.5) that a collapse-tripped run is stopped by stop-loss; the run was stopped accordingly
+  after both lr arms' seeds tripped \texttt{STOPPED\_collapse.json}, and no final eval exists
+  for those arms. (b) The collapse gate, permutation consequence clause, selection rule, and
+  G1 pass rule were all frozen before training.
+  \item \textbf{Amendments actually made (documented at the time).} (a) 8B budget amendment:
+  two seed-1 legs (one cancelled mid-run, one auto-killed, reason=budget) were re-run on a
+  second lane after the first lane's GPU budget ran out; the per-rung gates stayed the frozen,
+  model-determined \texttt{gates\_8b.json}. The nominal effective batch (32) was matched
+  across lanes via a grad-accum split; conversely we do \emph{not} claim optimizer-for-step
+  equivalence across the lanes, because micro-batch composition, providerized numerical
+  precision, and RNG seeding differ and we did not run an equivalence test.
+  (b) 4B ran a single lr arm (5e-5) rather than both: the operating plan stages each rung at
+  the previous rung's selected lr; flagged as a deviation from a full-lr reading, so the 4B
+  pass is conditional on 5e-5 being the right arm at that rung. The other lr's 1.7B evidence
+  (much worse at 1e-5) is indirect support, not a controlled comparison at 4B.
+  \item \textbf{Open provenance item (stated as open).} The 1.7B operating plan
+  (\texttt{W8-START-17B.md}, \texttt{W8-NEXT-SUBMITS.md}) names 5e-5 as the planned lr; the
+  arm that actually ran is 1e-5, and no amendment note for that switch was found in the
+  committed docs. The arm's validation files on disk carry both lr arms' names; the
   discrepancy does not change any verdict (the lr that ran is far above its rung control
-  under either generation), but a clean ladder needs a note resolving it. We flag it
-  rather than paper over it.
+  under either generation), but a clean ladder needs a note resolving it. It is carried
+  forward unresolved rather than reconstructed from submit history.
+  \item \textbf{Result-inspection ordering.} The curriculum-validation band (\texttt{wave8\_val})
+  was the selection input; the final-eval generation (\texttt{eval/}, newer by 17 h at 4B and
+  31 h at 1.7B, same adapters at checkpoint-169) was produced afterwards and is the version
+  all within-size verdicts and effect sizes are computed on this manuscript. When final-eval
+  numbers were first inspected, the selection rule had already fixed the arm choice, so no
+  selection step used the final-eval generation; per-seed report cuts made after inspection
+  are not used to change any verdict.
 \end{itemize}
 
 \section{Analysis}\label{sec:analysis}
-\paragraph{What survives.} One rung passes the frozen cost gate on both seeds. One rung
-fails it with 0/3 seeds against a matched control. One rung is unconditionally negative
-under two recipe variants. One rung cannot be evaluated within-size because its control
-does not exist, and is negative only as a cross-rung regression. A reader who wants a
-one-line summary: \emph{closed-choice readouts stabilize the agent interface enough for
-training to be testable; outcome-scored exact-gradient post-training pays off exactly once
-in four scale attempts, at the 4B rung, and is a measured regression everywhere else.}
+\paragraph{What survives.} One rung passes the frozen cost criteria on both evaluated seeds,
+with both effect sizes reported and the raw pairs archived. One rung fails on all three seeds
+against a matched control. One rung is negative under two training variants at the same scale.
+One rung cannot be evaluated within-size because its control evaluation does not exist, and
+its learned arms are negative only as a cross-rung regression. One-line summary: closed-choice
+readouts stabilized the interface enough for paired training evaluations to be run at all,
+and exact-enumeration outcome-scored post-training paid off at exactly one scale point (4B)
+under the frozen rule.
 
-\paragraph{The selection rule as a scientific instrument.} The 8B seed spread inside the
-winning arm is the point. Without the frozen rule, a $12{,}444$ seed sits below the
-untrained-4B reference and a $35{,}289$ seed does not; a per-seed report picks the
-flattering one. The pre-registered in-arm pooling (mean of the arm's seeds, computed
-before outcomes were known to the analyst) removes that interpretive freedom. This part of
-the program is the most transferable lesson for independent replications: the rule's value
-shows up precisely on the arm where it contradicts the flattering read.
+\paragraph{The selection rule as a methodological point.} The 8B seed spread inside the
+selected arm (35{,}289 vs 12{,}444; ratio $2.84\times$) is the unit demo. A per-seed report
+can pick the flattering seed (12{,}444); the frozen in-arm pooled mean cannot. State it as
+it is known: the \emph{aggregation rule} was frozen in the spec before outcomes were reviewed
+by the analyst (commit-pinned, dated); the realized pooled mean was computed by a
+non-blinded analyst when the validation outputs landed. What the rule removes is post-hoc
+interpretive freedom, not hindsight in the analyst; we make no blinding claim.
 
 \section{Limitations}\label{sec:limits}
 \begin{itemize}
-  \item Simulated environment; external validity is the original paper's problem too.
-  \item Two seeds per passing rung (4B), three elsewhere; the verdict is conditional on
-  pre-registered seed counts, no more. No inferential test of the cross-rung comparisons
-  is offered; the paper's within-size claims are all paired tests, the cross-rung ones are
-  descriptive.
-  \item The training objective is an exact-enumeration policy gradient with a frozen KL
-  anchor; it is not the published RLCD pipeline and not GRPO's group-relative form. A
-  verbatim re-run of either is future work.
-  \item Hardware differs across rungs (L4 for 0.6B--4B; A100 lanes for 8B), and the 8B
-  run spanned two providers. Within a rung the configuration is protocol-equivalent
-  (same torch/transformers/peft stack pinned).
-  \item No matched untrained-8B control exists; the 8B row's verdict is cross-rung only.
-  \item The 1e-5 seed-1 1.7B arm's \texttt{min\_mass} artefact ($5\times 10^{-9}$) is an
-  open stability read.
+  \item Simulated environment; external validity is a shared problem of this study and the
+  reference claim.
+  \item \textbf{Seed inventory, exact.} 0.6B wave-7: 6 arms $\times$ 3 seeds. 0.6B wave-8 R1:
+  2 lr $\times$ 3 seeds (all six tripped mid-run; no final eval). 1.7B: 1 lr $\times$ 3 seeds.
+  4B: 1 lr $\times$ 2 seeds. 8B: 2 lr $\times$ 2 seeds. Total trained-with-verdict seeds: 11.
+  Every verdict is conditional on its pre-registered seed count; with 11 arms across 4 scales
+  there is no statistical test of any scaling claim, and we offer none. Cross-rung
+  comparisons are descriptive.
+  \item The training objective is an exact-enumeration policy gradient with a frozen
+  per-state KL anchor; the reference objective also uses a frozen reference KL (v4 eq.~2), so
+  that component is shared, not a delta; the enumerated deltas are in
+  Appendix~\ref{app:deltas}. A verbatim re-run of the reference GRPO recipe or of published
+  RLCD \cite{rlcd} is future work, and this study's positive rung is conditional on our
+  particular recipe deltas.
+  \item Hardware differs across rungs (L4 for 0.6B--4B; A100 lanes for 8B), and the 8B run
+  spanned two providers; the nominal effective batch was matched but optimizer-step/numerical
+  equivalence across providers was not established.
+  \item No matched untrained-8B control evaluation exists (the frozen F3 thresholds come from
+  an untrained-8B \emph{diagnostic} checkpoint, a different artifact); the 8B row's
+  within-size verdict is genuinely unevaluated, not negative.
+  \item The 1e-5 seed-1 1.7B arm's \texttt{min\_mass} artifact ($5\times10^{-9}$) is an open
+  stability read; the \texttt{min\_mass} statistic is the readout's minimum probability mass
+  assigned to the 26 in-grid letters on a run, thresholded at $\geq 0.9$ (G7, from wave-7's
+  observed 0.924--0.982 range).
   \item The 1.7B learning-rate provenance item in Section~\ref{sec:prov} is unresolved.
+  \item No bullwhip-amplification statistic, order-trajectory plot, or reliability-tail
+  analysis is supplied; the claims here are realized total costs, paired comparisons, and
+  interface validity, and costs alone do not measure the reliability dimension the reference
+  paper targets (its headline is variance compression).
 \end{itemize}
 
 \section{Reproducibility statement}\label{sec:repro}
-The full audit trail exists: per-run JSON for three of four rungs on the primary cluster
-archive, \texttt{sbatch} ledger with job IDs, the committed spec and amendment records, the
-8B doc-recorded numbers with their lane metadata, and the trainer module paths. No number
-in this paper was produced without a corresponding artifact or a doc-recorded provenance
-line; the 8B row's format is named as such above. The repository and artifacts are
-available on request.
+The audit trail is tiered, stated as such: (a) full per-run JSON on the primary cluster
+archive for the 0.6B wave-7 arms, untrained 0.6B/1.7B/4B, trained 1.7B (both generations),
+and trained 4B (both seeds, all three readouts plus permutation JSON); (b) present but
+final-eval-incomplete: the wave-8 0.6B R1 arms (round structure, collapse reads, training
+logs present; their final-eval files did not reach the archive, a named defect); (c) for 8B,
+document-level provenance only (verdict doc, sbatch/Modal job IDs, lane metadata); raw 8B
+final-eval JSONLs were not recovered. Honest label for the whole: \emph{partial archived
+audit trail, with document-level provenance for 8B}. Env pinning: model snapshots pinned per
+rung (tokenizer + base model revisions in the kit's \texttt{config.sh}); the pinned library
+stack per provider is torch 2.1.2 / transformers 4.55.4 / peft 0.21.1 as installed by the
+staged sbatch kit; simulator and trainer modules are cited by path in the artifact ledger
+with commit SHAs \texttt{7d3260b} (spec), \texttt{4b8bffb} (cluster kit), and the per-rung
+anchors (\texttt{5317d2d}, \texttt{73439c4}). Numbers in this paper are labeled per row as
+either recomputed-from-raw or doc-recorded; recovering the raw 8B evals would be new evidence
+and would not silently replace the historical doc-recorded rows. The repository and artifacts
+are available on request.
 
 \section*{Acknowledgments}
-This paper is an independent, unfunded replication program. The authors of
-\texttt{arXiv:2605.17036} are the reference pole, not co-authors. Our thanks to the TU/e
-Umbrella compute staff for generous L4 time.
+This is an unfunded independent replication program. The authors of \cite{long2026} are the
+reference pole, not co-authors. Thanks to the TU/e Umbrella compute staff for generous L4
+time.
 
 \bibliographystyle{plain}
 \begin{thebibliography}{9}\itemsep 0pt
-\bibitem{long2026} C. X. Long, D. Simchi-Levi, F. Zhu, H. Su, A. du Pin Calmon, F. P. Calmon,
-``Reliability and Effectiveness of Autonomous AI Agents in Supply Chain Management,''
-\texttt{arXiv:2605.17036} (2026).
-\bibitem{rlcd} K. Yang, D. Klein, A. Celikyilmaz, N. Peng, Y. Tian,
-``RLCD: Reinforcement Learning from Contrastive Distillation for Language Model
-Alignment,'' \texttt{arXiv:2307.12950} (2023; ICLR 2024).
-\bibitem{grpo} Z. Shao, P. Wang, Q. Zhu, R. Xu, J. Song, X. Bi, H. Zhang,
-M. Zhang, Y. K. Li, Y. Wu, D. Guo,
-``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language
-Models,'' \texttt{arXiv:2402.03300} (2024). (GRPO.)
-\bibitem{lora} E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang,
-L. Wang, W. Chen,
-``LoRA: Low-Rank Adaptation of Large Language Models,'' \texttt{arXiv:2106.09685}
-(2021).
-\bibitem{aimbench} X. Zhao, Y. Xie, C. Chen, Y. Sun,
-``AIM-Bench: Evaluating Decision-making Biases of Agentic LLM as Inventory
-Manager,'' \texttt{arXiv:2508.11416} (2025).
-\bibitem{sterman} J. D. Sterman,
-``Modeling Managerial Behavior: Misperceptions of Feedback in a Dynamic Decision
-Making Experiment,'' \textit{Management Science} 35(3), 321--339 (1989).
+\bibitem{long2026} C.~X. Long, D.~Simchi-Levi, F.~Zhu, H.~Su,
+A.~P.~Calmon, F.~P.~Calmon, ``Reliability and Effectiveness of Autonomous AI Agents in Supply
+Chain Management,'' \texttt{arXiv:2605.17036}, version 4 (2026-10-22); v1 2026-05-16.
+\bibitem{rlcd} K.~Yang, D.~Klein, A.~Celikyilmaz, N.~Peng, Y.~Tian,
+``RLCD: Reinforcement Learning from Contrastive Distillation for Language Model Alignment,''
+\texttt{arXiv:2307.12950} (2023; ICLR 2024).
+\bibitem{grpo} Z.~Shao, P.~Wang, Q.~Zhu, R.~Xu, J.~Song, X.~Bi, H.~Zhang, M.~Zhang,
+Y.~K.~Li, Y.~Wu, D.~Guo, ``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
+Language Models,'' \texttt{arXiv:2402.03300} (2024). (GRPO.)
+\bibitem{lora} E.~J.~Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, W.~Chen,
+``LoRA: Low-Rank Adaptation of Large Language Models,'' \texttt{arXiv:2106.09685} (2021).
+\bibitem{aimbench} X.~Zhao, Y.~Xie, C.~Chen, Y.~Sun, ``AIM-Bench: Evaluating Decision-making
+Biases of Agentic LLM as Inventory Manager,'' \texttt{arXiv:2508.11416} (2025).
+\bibitem{sterman} J.~D. Sterman, ``Modeling Managerial Behavior: Misperceptions of Feedback in
+a Dynamic Decision Making Experiment,'' \textit{Management Science} 35(3), 321--339 (1989).
 \end{thebibliography}
 
 \appendix
-\section{Recipe $\times$ Scale delta table}\label{app:deltas}
+\section{Recipe $\times$ protocol delta table}\label{app:deltas}
+Rows are split by component; the KL-reference row is shared (the reference's v4 objective
+eq.~2 already penalizes $D_{\mathrm{KL}}(\pi_\theta \Vert \pi_{\mathrm{ref}})$ to a frozen
+$\pi_{\mathrm{ref}}$), so it is NOT a delta.
 \begin{table}[ht]
 \centering
-\caption{Where our recipe deliberately differs from the reference protocol.}
-\begin{tabular}{@{}lll@{}}
+\caption{\cite{long2026} v4 vs this paper, per component.}
+\begin{tabular}{@{}p{3.4cm}p{4.6cm}p{4.6cm}@{}}
 \toprule
-\textbf{Axis} & \textbf{Reference (2605.17036)} & \textbf{This paper} \\
+\textbf{Component} & \textbf{Reference (2605.17036 v4)} & \textbf{This paper} \\
 \midrule
-Cost gradient & sampled-$K$ & exact enumeration over all 26 choices \\
-Readout & free-form autoregressive & closed-choice letter logits (26 letters) \\
-Anchor & GRPO-style group-relative & frozen KL anchor, per-state $z$-scored $J$ \\
-Seeds & 2 (4B run) & pre-registered per rung (2--3) \\
+Cost/advantage normalization & group-sampled form over $G$ rollouts & per-state $z$-score
+enumerated over all 26 choices \\
+KL reference policy & frozen $\pi_{\mathrm{ref}}$ (v4 eq.~2), shared &
+frozen per-state anchor (shared) \\
+Readout & free-form autoregressive orders & closed-choice letter logits (26 letters) \\
+Reward attribution & rollout (return-to-go) vs episode & exact per-(state,action) continuation
+cost $J$ \\
+Model & one shared backbone, four echelons (global); per-echelon models (decentralized) &
+one shared backbone across roles \\
+Reward aggregation studied & agent-level vs system-level & system-level continuation cost
+(most comparable to rollout + system scope) \\
+Training-run seed count & not stated in the v4 text we could read & pre-registered per rung
+(Section~\ref{sec:limits}) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Artifact ledger excerpt}\label{app:ledger}
-Eval generations: \texttt{eval/w8-r1-\{rung\}-seed\{n\}-\{composition\}} are
-the final eval generation; \texttt{wave8\_val/} is the
-curriculum-validation band used by the frozen selection rule. The 0.6B
-wave-8 R1 arms carry their own stop-marker semantics
-(\texttt{STOPPED\_collapse.json} plus a silent-resume defect documented
-in \texttt{W8-R1-DRAINED.md} \S5). Job numbers for the 8B lanes:
-Snellius \texttt{28414248} (5e-5 seed 0), \texttt{28418615} (1e-5 seed
-0); the 8B seed-1 legs ran on Modal (IDs in the verdict doc). Full
-per-run JSON in the archive for three of four rungs; the 8B final-eval
-JSONLs did not reach the archive and are cited as doc-recorded numbers.
+\section{Artifact ledger excerpts}\label{app:ledger}
+Eval generations: \texttt{eval/w8-r1-\{rung\}-seed\{n\}-\{composition\}} are the final-eval
+generation; \texttt{wave8\_val/} is the curriculum-validation band used by the frozen
+selection rule. Commit anchors: \texttt{7d3260b} (2026-10-07, spec), \texttt{4b8bffb}
+(2026-10-07, cluster kit), first 0.6B R1 training log 2026-10-08. 8B lanes: Snellius
+\texttt{28414248} (5e-5 seed 0), \texttt{28418615} (1e-5 seed 0); the 8B seed-1 legs ran on
+Modal (IDs in the verdict doc). Full per-run JSON archive for 0.6B w7, untrained
+0.6B/1.7B/4B, 1.7B both generations, 4B both seeds; wave-8 0.6B R1 final-eval files and the
+8B final-eval JSONLs did not reach the archive (named defects; doc-recorded rows are labeled
+as such in every table and paragraph).
 \end{document}
