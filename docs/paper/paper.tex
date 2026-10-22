@@ -1,0 +1,231 @@
+
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\newcommand{\eg}{e.g.}
+\newcommand{\ie}{i.e.}
+
+\title{Post-Tuned LLM Decision Agents on a Simulated Bullwhip Environment:\\
+A Pre-Registered Scale Ladder (0.6B--8B): One Rung Passes, Three Fail}
+\author{Pepijn Frenken\\
+Department of Industrial Engineering and Business Information Systems,\\
+Eindhoven University of Technology\\
+\texttt{[email placeholder]}
+}
+\date{October 22, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Post-training an LLM agent with reinforcement learning is the standard response to unreliable
+autonomous decision-making in supply-chain simulations. The original supporting claim in this
+line of work reports that a GRPO-tuned 4B agent beats its own untrained baseline on cost in a
+four-tier beer-game environment. We ran that recipe as a \emph{pre-registered scale ladder}
+with a fixed verdict rule: pooled validation over the complete learning-rate $\times$ seed grid
+selects the arm, and the arm's pooled mean must beat the paired untrained readout. We ran this
+protocol at four model scales: 0.6B, 1.7B, 4B, and 8B. The outcome is rung-dependent with exactly
+one pass: 0.6B failed (six training arms, none beat the untrained control; a subsequent exact-gradient
+RLCD attempt at the same scale tripped the collapse gate on 5 of 6 tasks), 1.7B failed (distribution
+collapse at one learning rate, pooled cost near 4$\times$ the untrained-4B baseline at the other),
+4B passed cleanly (2/2 seeds, $\sim$1.4--1.6$\times$ the walk-forward floor), and 8B failed (best
+pooled arm 3.0$\times$ the trained 4B result, slightly worse than untrained, with a 2.8$\times$
+seed spread inside the winning arm). The verdict rule is the paper's methodological contribution:
+at 8B it blocked a post-hoc ``lucky seed'' reading that would have produced a false positive. We
+release the full audit trail (specs, per-run JSON, sbatch ledger, commit SHAs).
+\end{abstract}
+
+\section{Introduction}\label{sec:intro}
+Post-training LLM agents for operational decision problems is an active recipe family. The
+motivating published claim for this paper is \textit{Long, Simchi-Levi, Zhu, Su, du Pin Calmon
+and Calmon} (\texttt{arXiv:2605.17036}), which reports that a GRPO-tuned autoregressive 4B agent
+beats an untrained 4B on cost in a four-tier Beer-Game simulator. The open question is not
+whether such a claim can hold once at one scale, but whether it holds under \emph{pre-registered}
+controls \emph{and} whether it survives scaling.
+
+We test both on a public four-tier beer-game style environment. Our recipe adaptation (exact
+expected-cost policy-gradient over the full closed action set, frozen-anchor KL, closed-choice
+letter readout) is applied unchanged at 0.6B, 1.7B, 4B, and 8B. Every rung inherits the same
+pre-registered gates and the same numeric verdict rule. Where the recipe had to change
+(the 0.6B wave also carried a soft-target SFT arm family), the change is documented, dated,
+and reported as a separate result.
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item A pre-registered recipe instance for post-tuning a decision-native readout on a
+  beer-game cost signal, with frozen gates (synthetic-regret F0, tokenizer check F1, label
+  integrity F2, collapse stopping F3, permutation-invariance gate).
+  \item A complete scale-ladder read (0.6B--8B) under that fixed protocol. Exactly one rung
+  passes (4B).
+  \item A methodological result: the verdict rule blocked a post-hoc seed pick at 8B that would
+  have flipped the verdict from negative to positive.
+  \item A negative mechanism finding: the trained policies are \emph{fixed-ordinal-grid
+  specialists}. All permutation-invariance gates read 0.000 (6 trained arms at 0.6B,
+  plus 1.7B/4B/8B reads); the pick is a letter position, not a value-invariant quantity.
+\end{itemize}
+
+\section{Environment}\label{sec:env}
+The environment is a four-tier (retailer / wholesale / distributor / factory) Beer-Game
+simulator with real weekly demand, bounded backorders, and a per-stage linear holding and
+stock-out cost. Agents output one order per stage per week on a frozen, closed ordinal
+action grid (\texttt{w8\_g26b}, 26 values on $[36,200]$). This grid was amended once from a
+prior candidate grid (\texttt{g26}) after pre-flight gate F0 failed on 1{,}000 probe states;
+the amendment is logged in the spec before any training started. Cost readout is exact
+expected cost (not sampled-$K$), which matters for the train-time estimator and is listed as a
+delta from the original recipe.
+
+\section{Protocol and Gates}\label{sec:gates}
+The protocol is commit-then-run: every gate and the verdict rule are frozen in version-derived
+spec files before any GPU is allocated. Changes are logged, timestamped, and evidence-backed;
+we cite three amendments in this paper's lifecycle (pre-registered grid revise, 4B seed cap,
+8B budget amendment). The gates:
+\begin{itemize}
+  \item \textbf{F0 synthetic-regret.} Can the readout express enough ordinal signal at the
+  intended resolution to be worth training? Should the gate fail on the intent grid, the grid
+  gets revised (and the amendment logged) \emph{before} training, not after.
+  \item \textbf{F1 tokenizer.} Teacher and student encodings match.
+  \item \textbf{F2 label integrity.} No prompt leakage between label and policy data.
+  \item \textbf{F3 collapse stopping rule.} A rolling distribution-collapse detector halts and
+  marks the arm. \texttt{STOPPED\_collapse.json} is a first-class result, not an error.
+  \item \textbf{Permutation invariance.} Trained arms must preserve the argmax \emph{value}
+  under $\geq 3$ shuffled option grids in $\geq 0.90$ of validation states. This gate never
+  passed (see Section~\ref{sec:analysis}).
+  \item \textbf{Verdict rule.} Arm selection uses pooled validation mean over the
+  pre-registered learning-rate $\times$ seed grid; the selected arm must beat the paired
+  untrained readout for its rung. Never a post-hoc pick.
+\end{itemize}
+
+\section{Results}\label{sec:results}
+Table~\ref{tab:ladder} is the headline result. Lower cost is better.
+
+\begin{table}[ht]
+\centering
+\caption{Pre-registered scale ladder, one recipe (adapted GRPO-style RLCD), pooled validation
+cost per rung. Reference points: untrained 0.6B = 11{,}569 (noisy argmax), untrained 4B =
+21{,}578; walk-forward formula floor $\sim$3{,}206 (step pattern).}
+\label{tab:ladder}
+\small
+\begin{tabular}{@{}llp{5.2cm}l@{}}
+\toprule
+\textbf{Scale} & \textbf{Recipe variant} & \textbf{Pooled val cost} & \textbf{Verdict} \\
+\midrule
+0.6B (wave 7) & 3 SFT + 3 RLCD arms & all 6 arms: 0/30 wins vs control (C1 fail) & NEG \\
+0.6B (wave 8 R1) & exact-gradient RLCD & 5/6 tasks trip collapse gate & NEG \\
+1.7B            & exact-gradient RLCD & 1e-5 arm pooled 48{,}311; 5e-5 arm collapse & NEG \\
+4B              & exact-gradient RLCD & pooled 7{,}964 (8{,}315 / 7{,}612) & \textbf{PASS} \\
+8B              & exact-gradient RLCD & best arm 23{,}867; vs untrained 4B 21{,}578 & NEG \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Seed variance at 8B.} At the winning 5e-5 arm: seed 0 = 35{,}289, seed 1 = 12{,}444.
+The 2.8$\times$ spread is real and is a finding: any single-seed reading of that arm can be
+made to fall on either side of the 4B result. The verdict rule refuses the pick. Under 1e-5
+the spread is smaller (71{,}855 / 22{,}083, pooled 46{,}969). Collapsed-arm behavior is
+excluded from the mean only via the pre-registered collapse gate, never by judgment call.
+
+\paragraph{Mechanism: the tuned models are letter specialists.} The permutation-invariance
+gate never passes at any rung (invariance 0.000). Trained arms preserve the argmax
+\emph{letter}, not the argmax \emph{value}: across shuffled grids, the modal letter stays
+constant while the order quantity that letter maps to changes. Training sharpened a fixed
+ordinal grid, \ie a fixed-grid specialist, not a scale-invariant policy. This caps cross-grid
+transfer and is our best mechanistic explanation for why the tuned advantage dies between 4B
+and 8B: the specialist reads the tuned grid but cannot generalize it.
+
+\paragraph{Interface-outperforms-training at small scale.} The biggest measured improvement
+in our program is the \emph{readout}, not the gradient: closed-choice letter-logit readouts
+at 0.6B eliminated the free-form rogue-order rate entirely (0 vs 7--188 rogue orders per
+wave-6 arm), without any training step. This strengthens the ``the models need interfaces,
+not just gradients'' interpretation.
+
+\section{Analysis}\label{sec:analysis}
+\paragraph{What survives the gates.} The 4B rung passes pre-registered G1 with two seeds
+on our exact-cost gradient and closed-choice readout. At 1.7B the same recipe produces a
+distribution collapse at one learning rate and a high-cost no-collapse arm at the other. At
+8B the recipe produces a \emph{seed-variance-dominated} arm at 5e-5 and a globally worse arm
+at 1e-5. Reading the whole ladder left-to-right, the tuned advantage is \emph{not} monotone
+in scale, and the single positive rung sits in the middle. No claim in this paper rests on
+an arm whose verdict required bypassing a gate.
+
+\paragraph{The verdict rule as a scientific instrument.} The 8B seed spread is the point.
+Without pre-registered pooling, a single-seed report could read 12{,}444 and claim a pass
+(better than trained 4B's 7{,}964? no - worse, but faster to overstate), or read 35{,}289
+and claim a failure. The rule that computes the pooled mean over the whole pre-registered
+grid removes that interpretive freedom. We consider this paper's most transferable finding
+for any independent replication program.
+
+\section{Limitations}\label{sec:limits}
+\begin{itemize}
+  \item Simulated environment; external validity is exactly the original paper's problem too.
+  \item Two seeds per rung (4B, 8B); three seeds per arm (0.6B wave 7, 1.7B). The verdict is
+  conditional on pre-registered seed counts, no more.
+  \item The recipe is a delta adaptation of the original: exact expected cost instead of
+  sampled-$K$, frozen-anchor KL, closed-choice letter grid. We did not run the public recipe
+  verbatim.
+  \item Hardware tiers differ across rungs (L4 vs A100), always within one rung.
+  \item The 1e-5 seed-1 1.7B arm's \texttt{min\_mass} artefact ($5\times 10^{-9}$) is an open
+  stability read (pre-print should flag this run either way).
+\end{itemize}
+
+\section{Reproducibility statement}\label{sec:repro}
+The full audit trail is citable: per-run JSON, \texttt{sbatch} ledger with job IDs, spec files
+with amendments, commit SHAs per rung, and the trainer module paths (\texttt{agent\_bullwhip/}
+kit, exact). No number here exists without its artifact. The repo is \texttt{[release URL]}.
+
+\section*{Acknowledgments}
+This paper is an independent, unfunded student-side replication program. The authors of
+\texttt{arXiv:2605.17036} are the reference pole, not co-authors; our thanks to the TU/e
+Umbrella compute staff for generous L4 time.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}\itemsep 0pt
+\bibitem{long2026} C. X. Long, D. Simchi-Levi, F. Zhu, H. Su, A. du Pin Calmon, F. P. Calmon,
+``Reliability and Effectiveness of Autonomous AI Agents in Supply Chain Management,''
+\texttt{arXiv:2605.17036} (2026).
+\bibitem{rlcd} [to fill: RLCD / representation-free RL distillation refs]
+\bibitem{clef} [to fill: Cloudflare Clef decision-native readout refs]
+\end{thebibliography}
+
+\appendix
+\section{Recipe $\times$ Scale delta table}\label{app:deltas}
+\begin{table}[ht]
+\centering
+\caption{Where our recipe deliberately differs from the reference protocol.}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Axis} & \textbf{Reference (2605.17036)} & \textbf{This paper} \\
+\midrule
+Cost gradient & sampled-$K$ & exact expected cost, all 21 actions \\
+Readout & free-form autoregressive & closed-choice letter logits (26 letters) \\
+Anchor & GRPO & frozen-$\pi_{sft}$ KL, $\beta=0.02$ \\
+Seeds & 2 (4B run) & pre-registered grid per rung (2--3) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Artifact ledger excerpt}\label{app:ledger}
+\begin{table}[ht]
+\centering
+\caption{Per-rung sbatch job identifiers (cluster ledger; full JSON in repo).}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Rung} & \textbf{Job(s)} & \textbf{Doc} \\
+\midrule
+0.6B wave 7 & eval readouts (Jev + readout) & \texttt{VERIFY-W7-EVAL.md} \\
+0.6B wave 8 R1 & 407006 & \texttt{W8-CONSOLIDATION.md} \\
+1.7B R1 & (cluster, \texttt{results/wave8\_r1-1.7b-*}) & \texttt{W8-START-17B.md} \\
+4B R1 & 28414248 (seed 0) & \texttt{WAVE8\_WORD8B\_RESULT.md} \\
+8B R1 2$\times$2 & 28414248 / 28418615 / Modal legs & \texttt{WAVE8\_WORD8B\_RESULT.md} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
