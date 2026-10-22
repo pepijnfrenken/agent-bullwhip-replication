@@ -94,7 +94,8 @@ Core gates:
 
 | rung | recipe | val cost (pooled) | vs own floor tier | verdict |
 |---|---|---|---|---|
-| 0.6B | soft-target SFT + RLCD, 3 seeds x 6 arms | C1 fail 0-12/30 on all arms, perm gate 0.000, letter-lock | - | NEG training |
+| 0.6B (wave7) | 3 SFT arms + 3 RLCD arms (exact-gradient, matched seeds) | C1 fail 0/30 wins on all six; perm gate 0.000; RLCD letter-lock (uniq orders 1-2) | - | NEG both recipe variants |
+| 0.6B (wave8 R1) | exact-gradient RLCD from untrained readout, 3x170 steps | 5/6 (lr,seed) tasks tripped STOPPED_collapse; surviving arm passed to ladder [1] | - | NEG (collapse) |
 | 0.6B | R1 (closed-choice) | closed-choice killed rogue tail 0 rogue vs 7-188 wave6; stable untrained control 11,569 | - | interface-positive, training-null |
 | 1.7B | R1 recipe | 5e-5 arm: STOPPED_collapse (collapsed=true, medH 6.3e-05, I 2.1e-06); 1e-5 arm pooled 48,311 (47,125 / 36,734 / 61,073) | worse than untrained-4B (21,578) | NEG (collapse + cost) |
 | 4B | R1 recipe, 2 seeds | 8,315 / 7,612 (pooled 7,964) | 1.42-1.56x floor | PASS (G1) |
@@ -102,6 +103,17 @@ Core gates:
 
 Untrained reference line: 0.6B 11,569; 4B 21,578; 8B 21,578 (same untrained-4B checkpoint
 reference used by the 8B comparison).
+
+[1] Training condition per rung (IMPORTANT for the honest-claims bar):
+- 1.7B, 4B, 8B rungs: identical wave-8 R1 recipe = outcome-scored EXACT-gradient RLCD
+  (all 21 actions scored, zero sampling variance; loss = sum_a pi(a) J(a)/std_a(J) +
+  beta_kl KL vs frozen pi_sft), LoRA on the untrained readout, 3 rounds, closed-choice
+  letter-grid readout. Same trainer (decision_train.py --phase rlcd --rlcd-sample-k 0),
+  same sbatch kit. So the cross-rung comparison is apples-to-apples at 1.7B/4B/8B.
+- 0.6B got TWO training waves: wave-7 (3 SFT arms + 3 RLCD arms) and wave-8 R1
+  (exact-gradient RLCD, job 407006, 5/6 tasks tripped collapse). Negative under both.
+- Deliberate recipe delta vs the original paper: they use sampled-K; we use exact scoring
+  (audit P1: exact has zero sampling variance). --rlcd-sample-k exists for the sampled arm.
 
 [1.7B VERIFIED 2026-10-22 from cluster artifacts:
 lr 5e-5 arm stopped by the collapse gate (STOPPED_collapse.json, collapsed=true,
