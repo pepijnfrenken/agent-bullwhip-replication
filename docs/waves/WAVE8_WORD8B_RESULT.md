@@ -73,3 +73,31 @@ step for ~90 min with ~0% GPU util and frozen memory; task 0 hit the 2 h TIMEOUT
 cancelled. Diagnosis: training-loop stall with gradient checkpointing (use_reentrant=False)
 across sharded layers — not a memory failure. TU/e 8B training attempts now: 4 OOMs + 1 hang
 = lane closed. Equivalent-protocol fallback: Modal A100-80GB resume (~$2-4).
+
+
+## FINAL: full 2x2 sweep complete (2026-10-22, Modal A100-80GB)
+Last leg `lr=1e-5 seed=1` resumed from the persisted round_state.json (rounds 1-2 done,
+round-3 collect/label/merge done) and completed all of round 3 + final val in one detached
+Modal run (ap-aqowSMnlxmrP0tkBzeK2jv, 13:31-13:5x UTC). Verified from summary artifact
+(wave8_val/w8-val-r1-8b-lr1e-5-seed1.summary.json, n=30, parse_fail=0, min_mass=0.992):
+**mean 22,083** (min 10,401, max 40,466), collapse-check final: collapsed=False
+(medH=0.673, modal_share=0.391, I=1.3642).
+
+### Scoreboard (val cost, lower = better)
+| lr | seed 0 | seed 1 | pooled |
+|----|--------|--------|--------|
+| 5e-5 | 35,289 (Snellius 28414248) | 12,444 (Modal leg1) | **23,867** |
+| 1e-5 | 71,855 (Snellius 28418615) | 22,083 (Modal final) | 46,969 |
+
+Reference: 4B trained pooled 7,964 (8,315 / 7,612); untrained 4B 21,578; untrained 0.6B 11,569.
+
+### Verdict (pre-registered arm-select rule)
+Arm selection picks **lr 5e-5** (pooled 23,867 < 46,969). The tuned 8B rung is **negative**:
+its best-arm pooled cost is 3.0x the trained-4B reference and 1.1x the UNtrained-4B baseline
+(23,867 > 21,578) - i.e. at the protocol's chosen arm, mean-tuned 8B does not beat simply
+running the 4B model. Eye-catching counterpoint for the paper: the 5e-5/seed-1 leg alone
+(12,444) is 0.58x the untrained-4B baseline - a genuinely better-than-4B 8B run exists, but
+the arm-selection rule pools seeds first, and seed 0 (35,289) drags the arm below the
+baseline. High seed variance at 8B (25k spread within one arm) is itself a finding.
+Full sweep = 4/4 legs, both lr arms x both seeds, all n=30 validations, no parse failures,
+collapse-checks clean on all completions.
