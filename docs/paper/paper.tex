@@ -37,8 +37,9 @@ trained checkpoint, not 30 training seeds). \textbf{1.7B is adverse}: all three 
 seeds regress against their matched untrained-1.7B control (medians $1.87\times$--$6.19\times$,
 0/30 wins each), and a second learning-rate arm tripped the collapse stop-loss. \textbf{0.6B}
 has negative wave-7 paired comparisons on all six arm--seed rows and a wave-8 procedure
-stopped by its own stop-loss (the collapse detector tripped on all six arm tasks; five were
-stopped before final evaluation and one completed with a failing output-mass gate).
+stopped by its own stop-loss (the collapse detector tripped on all six arm tasks at round 1,
+the stop-loss persisted on five, two were later resumed under written override, and the
+completed read still fails the output-mass gate at $3.2\times10^{-4}$).
 \textbf{8B is not evaluable within size}: no matched untrained-8B control evaluation and no
 final-eval generation exist; its two learning-rate arms are reported from the
 curriculum-validation band on document-level provenance (pooled means 23{,}867 vs 46{,}969;
@@ -82,9 +83,12 @@ in Section~\ref{sec:prov} rather than absorbed silently.
   \item A methodological result: the frozen seed-pooling selection rule blocks a favorable
   single-seed reading at 8B that a per-seed report would have accepted.
   \item A diagnostic observation, not a mechanism claim: on the pre-registered
-  permutation-invariance check, no arm (and no control) preserved the argmax \emph{value}
-  across shuffled choice grids, so the interface claim ``the model reads option values'' is
-  withheld for every arm, per the pre-registered consequence clause.
+  permutation-invariance check, \emph{no tested arm met the pre-registered $90\%$
+  value-preservation criterion} (per-checkpoint success counts $24/512 = 0.046875$ and
+  $20/512 = 0.0390625$ on the two passing 4B seeds; $0/512$ on the untrained control and on
+  every wave-7 arm). A rate of 24/512 is not the same statement as zero preservation: some
+  states are preserved and the threshold is what fails. The interface claim ``the model reads
+  option values'' is withheld for every arm, per the pre-registered consequence clause.
 \end{itemize}
 
 \section{Environment}\label{sec:env}
@@ -149,25 +153,51 @@ item are listed in Section~\ref{sec:prov}. The frozen gates:
   arm is \emph{collapsed} iff [median entropy $< H_{\mathrm{lo}}$ AND (modal-argmax-letter
   share $> m_{\mathrm{hi}}$ OR $I \leq I_{\mathrm{hi0}}$)] OR [median entropy
   $> H_{\mathrm{hi}}$ AND $I \leq I_{\mathrm{hi0}}$]. Low entropy alone is not collapse.
-  Frozen values: 1.7B $H_{\mathrm{lo}}{=}0.000$, $H_{\mathrm{hi}}{=}1.631$,
-  $I_{\mathrm{hi0}}{=}1.486$, $m_{\mathrm{hi}}{=}0.149$; 4B
-  $H_{\mathrm{lo}}{=}0.038$, $H_{\mathrm{hi}}{=}1.911$, $I_{\mathrm{hi0}}{=}0.677$,
-  $m_{\mathrm{hi}}{=}0.149$; 8B $H_{\mathrm{lo}}{=}0.001$, $H_{\mathrm{hi}}{=}1.881$,
-  $I_{\mathrm{hi0}}{=}1.034$, $m_{\mathrm{hi}}{=}0.149$. An untrained-8B \emph{diagnostic}
-  checkpoint supplies the 8B threshold inputs; no untrained-8B final \emph{control
-  evaluation} was ever run. A collapsed arm's costs are reported but cannot support the
-  success claim. The stop-loss handling is a planned contingency stated in the spec
-  (\S6.5), not an amendment.
+  Frozen values, to the precision stored in the gate files ($m^* = 0.1270$ and
+  $m_{\mathrm{hi}} = 0.1487$ are common to every rung because they depend only on the frozen
+  oracle on $S_{\mathrm{nom}}$): 0.6B $H_{\mathrm{lo}}{=}1.393$,
+  $H_{\mathrm{hi}}{=}2.022$, $I_{\mathrm{hi0}}{=}0.0970$; 1.7B
+  $H_{\mathrm{lo}}{=}9.6527\times10^{-5}$, $H_{\mathrm{hi}}{=}1.6313$,
+  $I_{\mathrm{hi0}}{=}1.4858$; 4B $H_{\mathrm{lo}}{=}0.038026$,
+  $H_{\mathrm{hi}}{=}1.910513$, $I_{\mathrm{hi0}}{=}0.676551$; 8B
+  $H_{\mathrm{lo}}{=}0.000503$, $H_{\mathrm{hi}}{=}1.881214$,
+  $I_{\mathrm{hi0}}{=}1.033805$. Sources: \texttt{gates\_1.7b.json},
+  \texttt{gates\_4b.json}, \texttt{gates\_8b.json}, and for 0.6B the freeze line recorded by
+  the pre-flight job in \texttt{results/wave8\_logs/wave8-preflight\_404131.log}; the current
+  \texttt{results/wave8/gates.json} no longer carries an \texttt{F3} block, so the 0.6B
+  threshold record survives only in that log line (recorded as an incomplete gate artifact
+  in Section~\ref{sec:prov}, not as a threshold that was never frozen).
+
+  The 1.7B value is a small \emph{positive} cutoff, not zero: entropy is non-negative, so a
+  literal zero would make the strict inequality ``median entropy $< H_{\mathrm{lo}}$''
+  unsatisfiable and the low-entropy branch unreachable. The 0.6B cutoff is the largest of the
+  four (1.393 nats), which is why reads at that rung trip on median entropy as well as on
+  modal share rather than on share alone.
+
+  Read schedule and stop semantics (\S6.2, \S6.5): the gate is read at every round end on a
+  256-state subsample of $S_{\mathrm{nom}}$ (every fourth state), and on all 1,024 states at
+  final evaluation. Rounds are 1-indexed. The stop-loss is terminal: the task is stopped when
+  the gate reports \emph{collapsed} at two consecutive round reads, and a resume past a stop
+  needs a written override. A keep-or-resume that skips this check is a defect of the runner,
+  not of the rule, and one such accidental resume is on the record
+  (Section~\ref{sec:prov}). An untrained-8B \emph{diagnostic} checkpoint supplies the 8B
+  threshold inputs; no untrained-8B final \emph{control evaluation} was ever run. A collapsed
+  arm's costs are reported when they exist but cannot support the success claim. The
+  stop-loss handling is a planned contingency stated in the spec, not an amendment.
   \item \textbf{Permutation invariance (diagnostic, pre-registered consequence).} 512
   states; 3 shuffled grids besides the canonical one (grid seed 20261006). A state is a
   \emph{success} iff the argmax letter's \emph{value} is unchanged on all three shuffles;
   the arm passes iff the success fraction $\geq 0.90$ of states
   (\texttt{decision\_gates.py}, \texttt{pass} field over \texttt{invariance\_rate}). The
   diagnostic's \texttt{invariance\_rate} therefore counts successes per state (all three
-  shuffles simultaneously), not per state--shuffle comparison. Observed at 4B
-  (\texttt{w8-r1-4b-seed0-perm.json}): rate $0.0469$ (24 of 512), per-shuffle disagreement
-  counts $[0, 464, 452, 449]$ vs the canonical. Earlier arms (including the untrained
-  control) read rate $0.000$. This is explicitly NOT part of the performance-claim
+  shuffles simultaneously), not per state--shuffle comparison. Observed at 4B:
+  seed 0 rate $0.046875$ ($24$ of $512$, \texttt{w8-r1-4b-seed0-perm.json}, per-shuffle
+  disagreement counts $[0, 464, 452, 449]$ vs the canonical grid) and seed 1 rate
+  $0.0390625$ ($20$ of $512$, \texttt{w8-r1-4b-seed1-perm.json}); both \texttt{pass=false}
+  against \texttt{gate} $=0.9$ on $n_{\mathrm{grids}}{=}4$ with 3 shuffles. Earlier arms
+  (including the untrained control) read rate $0.000$, i.e. 0 of 512. These are success
+  counts, not evidence that preservation is impossible; the criterion failed. This is
+  explicitly NOT part of the performance-claim
   conjunction: wave 7 already read the shared failure, so the pre-registered consequence
   clause says on a fail the cost gates still decide the performance claim, the interface
   claim ``the model reads option values'' is withheld, and the arm is labelled a
@@ -179,9 +209,13 @@ item are listed in Section~\ref{sec:prov}. The frozen gates:
   per-decision mass over the run; a summary's \texttt{min\_mass} is the minimum over runs.
   G7 for a trained arm: summary \texttt{min\_mass} $\geq 0.9$ (i.e. the smallest
   min-over-decisions mass across the arm's runs must still leave 90\% of probability on
-  the letter set). It is possible (an individual letter probability cannot exceed 1/26, but
-  the \emph{total} mass on the 26 letters can fall to 0, and a readout that has drifted off
-  the label set scores far below 0.9). G7 is mandatory for a trained arm's eligibility
+  the letter set). The criterion is attainable because the quantity bounded is a
+  \emph{sum}: the total probability on the 26 label tokens ranges from near zero to near one
+  independently of how that mass is spread inside the set, so a healthy readout sits near 1
+  and a readout that has drifted onto other vocabulary items scores far below 0.9. (No
+  bound of the form $1/26$ applies to this quantity, nor to an individual letter's
+  probability; only the smallest of the 26 individual probabilities is capped at $1/26$.)
+  G7 is mandatory for a trained arm's eligibility
   (from wave-7 onwards, where observed values 0.925--0.983 motivated the 0.9 threshold).
   Results for the passing 4B checkpoints: seed 0 \texttt{min\_mass} $0.99999$, seed 1
   $0.99999$ (both PASS). The 1.7B seed-1 arm's $7.3\times10^{-9}$ is a binding G7
@@ -197,13 +231,31 @@ item are listed in Section~\ref{sec:prov}. The frozen gates:
   and 22 gives 0.008, so the $p<0.02$ clause implies $\geq 22/30$ wins. Tie handling: a tie
   is neither win nor loss; all 60 paired comparisons here had zero ties (verified from the
   raw JSONLs), and rows with a zero control cost would be dropped from the denominator
-  (none occurred). \textbf{The pass rule ``the arm needs $\geq 2/3$ passing seeds'' is a
-  fraction of planned seeds} (\texttt{WAVE8\_SPEC.md} \S6.3, committed 2026-10-07, i.e.
-  before any wave-8 run): three planned seeds at 1.7B ($\geq$ 2 of 3 must pass), two planned
-  seeds per learning-rate arm at 4B and 8B (both evaluated seeds must pass). A planned seed
-  that never becomes an evaluated checkpoint does not enter the fraction; it is reported as
-  missing (1.7B's 5e-5 arm: one of three planned seeds trained, stopped at round 2, zero
-  evaluated).
+  (none occurred). \textbf{Seed denominator, quoted and then read both ways.} The registered text
+  (\texttt{WAVE8\_SPEC.md} \S6.3, committed 2026-10-07, i.e.\ before any wave-8 run) says,
+  verbatim: ``A seed passes iff all three hold; the arm needs $\geq$ 2/3 seeds.'' That
+  registered text does not say how a planned seed that never produces an evaluated
+  checkpoint enters the fraction, and this paper does not amend it retrospectively, so both
+  readings are reported:
+  \begin{itemize}
+    \item \emph{Evaluated denominator} (numerator: evaluated seeds passing all three
+    clauses; denominator: evaluated seeds). 4B: $2/2$ pass. 1.7B: $0/3$. For the 1.7B 5e-5
+    arm and the six wave-8 0.6B tasks the fraction is \emph{undefined} (zero evaluated
+    seeds), so those arms are reported incomplete rather than failing; and a collapsed arm
+    cannot support the success claim independently of any denominator (\S6.2).
+    \item \emph{Planned denominator} (denominator: planned seeds; an unattempted, stopped, or
+    evaluated-failing planned seed counts as not passing). 4B: $2/2$ pass. 1.7B: $0/3$
+    overall and $0/3$ within the 5e-5 arm. Wave-8 0.6B: $0/6$.
+  \end{itemize}
+  Both readings agree on the only positive rung, which is the reason both are printed; the
+  evaluated reading's estimand is conditional on a checkpoint having reached evaluation, and
+  that conditionality is disclosed rather than absorbed. Failure categories stay distinct in
+  Table~\ref{tab:ledger} and are never merged: \emph{unattempted} (never submitted, 2 seeds),
+  \emph{stopped} (collapse stop-loss persisted, 6 tasks: five wave-8 0.6B and the 1.7B 5e-5
+  checkpoint), \emph{trained without any final
+  evaluation} (4 8B legs; no final generation was produced on any lane),
+  \emph{evaluated-failing} (0.6B wave-7 six rows, 1.7B three seeds), \emph{evaluated-passing}
+  (4B two seeds).
 \end{itemize}
 
 \section{Training objective and configuration}\label{sec:method}
@@ -240,41 +292,71 @@ we execute; a verbatim re-run of either is future work.
 
 \section{Run ledger}\label{sec:ledger}
 Table~\ref{tab:ledger} is one row per planned task (recipe arm $\times$ learning-rate arm
-$\times$ seed), derived from the per-run artifacts; all subsequent counts come from this
-table and nowhere else.
+$\times$ seed): 24 rows, nothing aggregated. Every status in it was read this revision from
+the task's own marker files, round reads, or generation summaries on the primary cluster
+archive; the machine-readable extract is \texttt{docs/verify/W8-MANIFEST.json} and the
+row-by-row artifact paths are listed with the reconciliation note
+(Section~\ref{sec:prov}). All counts below are row counts of this table.
 
 \begin{table}[ht]
 \centering
-\caption{Planned-task ledger. ``Stopped R$k$'' = collapse stop-loss persisted at round
-$k$; ``eval'd'' = matched noisy-argmax final evaluation exists.}
+\caption{Planned-task ledger, one row per planned task. ``Rounds'' = the collapse-gate reads
+at each round end, \texttt{C} = collapsed, \texttt{-} = not collapsed, 1-indexed; ``Stopped
+R$k$'' = the stop-loss persisted after round $k$ (two consecutive collapsed reads);
+``eval'd'' = a matched noisy-argmax final evaluation exists. Band values in the 8B rows are
+curriculum-validation means, not final evaluations.}
 \label{tab:ledger}
 \small
-\begin{tabular}{@{}p{2.2cm}p{2.6cm}p{1.6cm}p{5.4cm}p{1.4cm}@{}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{1.35cm}p{1.75cm}p{1.0cm}p{5.8cm}p{1.0cm}@{}}
 \toprule
-\textbf{Rung} & \textbf{Recipe lr} & \textbf{Seeds} & \textbf{Task status} & \textbf{Eval'd} \\
+\textbf{Rung} & \textbf{Arm} & \textbf{Seed} & \textbf{Status (artifact)} & \textbf{Eval} \\
 \midrule
-0.6B w7 & SFT & 0,1,2 & 3 arm--seed rows, completed C1 protocol & 3 \\
-0.6B w7 & exact-grad & 0,1,2 & 3 arm--seed rows, completed C1 protocol & 3 \\
-0.6B w8 R1 & 1e-5 & 0 & stopped R2, accidentally resumed to R3 (markers both DONE/STOPPED) & 0 \\
-0.6B w8 R1 & 1e-5 & 1,2 & stopped R2 & 0 \\
-0.6B w8 R1 & 5e-5 & 0 & stopped R2 (round reads C, clean, C) & 0 \\
-0.6B w8 R1 & 5e-5 & 1,2 & stopped R2 & 0 \\
-1.7B & 5e-5 & 0 & stopped R2 & 0 \\
-1.7B & 5e-5 & 1,2 & \multicolumn{2}{l}{not attempted (stop preceded further 5e-5 spend)} \\
-1.7B & 1e-5 & 0,1,2 & 3 arm--seed rows, completed R3 & 3 \\
-4B & 5e-5 & 0,1 & 2 arm--seed rows, completed R3 & 2 \\
-8B & 5e-5 & 0,1 & trained on external lanes; validation band only (23{,}867 pooled) & 0 \\
-8B & 1e-5 & 0,1 & trained on external lanes; validation band only (46{,}969 pooled) & 0 \\
+0.6B w7 & SFT, lr 1e-5 & 0 & trained, C1 protocol complete, median 20{,}594 & 1 \\
+0.6B w7 & SFT, lr 1e-5 & 1 & trained, C1 complete, median 25{,}721 & 1 \\
+0.6B w7 & SFT, lr 1e-5 & 2 & trained, C1 complete, median 25{,}508 & 1 \\
+0.6B w7 & exact-grad & 0 & trained, C1 complete, median 37{,}384, letter-lock & 1 \\
+0.6B w7 & exact-grad & 1 & trained, C1 complete, median 32{,}516, letter-lock & 1 \\
+0.6B w7 & exact-grad & 2 & trained, C1 complete, median 27{,}652, letter-lock & 1 \\
+0.6B w8 & lr 1e-5 & 0 & rounds C,C,- ; stopped R2 then resumed to R3 (accidental); markers
+  \texttt{DONE} and \texttt{STOPPED\_collapse} both present; final read fails G7
+  (min\_mass $3.2\times10^{-4}$) & 0 \\
+0.6B w8 & lr 1e-5 & 1 & rounds C,C,- ; stopped R2, later resumed to R3 under the written
+  completion override & 0 \\
+0.6B w8 & lr 1e-5 & 2 & rounds C,C,C ; stopped R2 & 0 \\
+0.6B w8 & lr 5e-5 & 0 & rounds C,-,C ; completed, \texttt{DONE} only & 0 \\
+0.6B w8 & lr 5e-5 & 1 & rounds C,C ; stopped R2 & 0 \\
+0.6B w8 & lr 5e-5 & 2 & rounds C,C ; stopped R2 & 0 \\
+1.7B & lr 5e-5 & 0 & rounds C,C ; stopped R2, low branch then high branch & 0 \\
+1.7B & lr 5e-5 & 1 & not attempted & 0 \\
+1.7B & lr 5e-5 & 2 & not attempted & 0 \\
+1.7B & lr 1e-5 & 0 & trained R3, C1 evaluated, median 21{,}468 & 1 \\
+1.7B & lr 1e-5 & 1 & trained R3, C1 evaluated, median 43{,}660 & 1 \\
+1.7B & lr 1e-5 & 2 & trained R3, C1 evaluated, median 71{,}270 & 1 \\
+4B & lr 5e-5 & 0 & trained R3, G1 pass, median 8{,}315 & 1 \\
+4B & lr 5e-5 & 1 & trained R3, G1 pass, median 7{,}612 & 1 \\
+8B & lr 5e-5 & 0 & external lane (Snellius \texttt{28414248}), band mean 35{,}289 & 0 \\
+8B & lr 5e-5 & 1 & external lane (Modal), band mean 12{,}444 & 0 \\
+8B & lr 1e-5 & 0 & external lane (Snellius \texttt{28418615}), band mean 71{,}855 & 0 \\
+8B & lr 1e-5 & 1 & external lane (Modal), band mean 22{,}083 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Counts derived from Table~\ref{tab:ledger}: 33 planned tasks across 12
-recipe$\times$lr$\times$seed expansions; 21 tasks reached a trained checkpoint; 11 rows
-have a matched paired evaluation (0.6B w7 6, 1.7B 3, 4B 2); 8 arm--seed rows trained but
-carry no final evaluation (0.6B w8 six, 1.7B 5e-5 one, and the 8B validation band rows
-separately). Wave-7's ``all six arm--seed rows'' in the results text counts rows of the
-two-recipe $\times$ three-seed structure above, not six independent recipe arms.
+Counts, from the 24 rows above: \textbf{24 planned} tasks; \textbf{22 attempted} and holding
+a trained checkpoint (the two 1.7B 5e-5 seeds 1 and 2 were never submitted);
+\textbf{11 evaluated} on a matched paired final generation (0.6B wave-7 six, 1.7B three, 4B
+two); \textbf{13 without a matched final evaluation} (six wave-8 0.6B tasks, one 1.7B 5e-5
+stopped task, two unattempted 1.7B 5e-5 seeds, four 8B legs). Of the 24, six carry a
+persisted stop-loss marker (five wave-8 0.6B tasks and the 1.7B 5e-5 checkpoint) and two of
+those six were later resumed past the stop, one by an unattended resubmission and one under a
+written completion override (Section~\ref{sec:prov}). Wave-7's ``all six arm--seed rows'' elsewhere in
+this paper means the six rows of the two-recipe $\times$ three-seed block above, not six
+independent recipe arms. The wave-8 0.6B task directories and their two curriculum-band files
+were removed from the archive by the repository's own results slim-down; their round reads,
+markers, and the two band means survive in \texttt{results/wave8\_logs} and
+\texttt{w8-band-record.json}, which is why the 0.6B rows are sourced to logs rather than to
+per-run JSON.
 
 \section{Results}\label{sec:results}
 Table~\ref{tab:ladder} is the headline table. Lower cost is better. Every row names its own
@@ -329,16 +411,71 @@ the frozen control on the fixed demand paths; not evidence from 30 training seed
 test of a scaling claim. The two seed-level tests share the same control paths, so they
 are dependent reads, reported separately and never combined.
 
+\paragraph{Collapse-gate report for the two passing 4B checkpoints.} The gate is read at every
+round end on 256 states of $S_{\mathrm{nom}}$ and on all 1,024 at final evaluation; the
+frozen 4B thresholds are $H_{\mathrm{lo}}{=}0.038026$, $H_{\mathrm{hi}}{=}1.910513$,
+$I_{\mathrm{hi0}}{=}0.676551$, $m_{\mathrm{hi}}{=}0.1487$. Table~\ref{tab:4bgates} gives every
+read (sources: \texttt{results/wave8\_r1-4b\_lr5e-5\_seed\{0,1\}/round\{1,2,3\}/collapse\_round\{n\}.json}
+and \texttt{results/wave8/r1-4b-seed\{0,1\}-S\_nom.json}).
+
+\begin{table}[ht]
+\centering
+\caption{Collapse reads for the passing 4B checkpoints. $H$ = median per-state entropy
+(nats), $I$ = state-dependence statistic, $s$ = modal-argmax share, min\_mass = G7 reading.
+The verdict column is the detector's own \texttt{collapsed} field.}
+\label{tab:4bgates}
+\small
+\begin{tabular}{@{}p{2.6cm}rrrrl@{}}
+\toprule
+\textbf{Read} & \textbf{$H$} & \textbf{$I$} & \textbf{$s$} & \textbf{min\_mass} & \textbf{collapsed} \\
+\midrule
+seed 0 round 1 (256) & 2.0863 & 0.8714 & 0.1836 & 0.999996 & no \\
+seed 0 round 2 (256) & 1.5563 & 0.7063 & 0.4688 & 1.000000 & no \\
+seed 0 round 3 (256) & 1.7783 & 0.3459 & 0.7461 & 0.999994 & no \\
+seed 0 final (1{,}024) & 1.7887 & 0.5287 & 0.6514 & 0.999983 & no \\
+seed 1 round 1 (256) & 0.5765 & 1.6662 & 0.1953 & 0.999813 & no \\
+seed 1 round 2 (256) & 1.7547 & 0.4540 & 0.4102 & 0.999996 & no \\
+seed 1 round 3 (256) & 1.7455 & 0.0739 & 0.8398 & 0.999996 & no \\
+seed 1 final (1{,}024) & 1.7239 & 0.3719 & 0.7939 & 0.999996 & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Neither detector branch can fire on any of these reads, and this is checkable by hand rather
+than asserted: no 4B read has median entropy below $H_{\mathrm{lo}}{=}0.038$ (the smallest is
+0.5765), so the low-entropy branch is unreachable; the diffuse-and-state-blind branch needs
+median entropy $>H_{\mathrm{hi}}{=}1.911$ \emph{and} $I \leq I_{\mathrm{hi0}}{=}0.677$, and
+the one read above $H_{\mathrm{hi}}$ (seed 0 round 1, $H{=}2.086$) carries
+$I{=}0.871 > 0.677$, so it does not fire either. The high modal shares (0.746 and 0.840 in
+round 3) are therefore not evidence of collapse on their own: the registered rule requires the
+entropy condition as well, and it is not met.
+
 \paragraph{1.7B, a within-size regression with a matched control.} Final-eval medians
 21{,}468 / 43{,}660 / 71{,}270 (seeds 0/1/2 of the executed 1e-5 arm) against the matched
 untrained-1.7B control of 11{,}508 (mean 11{,}405): 0/30 paired wins on every seed, median
 regressions $1.87\times$, $3.79\times$, $6.19\times$. The curriculum-validation generation
 (means 47{,}125 / 36{,}734 / 61{,}073; pooled 48{,}311) is the frozen selection input; both
 generations agree on the outcome. Training made this rung worse than its own starting
-readout. Separately, the planned 5e-5 arm trained seed 0 only and tripped the collapse
-gate persistently (round-1 modal-argmax share 1.0 vs bound 0.149), stopping at round 2;
-seeds 1 and 2 were not attempted. That arm has no validation and no evaluation, so it
-neither strengthens nor weakens the 1.7B adverse result; it is an incomplete planned arm.
+readout. Separately, the planned 5e-5 arm trained seed 0 only, tripped the gate on \emph{both}
+branches at consecutive reads, and was stopped after round 2
+(\texttt{STOPPED\_collapse.json}, \texttt{stopped\_after\_round: 2}, reason string ``collapse
+gate tripped at two consecutive round reads''): round 1 on the low-entropy branch (median
+$H = 6.28\times10^{-5} < H_{\mathrm{lo}} = 9.65\times10^{-5}$, modal share $1.00 >
+m_{\mathrm{hi}} = 0.149$) and round 2 on the diffuse branch (median $H = 2.059 >
+H_{\mathrm{hi}} = 1.631$ with $I = 0.109 \leq I_{\mathrm{hi0}} = 1.486$, reading
+``diffuse and state-blind''), which is an unusually clean demonstration that the two branches
+catch different failure modes. Seeds 1 and 2 of that arm were never submitted. It has no
+validation and no evaluation, so it neither strengthens nor weakens the 1.7B adverse result;
+it is an incomplete planned arm.
+
+The executed 1e-5 arm's own round reads are mixed and are reported as read, not tidied: seed
+0 tripped at round 3 only (one read, below the two-consecutive stop rule), seeds 1 and 2
+finished with clean or single-trip reads respectively, and no 1.7B 1e-5 task was stopped. The
+G7 reading for seed 1 is a binding failure at three measured scopes: the final noisy-argmax
+generation reports \texttt{min\_mass} $7.33\times10^{-9}$ (the figure quoted above), the same
+checkpoint's 256-state round read $8.93\times10^{-9}$, and its 1,024-state final read
+$7.85\times10^{-9}$. All three are far below the 0.9 threshold; the earlier draft's
+``$5\times10^{-9}$'' was a rounding of a different file and is corrected here.
 
 \paragraph{0.6B, two training variants and a stopped procedure.} Wave 7 ran two recipe
 arms (SFT and exact-gradient R1) at three matched seeds each against the matched
@@ -347,16 +484,32 @@ untrained-0.6B control (median 11{,}569): the recomputation in
 noisy-argmax read (arm medians 20{,}594 / 25{,}721 / 25{,}508 SFT and 37{,}384 /
 32{,}516 / 27{,}652 exact-grad; exact-gradient rows historically labelled ``RLCD'' in
 internal files; sign $p = 1.0$ on each row; the exact-grad arms also showed letter-lock,
-1--2 distinct order values). Wave 8's exact-gradient instance at the same scale tripped
-the collapse gate on six of six arm tasks at least once (round-1 modal-argmax share
-0.51--1.00 vs the bound 0.149); five tasks were stopped before final evaluation. The
-sixth (lr 1e-5, seed 0) was stopped at round 2, then accidentally resumed by an
-unattended bare-array resubmission and completed round 3 with markers \texttt{DONE} and
-\texttt{STOPPED\_collapse} both present; its final read is not collapsed (energy
-1.604 nats) but fails G7 (\texttt{min\_mass} $3.2\times10^{-4}$, the readout left the
-label set). No wave-8 0.6B arm has a matched final evaluation, so the wave-8 0.6B
-outcome is a stopped procedure, distinct from a measured cost regression; the wave-7
-rows carry the measured negative.
+1--2 distinct order values). Wave 8's exact-gradient instance at the same scale tripped the
+collapse gate on \emph{six of six} arm tasks at round 1, and the trip satisfies the full
+registered conjunction at that scale rather than the modal-share half of it: the frozen 0.6B
+cutoff is $H_{\mathrm{lo}}{=}1.393$ nats, and every round-1 read has median entropy below it
+with modal share above $m_{\mathrm{hi}}{=}0.149$ (per arm, round 1, $H$ and $s$:
+lr1e-5 seed 0: $0.401$, $0.980$; seed 1: $0.938$, $0.812$; seed 2: $0.396$, $0.961$; lr5e-5
+seed 0: $0.826$, $0.508$; seed 1: $0.057$, $0.805$; seed 2: $0.000$, $0.996$). The stop-loss
+(terminal, two consecutive trips) then persisted a \texttt{STOPPED\_collapse} marker on five
+of the six tasks. Stop-ledger detail, from the markers and round reads: lr1e-5 seeds 0, 1 and
+2 read C,C (stopped R2), lr5e-5 seeds 1 and 2 read C,C (stopped R2), and lr5e-5 seed 0 read
+C,-,C and completed with \texttt{DONE} only, so it was never stopped. Two tasks were later
+resumed past a stop: lr1e-5 seed 0 by an unattended bare-array resubmission (no
+\texttt{W8\_ARM}, stale \texttt{HEAD}, \texttt{EXPECTED\_COMMIT} unset) and lr1e-5 seed 1 under
+the written completion override recorded in the same memo, which also documents the runner
+defect that made the first resume possible (the task loop writes the marker but never reads it
+on entry). lr1e-5 seed 0 therefore carries \texttt{DONE} and \texttt{STOPPED\_collapse} both,
+and its round-3 read is clean (median $H = 1.760$) while its 1,024-state final read fails G7
+(\texttt{min\_mass} $3.2\times10^{-4}$: the readout left the label set). Its two
+curriculum-band means, for the record, are 90{,}448 (lr1e-5 seed 0) and 16{,}035 (lr5e-5
+seed 0), each a single seed, which is why they are not used to select anything at this rung.
+No wave-8 0.6B arm has a matched final evaluation, so the wave-8 0.6B outcome is a stopped
+procedure, distinct from a measured cost regression; the wave-7 rows carry the measured
+negative. The six wave-8 arm directories and those two band files were subsequently removed
+from the archive by the repository's own results slim-down, so every 0.6B wave-8 number here
+is sourced to the job logs and to the stop markers, not to per-run JSON; that limitation is
+stated in Section~\ref{sec:repro} rather than glossed.
 
 \paragraph{8B, validation-band evidence only, within-size not evaluable.} All four 8B
 planned legs (2 lr $\times$ 2 seeds) trained on external A100 lanes (Snellius jobs
@@ -449,6 +602,31 @@ actual amendments (documented at the time), and open items:
   read. The 1.7B adverse result stands on the executed arm's own numbers; the plan-vs-
   execution discrepancy is carried forward unresolved rather than reconstructed from
   submit history.
+  \item \textbf{Changed claims and their artifacts (revision reconciliation).} Six reported
+  facts differ from the previous draft. Each was re-derived from a named artifact this
+  revision, not from the draft: (a) the wave-7 design is two recipe arms $\times$ three seeds
+  ($\texttt{eval/w7-sft-seed\{0,1,2\}-*}$, $\texttt{eval/w7-rlcd-seed\{0,1,2\}-*}$,
+  six files each mode), not six recipe arms; (b) the 8B costs 35{,}289 / 12{,}444 / 71{,}855 /
+  22{,}083 are \emph{curriculum-validation} means, per the verdict record's own column label
+  ``Scoreboard (val cost)'' and per the absence of any \texttt{w8-r1-8b} file under
+  \texttt{results/eval/}, so no 8B final-eval generation exists to report; (c) the simulator
+  has no backlog cap (\texttt{engine.py}), so the earlier ``bounded backorders'' wording was
+  wrong; (d) the 4B permutation reads are $24/512$ and $20/512$, not zero; (e) wave-8 0.6B
+  tripped the gate on all six tasks at round 1 with the stop-loss persisting on five, not
+  ``five of six tripped''; (f) the 1.7B seed-1 output mass is $7.33\times10^{-9}$ in the
+  final generation ($7.85\times10^{-9}$ in the 1,024-state read, $8.93\times10^{-9}$ in the
+  256-state read), replacing the earlier ``$5\times10^{-9}$''. The row-by-row mapping (old
+  claim, corrected claim, artifact path and field, evaluation generation, aggregation,
+  reason) is in the revision note \texttt{docs/paper/RECONCILIATION-2026-10-22.md}, with the
+  machine-readable reads in \texttt{docs/verify/W8-MANIFEST.json}; the note is the supplement
+  and is deliberately not repeated in this paper's body.
+  \item \textbf{Incomplete gate artifact, stated as such.} The 0.6B frozen F3 thresholds exist
+  only as the pre-flight job's log line (\texttt{wave8-preflight\_404131.log}:
+  $H_{\mathrm{lo}}{=}1.393$, $H_{\mathrm{hi}}{=}2.022$, $m_{\mathrm{hi}}{=}0.149$,
+  $I_{\mathrm{hi0}}{=}0.0970$). The current \texttt{results/wave8/gates.json} carries no
+  \texttt{F3} block, so the 0.6B threshold values cannot be re-read from a gate file today and
+  the 0.6B reads in this paper are checked against the log line. The rung-specific files
+  (\texttt{gates\_1.7b.json}, \texttt{gates\_4b.json}, \texttt{gates\_8b.json}) are complete.
   \item \textbf{Result-inspection ordering.} The curriculum-validation band
   (\texttt{wave8\_val}) was the selection input; the final-eval generation
   (\texttt{eval/}, newer by 17 h at 4B and 31 h at 1.7B, same adapters at
@@ -464,8 +642,9 @@ both evaluated seeds, with both effect sizes, both central statistics, and the G
 all recomputed from raw pairs. One rung (1.7B) is adverse on all three evaluated seeds
 against a matched control, with an incomplete planned second learning-rate arm. One rung
 (0.6B) is negative on all six wave-7 arm--seed rows, and its wave-8 exact-gradient
-procedure is a stopped run (collapse tripped on all six tasks; five stopped before
-evaluation; one completed but failed the output-mass gate). One rung (8B) is not
+procedure is a stopped run (collapse tripped on all six tasks at round 1; the stop-loss
+persisted on five; two were later resumed past a stop under override, and the one whose round
+3 completed fails the output-mass gate). One rung (8B) is not
 evaluable within size, and its band-level numbers are reported with document-level
 provenance only. One-line summary: closed-choice readouts eliminated invalid actions and
 simplified the comparison; exact-enumeration outcome-scored post-training paid off at
@@ -484,12 +663,12 @@ analyst hindsight; we make no blinding claim.
 \begin{itemize}
   \item Simulated environment; external validity is a shared problem of this study and
   the reference claim.
-  \item \textbf{Bookkeeping, exact.} From Table~\ref{tab:ledger}: 33 planned tasks, 21
-  trained checkpoints, 11 rows with matched paired evaluations, 13 rows stopped or
-  unevaluated (6 wave-8 0.6B, 2 unevaluated 1.7B 5e-5 seeds, 1 stopped 1.7B 5e-5 seed-0
-  checkpoint, 4 8B validation-band rows). Every within-size verdict is conditional on its
-  pre-registered seed count; with this many experimental units there is no statistical
-  test of any scaling claim, and none is offered. Cross-size comparisons are descriptive.
+  \item \textbf{Bookkeeping, exact.} From Table~\ref{tab:ledger}, by row count: 24 planned tasks, 22
+  attempted with a trained checkpoint, 11 with a matched paired final evaluation, 13 without
+  one (6 wave-8 0.6B tasks, 1 stopped 1.7B 5e-5 checkpoint, 2 unattempted 1.7B 5e-5 seeds, 4
+  8B legs). Every within-size verdict is conditional on its pre-registered seed count and on
+  the denominator reading declared in Section~\ref{sec:gates}; with this many experimental
+  units there is no statistical test of any scaling claim, and none is offered. Cross-size comparisons are descriptive.
   \item The training objective is an exact-enumeration policy gradient with a frozen
   per-state KL anchor; the reference objective also uses a frozen reference KL (v4
   eq.~2), so that component is shared, not a delta (Appendix~\ref{app:deltas}). A
@@ -515,10 +694,17 @@ permutation JSON included), and the frozen per-rung gate files
 (\texttt{gates\_1.7b/4b/8b.json}) with per-rung model revisions
 (\texttt{config.sh}: Qwen/Qwen3-0.6B \texttt{c1899de2...}, Qwen3-1.7B
 \texttt{70d244cc...}, Qwen3-4B \texttt{1cfa9a72...}, Qwen3-8B \texttt{b968826d...}).
-(b) Present but incomplete: the wave-8 0.6B R1 arms (round structure, collapse reads,
-training logs, stop markers, and the accidental-resume record present; their
-final-eval files never existed, because the run was stopped before evaluation -- this
-is a stop, not an archive defect) and the 1.7B 5e-5 arm (same). (c) For 8B,
+(b) Incomplete, and degraded during this revision: the wave-8 0.6B R1 arm directories and
+their two curriculum-band files are \emph{no longer present} on the archive (removed by the
+repository's own results slim-down, not by this paper's preparation). What survives for that
+block is the job log (\texttt{results/wave8\_logs/wave8-train\_407006\_*.log},
+\texttt{wave8-train\_406726\_*.log}) holding every round read, the
+\texttt{STOPPED\_collapse.json} / \texttt{DONE} markers, the record of the accidental resume,
+and \texttt{w8-band-record.json} (16{,}035 and 90{,}448, one seed each). The 0.6B wave-8 rows
+in this paper are therefore restated as log-sourced, and they are the weakest provenance in
+it. The 1.7B 5e-5 arm is in the same class minus the removal: its checkpoint directory and
+stop marker are present, and its final-eval files never existed because the task stopped
+before evaluation (a stop, not an archive defect). (c) For 8B,
 document-level provenance only (verdict doc with leg-by-leg timings, sbatch/Modal job
 IDs, lane metadata); no 8B raw JSONLs of either generation were recovered. Simulator
 and trainer module paths: \texttt{agent\_bullwhip/engine.py} (simulator),
