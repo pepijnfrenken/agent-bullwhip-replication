@@ -668,6 +668,12 @@ class _Policy:
         load_kwargs = {"local_files_only": True, "revision": revision,
                        "torch_dtype": getattr(torch, dtype),
                        "attn_implementation": "sdpa"}
+        # W8-L4MP amendment (2026-10-22): env-gated model parallel for 8B on 2x L4.
+        # Off by default -> byte-identical behavior for every completed leg.
+        if os.environ.get("W8B_DEVICE_MAP", "") == "auto" and \
+                hasattr(torch, "cuda") and torch.cuda.device_count() > 1:
+            load_kwargs["device_map"] = "auto"
+            self.device = "cuda:0"
         self.tok = AutoTokenizer.from_pretrained(model_name,
                                                  local_files_only=True,
                                                  revision=revision)
@@ -685,7 +691,8 @@ class _Policy:
         for name, p in self.model.named_parameters():
             if "lora_" in name:
                 p.requires_grad_(True)
-        self.model.to(self.device)
+        if not hasattr(self.model, "hf_device_map"):
+            self.model.to(self.device)   # skipped when accelerate shards across GPUs
         self.model.train()          # LoRA dropout active during training
         if grad_ckpt:
             _enable_grad_checkpointing(self.model)
