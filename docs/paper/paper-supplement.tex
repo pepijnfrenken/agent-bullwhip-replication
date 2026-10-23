@@ -1,0 +1,412 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{array}
+\usepackage{url}
+\sloppy
+\setlength{\parskip}{2pt}
+
+\title{Methods supplement: gates, per-round readings, task ledger and provenance inventory\\for the four-scale closed-choice bullwhip study}
+\author{Pepijn Frenken\\Independent researcher\\\texttt{pepijnfrenken@mailbox.org}}
+\date{22 October 2026}
+
+\begin{document}
+\maketitle
+
+\noindent This supplement is the companion to \texttt{paper.tex} and is cited from it as S1--S5.
+It exists because the main text had become close to half accounting; the numbers below are the
+same numbers, moved, not relaxed. Nothing here changes any number in the paper. Every table names
+its source and says whether the source is archived in this repository or only recorded in the
+reconciliation note (\texttt{docs/paper/RECONCILIATION-2026-10-22.md}). Where a cited per-run path
+is no longer present in the working tree, the table says so instead of implying the file exists.
+
+\section{S1. Gate definitions and frozen thresholds}
+
+\paragraph{Definitions as implemented.} F0 checks the choice grid on 1{,}000 probe states per
+regime (regret and top-mass bounds); F1 checks that the 26 label tokens are one contiguous id range
+and that the rendered prompt hash is equal across the string renderer and the chat template; F2
+freezes the state sample; F3 freezes the collapse-control statistics from that rung's own
+\emph{untrained} readout. For the state-dependence statistic we use, over the frozen state sample,
+\begin{equation}
+  I \;=\; H\!\left(\overline{\pi}\right) \;-\; \overline{H},
+\end{equation}
+in nats, where $\overline{\pi}$ is the mean of the per-state next-action distributions
+$\pi(\cdot\mid s)$ over the 26 label tokens and $\overline{H}$ is the mean of their entropies.
+$H_{\mathrm{lo}}$ and $H_{\mathrm{hi}}$ are the 5th and 95th percentiles of the per-state entropy;
+$m^{*}$ is the modal share of the oracle argmin letter and $m_{\mathrm{hi}}$ its Wilson upper
+bound; $I_{\mathrm{hi0}}$ is the 95th percentile of $I$ over $B{=}1{,}000$ bootstrap resamples.
+A trained arm is \emph{collapsed} iff
+\begin{quote}
+[median entropy $< H_{\mathrm{lo}}$ AND (modal share $> m_{\mathrm{hi}}$ OR
+$I \leq I_{\mathrm{hi0}}$)] OR
+[median entropy $> H_{\mathrm{hi}}$ AND $I \leq I_{\mathrm{hi0}}$].
+\end{quote}
+The gate is read at every round end on 256 states and on all 1{,}024 at final evaluation; rounds
+are 1-indexed. The stop-loss is terminal after two consecutive collapsing reads; a resume needs a
+written override. G1 (pass rule) and G7 (full-vocabulary mass on the 26 label tokens; arm
+\texttt{min\_mass} $\geq 0.9$) are stated in the paper's Section 3 and not duplicated here.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Frozen F3 thresholds, to the precision recorded. The 0.6B column is the largest
+$H_{\mathrm{lo}}$ of the four, so the 0.6B gate is the \emph{strictest} low-entropy branch.}
+\label{tab:s1}
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+\textbf{Rung} & $H_{\mathrm{lo}}$ & $H_{\mathrm{hi}}$ & $I_{\mathrm{hi0}}$ & $m_{\mathrm{hi}}$ & \textbf{Archived source} \\
+\midrule
+0.6B & 1.393 & 2.022 & 0.0970 & 0.149 & pre-flight log line only \\
+1.7B & $9.6527\times10^{-5}$ & 1.6313 & 1.4858 & 0.1487 & \emph{no} gate file recovered \\
+4B & 0.038026 & 1.910513 & 0.676551 & 0.1487 & \emph{no} gate file recovered \\
+8B & 0.000503 & 1.881214 & 1.033805 & 0.1487 & \texttt{gates\_8b.json} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Provenance status of Table~\ref{tab:s1}, stated plainly.}
+\begin{itemize}
+  \item The 0.6B values exist only as the pre-flight job's log line
+  (\texttt{results/wave8\_logs/wave8-preflight\_404131.log}):
+  \texttt{H\_lo=1.393 H\_hi=2.022 m\_hi=0.149 I\_hi0=0.0970 (m*=0.127)}.
+  The archived \texttt{results/wave8/gates.json} contains \texttt{F0}, \texttt{F0\_prereg\_w8\_g26},
+  \texttt{F1}, \texttt{S\_nom} and \texttt{S\_nom\_oracle} blocks and \emph{no} \texttt{F3} block.
+  \item The 8B values are archived and machine-readable in \texttt{results/wave8/gates\_8b.json},
+  which also carries \texttt{F2}: the 26 label ids 32--57, the equal prompt hashes
+  (\texttt{55bdc663\ldots}), and an untrained \texttt{min\_mass} of 0.2271.
+  \item The 1.7B and 4B values are quoted in the reconciliation note at the same precision as above,
+  but \texttt{gates\_1.7b.json} and \texttt{gates\_4b.json} appear in \emph{no} committed revision
+  of this repository (\texttt{git log --all --} on both paths is empty) and were not recovered from
+  the cluster archive. Those six numbers therefore stand on a document record, not on a gate file.
+  This is the weakest link in the 1.7B and 4B gate story and the paper says so.
+  \item What is \emph{not} weakened: the readings those thresholds are compared against are
+  archived, and Section S2 recomputes the branch verdicts from them. For the 4B, both the
+  low-entropy branch's unreachability (minimum median entropy 0.5765 against
+  $H_{\mathrm{lo}}{=}0.038$) and the diffuse branch's non-firing (the single read above
+  $H_{\mathrm{hi}}$ carries $I{=}0.8714 > I_{\mathrm{hi0}}{=}0.677$) hold with wide margins, so a
+  plausible transcription error in the missing gate file would not change the verdict.
+  \item The G2 band tiers are a pre-registered \emph{report} tier, not a gate. Both passing 4B
+  seeds land in its headline and strong bands at $1.42\times$--$1.56\times$ the archived 5{,}346
+  floor; no decision in this paper consumes the tier.
+\end{itemize}
+
+\section{S2. Per-round detector readings}
+
+All readings below are copied from archived artifacts, not retyped from prose: the 4B and 1.7B
+reads from \texttt{docs/verify/W8-MANIFEST.json} (\texttt{collapse\_4b},
+\texttt{stop\_1.7b\_5e5\_seed0}), the 0.6B wave-8 reads from the same manifest
+(\texttt{w06\_wave8\_r1\_collapse\_reads}, 16 entries) and the job logs under
+\texttt{results/wave8\_logs}. ``C'' in a sequence means the detector reported collapse at that
+round read.
+
+\begin{table}[h]
+\centering
+\small
+\caption{4B, both passing seeds, all eight reads. $H$ = median per-state entropy;
+$I$ = state-dependence statistic; share = modal argmax share; mass = G7 \texttt{min\_mass}.}
+\label{tab:s2a}
+\begin{tabular}{@{}llrrrrl@{}}
+\toprule
+\textbf{Seed} & \textbf{Read} & $H$ & $I$ & \textbf{share} & \textbf{mass} & \textbf{Collapsed} \\
+\midrule
+0 & R1 (256 st.) & 2.0863 & 0.8714 & 0.1836 & 1.000000 & no \\
+0 & R2 (256 st.) & 1.5563 & 0.7063 & 0.4688 & 1.000000 & no \\
+0 & R3 (256 st.) & 1.7783 & 0.3459 & 0.7461 & 0.999994 & no \\
+0 & final (1{,}024 st.) & 1.7887 & 0.5287 & 0.6514 & 0.999983 & no \\
+1 & R1 (256 st.) & 0.5765 & 1.6662 & 0.1953 & 0.999813 & no \\
+1 & R2 (256 st.) & 1.7547 & 0.4540 & 0.4102 & 0.999996 & no \\
+1 & R3 (256 st.) & 1.7455 & 0.0739 & 0.8398 & 0.999996 & no \\
+1 & final (1{,}024 st.) & 1.7239 & 0.3719 & 0.7939 & 0.999996 & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent A note on Table~\ref{tab:s2a}: the reconciliation note cites
+\path{results/wave8_r1-4b_lr5e-5_seed{0,1}/round{1,2,3}/collapse_round{n}.json} as the
+source of these rows. Those per-run files are not present in the working tree or in any committed
+revision; the values themselves are archived in the manifest above and are reproduced here from
+it. The same readings under the same thresholds appear in the note, so the discrepancy is a stale
+path citation, not a changed number.
+
+
+\begin{table}[h]
+\centering
+\footnotesize
+\caption{0.6B wave-8, all six arm tasks, all round reads (16 reads). Thresholds:
+$H_{\mathrm{lo}}{=}1.393$, $H_{\mathrm{hi}}{=}2.022$, $m_{\mathrm{hi}}{=}0.149$,
+$I_{\mathrm{hi0}}{=}0.0970$. Branch: \texttt{low} = low-entropy branch,
+\texttt{diff} = diffuse-and-state-blind branch, \texttt{---} = not collapsed.}
+\label{tab:s2b}
+\begin{tabular}{@{}llrrrcl@{}}
+\toprule
+\textbf{Arm} & \textbf{Rd} & $H$ & \textbf{share} & $I$ & \textbf{Branch} & \textbf{Seq.} \\
+\midrule
+\texttt{lr1e-5} s0 & 1 & 0.401 & 0.980 & 0.0991 & low & C \\
+\texttt{lr1e-5} s0 & 2 & 2.224 & 0.758 & 0.0196 & diff (reason unrecorded) & C \\
+\texttt{lr1e-5} s0 & 3 & 1.760 & 0.391 & 0.5641 & --- & not C \\
+\texttt{lr1e-5} s1 & 1 & 0.938 & 0.812 & 0.2046 & low & C \\
+\texttt{lr1e-5} s1 & 2 & 1.083 & 0.492 & 0.1606 & low & C \\
+\texttt{lr1e-5} s1 & 3 & 1.584 & 0.414 & 0.5879 & --- & not C \\
+\texttt{lr1e-5} s2 & 1 & 0.396 & 0.961 & 0.1310 & low & C \\
+\texttt{lr1e-5} s2 & 2 & 0.896 & 0.633 & 0.5023 & low & C \\
+\texttt{lr1e-5} s2 & 3 & 0.700 & 0.727 & 0.6029 & low & C \\
+\midrule
+\texttt{lr5e-5} s0 & 1 & 0.826 & 0.508 & 1.0592 & low & C \\
+\texttt{lr5e-5} s0 & 2 & 2.087 & 0.695 & 0.2633 & --- & not C \\
+\texttt{lr5e-5} s0 & 3 & 0.926 & 0.742 & 0.4367 & low & C \\
+\texttt{lr5e-5} s1 & 1 & 0.057 & 0.805 & 0.4679 & low & C \\
+\texttt{lr5e-5} s1 & 2 & 0.879 & 0.434 & 0.9350 & low & C \\
+\texttt{lr5e-5} s2 & 1 & 0.000 & 0.996 & 0.0309 & low & C \\
+\texttt{lr5e-5} s2 & 2 & 1.059 & 0.246 & 1.4025 & low & C \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading Table~\ref{tab:s2b} correctly.} Every round-1 read in the 0.6B wave-8 block has
+median entropy below $H_{\mathrm{lo}}{=}1.393$ and modal share above $m_{\mathrm{hi}}{=}0.149$
+($H$ spans 0.000--0.938, share 0.508--0.996), so the low-entropy branch fires on all six tasks at
+the first read. Two tasks stop there and two more stop after a second collapsing read; the resulting
+marker sequences are \texttt{C,C,-} (\texttt{lr1e-5} s0 and s1, both stopped at round 2),
+\texttt{C,C,C} (\texttt{lr1e-5} s2, stopped at round 3 when reads 2 and 3 satisfy the
+two-consecutive rule), \texttt{C,C} (\texttt{lr5e-5} s1 and s2, stopped at round 2), and
+\texttt{C,-,C} (\texttt{lr5e-5} s0), which never meets two \emph{consecutive} collapses and
+therefore completed with \texttt{DONE} only rather than being stopped.
+
+\paragraph{One recording anomaly, disclosed.} The \texttt{lr1e-5} s0 round-2 read is marked
+\texttt{collapsed: true} with an \emph{empty} \texttt{reasons} list, unlike the other fifteen
+entries. The read's own numbers are consistent with the low-entropy branch ($H{=}2.224$ is above
+$H_{\mathrm{hi}}{=}2.022$, so the low branch cannot have fired on entropy alone; share 0.758 with
+$I{=}0.0196 \leq 0.0970$ is exactly the diffuse-and-state-blind branch, which the detector records
+under a different label). We did not reconstruct the missing reason string, and the paper's claim
+about this arm rests on the marker sequence and the round-3 read, neither of which depends on it.
+
+\begin{table}[h]
+\centering
+\small
+\caption{1.7B \texttt{lr5e-5} seed 0, the stopped arm: both reads, with branches.}
+\label{tab:s2c}
+\begin{tabular}{@{}lrrrrl l@{}}
+\toprule
+\textbf{Round} & $H$ & $I$ & \textbf{share} & \textbf{mass} & \textbf{Branch} & \textbf{Reason} \\
+\midrule
+1 & $6.2846\times10^{-5}$ & $2.0803\times10^{-6}$ & 1.0000 & 0.9296 & low & share $>m_{\mathrm{hi}}$ \\
+2 & 2.0589 & 0.1086 & 0.4453 & $2.1528\times10^{-5}$ & high & diffuse and state-blind \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Table~\ref{tab:s2c} is the cleanest single demonstration in the study that the two
+detector branches catch different failure modes on the \emph{same} task: round 1 collapses the
+output onto one letter with the mass still on the label set (G7 easily passes at 0.9296), and round
+2 does the opposite, spreading probability while leaving the label set (G7 fails by five orders of
+magnitude). \texttt{stopped\_after\_round: 2}, reason: ``collapse gate tripped at two consecutive
+round reads (WAVE8 \S6.5)''. The paper reports the $H$ and $I$ comparisons against this rung's
+$H_{\mathrm{lo}}{=}9.6527\times10^{-5}$ and $H_{\mathrm{hi}}{=}1.6313$; both are in
+Table~\ref{tab:s1} and carry the provenance caveat noted there.
+
+
+\section{S3. The full 24-row task ledger}
+
+One row per planned task (scale $\times$ recipe arm $\times$ learning-rate arm $\times$ seed).
+Dispositions use the precedence stated in the paper: a task stopped by the collapse stop-loss is
+counted as \emph{stopped} even where a later resume produced a completed read, so the five classes
+below are disjoint. ``Matched final eval'' means a paired $n{=}30$ noisy-argmax generation against
+that rung's matched untrained control.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\caption{All 24 planned tasks. $n{=}30$ paired paths per evaluated row. Ctl = matched untrained
+control median.}
+\label{tab:s3}
+\begin{tabular}{@{}p{2.35cm}p{2.0cm}p{2.6cm}p{3.5cm}p{3.2cm}@{}}
+\toprule
+\textbf{Task} & \textbf{Sequence} & \textbf{Disposition} & \textbf{Measured read} & \textbf{Evidence} \\
+\midrule
+0.6B w7 SFT s0 & --- & evaluated, failing & 20{,}594 vs ctl 11{,}569; 0/30 wins & per-run JSON \\
+0.6B w7 SFT s1 & --- & evaluated, failing & 25{,}721; 0/30 & per-run JSON \\
+0.6B w7 SFT s2 & --- & evaluated, failing & 25{,}508; 0/30 & per-run JSON \\
+0.6B w7 xgrad s0 & --- & evaluated, failing & 37{,}384; 0/30 & per-run JSON \\
+0.6B w7 xgrad s1 & --- & evaluated, failing & 32{,}516; 0/30 & per-run JSON \\
+0.6B w7 xgrad s2 & --- & evaluated, failing & 27{,}652; 0/30 & per-run JSON \\
+\midrule
+0.6B w8 lr1e-5 s0 & C,C,- & stopped (resumed; 2 markers) & R3 $H{=}1.760$ clean; final G7 $3.2\times10^{-4}$ & log + marker \\
+0.6B w8 lr1e-5 s1 & C,C,- & stopped (resumed, override) & no final eval & log + marker \\
+0.6B w8 lr1e-5 s2 & C,C,C & stopped at R3 & no final eval & log + marker \\
+0.6B w8 lr5e-5 s0 & C,-,C & trained, no final eval & \texttt{DONE} only; band 16{,}035 & log + band record \\
+0.6B w8 lr5e-5 s1 & C,C & stopped at R2 & no final eval & log + marker \\
+0.6B w8 lr5e-5 s2 & C,C & stopped at R2 & no final eval & log + marker \\
+\midrule
+1.7B lr1e-5 s0 & not C & evaluated, failing & 21{,}468 vs ctl 11{,}508; 0/30 & per-run JSON \\
+1.7B lr1e-5 s1 & one trip & evaluated, failing & 43{,}660; 0/30; G7 fail & per-run JSON \\
+1.7B lr1e-5 s2 & not C & evaluated, failing & 71{,}270; 0/30 & per-run JSON \\
+1.7B lr5e-5 s0 & C,C & stopped at R2 & both branches (Table~\ref{tab:s2c}) & manifest \\
+1.7B lr5e-5 s1 & --- & unattempted & never submitted & submit ledger \\
+1.7B lr5e-5 s2 & --- & unattempted & never submitted & submit ledger \\
+\midrule
+4B lr5e-5 s0 & not C & evaluated, passing & 8{,}315 vs ctl 21{,}578; 30/30 & raw JSONL \\
+4B lr5e-5 s1 & not C & evaluated, passing & 7{,}612; 30/30 & raw JSONL \\
+\midrule
+8B lr5e-5 s0 & n/a & trained, no final eval & band mean 35{,}289 & verdict doc \\
+8B lr5e-5 s1 & n/a & trained, no final eval & band mean 12{,}444 (pooled 23{,}867) & verdict doc \\
+8B lr1e-5 s0 & n/a & trained, no final eval & band mean 71{,}855 & verdict doc \\
+8B lr1e-5 s1 & n/a & trained, no final eval & band mean 22{,}083 (pooled 46{,}969) & verdict doc \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Totals, reconciled.} Planned 24. Attempted with a trained checkpoint 22 (the two
+unattempted are 1.7B \texttt{lr5e-5} seeds 1--2). With a matched paired final evaluation 11 (six
+wave-7, three 1.7B 1e-5, two 4B). Without one 13 (five stopped wave-8 0.6B, one \texttt{DONE}-only
+wave-8 0.6B, one stopped 1.7B 5e-5, two unattempted, four 8B). Six distinct tasks carry a persisted
+\texttt{STOPPED\_collapse} marker, of which two were later resumed. The five disposition classes sum
+to 2 + 6 + 5 + 9 + 2 = 24 exactly as stated in the paper's Table~1, and the six-marker count is a
+\emph{separate flag} over the same rows, not a sixth class: this is the overlap the paper discloses
+rather than denies.
+
+\section{S4. The registered denominator text, and both estimands}
+
+\paragraph{Verbatim.} \texttt{docs/waves/WAVE8\_SPEC.md} \S6.3, committed 2026-10-07 (commit
+\texttt{7d3260b}), before any wave-8 run:
+
+\begin{quote}
+``A seed passes iff all three hold; the arm needs $\geq$ 2/3 seeds.''
+\end{quote}
+
+\noindent The sentence does not define how a planned seed that never produces an evaluated
+checkpoint enters the fraction. The registered treatment is therefore \emph{underspecified}; it is
+not amended retrospectively, and the paper prints two readings instead.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Both denominator readings, at the rule's actual unit (the learning-rate arm).}
+\label{tab:s4}
+\begin{tabular}{@{}p{2.4cm}p{2.3cm}p{3.4cm}p{4.0cm}@{}}
+\toprule
+\textbf{Rung} & \textbf{Arm} & \textbf{Evaluated reading} & \textbf{Planned reading} \\
+\midrule
+4B & 5e-5 & $2/2$ pass & $2/2$ pass \\
+1.7B & 1e-5 (executed) & $0/3$ & $0/3$ \\
+1.7B & 5e-5 (planned) & undefined (0 evaluated) & $0/3$ \\
+1.7B & rung level & undefined & $0/6$ \\
+0.6B w8 & 1e-5 & undefined (0 evaluated) & $0/3$ \\
+0.6B w8 & 5e-5 & undefined (0 evaluated) & $0/3$ \\
+0.6B w8 & pooled & undefined & $0/6$ \\
+8B & both & not computable (no matched control) & not computable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Two consequences the paper states and this table makes arithmetic: the only positive rung
+is unchanged under both readings, and the arms with zero evaluated seeds are \emph{undefined}
+rather than \emph{failing}. A third consequence belongs to the selection step and is easy to miss:
+the rule ranks arms by pooled mean validation cost \emph{over seeds}, so a missing seed corrupts arm
+selection independently of the pass fraction. At 8B no seed is missing and selection was computable
+(pooled 23{,}867 vs 46{,}969, \texttt{winner:} \texttt{lr5e-5}); at 1.7B the selection record holds
+only the executed arm (pooled 48{,}311 over three seeds, \texttt{winner:} \texttt{lr1e-5}) because
+the planned 5e-5 arm produced one trained-but-stopped seed with no validation read; at wave-8 0.6B
+the band record holds one seed per arm (90{,}448 and 16{,}035, \texttt{winner:}
+\texttt{lr5e-5}), so no pooled-mean selection was performed there either.
+
+
+\section{S5. Provenance inventory}
+
+\subsection*{Commit anchors}
+
+\begin{table}[h]
+\centering
+\small
+\caption{Anchors cited by the paper, with what each one pins. Times UTC unless stated.}
+\label{tab:s5a}
+\begin{tabular}{@{}p{1.7cm}p{3.6cm}p{7.0cm}@{}}
+\toprule
+\textbf{Commit} & \textbf{Date / time} & \textbf{What it pins} \\
+\midrule
+\texttt{7d3260b} & 2026-10-07 13:01:04Z & \texttt{docs/waves/WAVE8\_SPEC.md} with F0--F3, G1, G2, G7, the
+seed-pooling rule and the failing-grid record. Byte-identical spec text at the two later commits below \\
+\texttt{4b8bffb} & 2026-10-07 14:55:36Z & cluster kit, byte-equal to the spec text at \texttt{7d3260b} \\
+\texttt{b61cea6} & 2026-10-07 14:57:38Z & spec status header + appended changes log only; training arrays checked this out \\
+\texttt{d720701} & 2026-10-08 08:05:31Z & later checkout of the same spec text by the training arrays \\
+\midrule
+& 2026-10-08 22:24:06Z & first wave-8 GPU job \texttt{405143} starts, 7.5 h after the kit commit \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The provenance claim in the paper is narrow and verifiable: \texttt{sha256sum} of
+\texttt{git show <sha>:docs/waves/WAVE8\_SPEC.md} is identical at \texttt{7d3260b}, \texttt{b61cea6}
+and \texttt{d720701}; \texttt{git merge-base --is-ancestor} confirms \texttt{7d3260b} is an ancestor
+of both training HEADs; and \texttt{git diff 7d3260b b61cea6 -- docs/waves/WAVE8\_SPEC.md} shows only
+the status header and an appended changes log. No rule text changed after the freeze.
+
+\subsection*{Job and lane inventory}
+
+\begin{table}[h]
+\centering
+\small
+\caption{Compute lanes and job identifiers.}
+\label{tab:s5b}
+\begin{tabular}{@{}p{2.0cm}p{2.6cm}p{8.0cm}@{}}
+\toprule
+\textbf{Rung} & \textbf{Lane} & \textbf{Identifiers} \\
+\midrule
+0.6B -- 4B & TU/e Umbrella, L4 (24 GB) & pre-flight \texttt{404131}; wave-8 training arrays
+\texttt{405143}, \texttt{405887}, \texttt{406726}, \texttt{407006} (per-task array elements) \\
+8B, seed 0 & Snellius, A100 & \texttt{28414248}, \texttt{28418615} \\
+8B, seed 1 & Modal, A100 & two legs after the budget amendment; job identifiers in the 8B verdict doc \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Array-element start times from the manifest's \texttt{job\_timeline}: \texttt{405143\_0}
+2026-10-08T00:24:02 local, \texttt{405887\_0..5} from 09:35:08, \texttt{406726\_0..2} from 12:11:35,
+\texttt{407006\_0..2} from 13:19:09. The two later arrays are the resumed runs whose markers are
+discussed in S2; the first is the one that produced most of the round-1 collapse trips.
+
+\subsection*{Code and configuration}
+
+Implemented modules named by the paper: \texttt{agent\_bullwhip/engine.py} (four-tier beer-game
+simulator), \texttt{decision\_gates.py} (F0--F3, collapse detector, permutation check),
+\texttt{make\_w8\_g26b()} (the 26-value frozen grid), \texttt{verify.py} (gate orchestration and
+pristine-block gate), \texttt{gates.py}. Per-rung frozen gate files: see Table~\ref{tab:s1}. The
+per-provider library stack is recorded in the cluster environment specification and was
+\textbf{not} runtime-verified in preparing this paper, so it is named as a declaration, not a
+measurement.
+
+\subsection*{Evidence availability, per rung}
+
+\begin{table}[h]
+\centering
+\small
+\caption{What an independent reader can actually re-read today, and what they cannot.}
+\label{tab:s5c}
+\begin{tabular}{@{}p{1.5cm}p{4.4cm}p{6.4cm}@{}}
+\toprule
+\textbf{Rung} & \textbf{Available} & \textbf{Not available} \\
+\midrule
+0.6B w7 & per-run JSON for all six arm--seed rows; matched untrained control & --- \\
+0.6B w8 & job logs with every round read and marker; \texttt{w8-band-record.json};
+sixteen reads in the manifest & arm directories and the two curriculum-band files (removed by the
+repository's results slim-down, not by this paper) \\
+1.7B & per-run JSON for the three evaluated seeds (both generations); stop record for the
+5e-5 arm & \texttt{gates\_1.7b.json}; any final-eval files for the stopped arm (they never existed) \\
+4B & raw paired JSONLs for both seeds; permutation JSONs; both generations & \texttt{gates\_4b.json} \\
+8B & verdict doc with leg-by-leg timings, lane and job identifiers, band means & any raw JSONL of
+either generation; a matched untrained-8B control evaluation; selection JSON \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Closing statement on scope.} This supplement exists to let a reader check the paper's
+numbers rather than trust its prose, and it is explicit about the four places where that is not
+currently possible: the six 1.7B and 4B threshold values (no gate file recovered), the 0.6B wave-8
+per-run directories (removed by the repository's own slim-down), the 8B raw evaluations (never
+recovered from either lane), and one missing detector reason string in the 0.6B wave-8 block. Those
+four gaps are disclosed in the main text as well; none of them is load-bearing for the paper's only
+positive rung, whose numbers are recomputable from the raw paired JSONLs.
+
+\end{document}

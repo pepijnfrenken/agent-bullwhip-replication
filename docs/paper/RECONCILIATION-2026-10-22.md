@@ -104,8 +104,13 @@ was an incomplete description of the evidence.
 | seed1 R3 | 1.7455 | 0.0739 | 0.8398 | 0.999996 | no |
 | seed1 final S1024 | 1.7239 | 0.3719 | 0.7939 | 0.999996 | no |
 
-Source: `results/wave8_r1-4b_lr5e-5_seed{0,1}/round{1,2,3}/collapse_round{n}.json` and
-`results/wave8/r1-4b-seed{0,1}-S_nom.json`. No read is below H_lo (minimum 0.5765), and the
+Source (corrected 2026-10-23): `docs/verify/W8-MANIFEST.json` → `collapse_4b`. The per-run paths
+originally cited here (`results/wave8_r1-4b_lr5e-5_seed{0,1}/round*/collapse_round{n}.json`,
+`results/wave8/r1-4b-seed{0,1}-S_nom.json`) are **not present** in the working tree or in any
+committed revision; the values in the table above are archived in the manifest and were re-read
+from it, unchanged. Likewise `gates_1.7b.json` and `gates_4b.json` appear in no committed revision,
+so the 1.7B and 4B F3 thresholds in §8 rest on this note's record only — the paper's supplement S1
+states that limitation. No read is below H_lo (minimum 0.5765), and the
 single read above H_hi (seed0 R1, 2.086) has I = 0.871 > I_hi0 = 0.677, so neither branch can
 fire. High modal share alone is not collapse under the registered rule.
 
