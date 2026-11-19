@@ -35,3 +35,23 @@ AssertionError: label mass 0.9893 < 0.99 (prompt 3): candidate-letter invariant 
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 55.58it/s]
 collapse-final untrained-1.7b: collapsed=False argmax-histogram top3=[(2, 312), (1, 293), (0, 148)] -> results/wave8/untrained-1.7b-S_nom.json
 --- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at 2026-11-19T23:03:26+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 72.10it/s]
+untrained-curriculum: runs=30 mean=20,155 min=7,578 max=39,006 parse_fail=0 min_mass=0.60945 wall=218.9s -> results/wave8_val/untrained-curriculum.jsonl
+--- ok untrained curriculum control
+r1 lr override: lr1e-5
+r1-1.7b winner lr tag: lr1e-5
+--- eval w8-r1-1.7b-seed0-argmax-step (step/argmax) at 2026-11-19T23:07:13+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 60.40it/s]
+w8-r1-1.7b-seed0-argmax-step: runs=1 mean=38,490 min=38,490 max=38,490 parse_fail=0 min_mass=1.00000 wall=7.9s -> results/eval/w8-r1-1.7b-seed0-argmax-step.jsonl
+--- ok w8-r1-1.7b-seed0-argmax-step
+--- eval w8-r1-1.7b-seed0-sampled-step (step/sampled) at 2026-11-19T23:07:31+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 64.27it/s]
+w8-r1-1.7b-seed0-sampled-step: runs=30 mean=40,270 min=11,308 max=68,896 parse_fail=0 min_mass=1.00000 wall=297.0s -> results/eval/w8-r1-1.7b-seed0-sampled-step.jsonl
+--- ok w8-r1-1.7b-seed0-sampled-step
+--- eval w8-r1-1.7b-seed0-argmax-noisy (noisy/argmax) at 2026-11-19T23:12:35+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 53.70it/s]
+w8-r1-1.7b-seed0-argmax-noisy: runs=30 mean=28,739 min=8,071 max=59,309 parse_fail=0 min_mass=1.00000 wall=295.8s -> results/eval/w8-r1-1.7b-seed0-argmax-noisy.jsonl
+--- ok w8-r1-1.7b-seed0-argmax-noisy
+--- perm probe r1-1.7b-seed0 at 2026-11-19T23:17:41+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 98.48it/s]
+grid 0/3: done (512 states)
