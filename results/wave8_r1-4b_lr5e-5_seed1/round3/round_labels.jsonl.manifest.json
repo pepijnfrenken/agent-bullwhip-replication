@@ -1,0 +1,9 @@
+{
+  "episode_stride": 10000,
+  "n": 5440,
+  "sha256": "58d4a93b5af8489e1f6888e90f38968e64dc9f09129550c8c698521f274cf17f",
+  "sources": [
+    "results/wave8_r1-4b_lr5e-5_seed1/round3/policy_labels.jsonl",
+    "results/wave8_r1-4b_lr5e-5_seed1/round3/behavior_labels.jsonl"
+  ]
+}

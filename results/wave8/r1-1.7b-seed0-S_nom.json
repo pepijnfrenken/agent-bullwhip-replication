@@ -1,0 +1,50 @@
+{
+ "adapter": "results/wave8_r1-1.7b_lr1e-5_seed0_round3/checkpoint-169",
+ "argmax_histogram": [
+  0,
+  28,
+  18,
+  19,
+  22,
+  68,
+  76,
+  79,
+  64,
+  45,
+  35,
+  109,
+  103,
+  176,
+  41,
+  33,
+  3,
+  11,
+  14,
+  63,
+  9,
+  2,
+  6,
+  0,
+  0,
+  0
+ ],
+ "arm": "r1-1.7b-seed0",
+ "collapse": {
+  "I": 2.583699021405696,
+  "branch": "low",
+  "collapsed": true,
+  "median_entropy": 1.0605184714443642e-05,
+  "modal_argmax_share": 0.171875,
+  "n_states": 1024,
+  "reasons": [
+   "low-entropy: modal argmax share > m_hi"
+  ]
+ },
+ "entropy_median": 1.0605184714443642e-05,
+ "grid": "w8_g26b",
+ "min_mass": 0.9999962449073792,
+ "n_states": 1024,
+ "oracle_modal_share": 0.126953125,
+ "top_letter_share": 0.0,
+ "zero_letter_share": 0.0
+}

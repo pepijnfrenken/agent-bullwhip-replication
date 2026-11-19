@@ -1,0 +1,22 @@
+{
+  "completed": 1,
+  "confidence_mean": 0.9781069166666669,
+  "config": "baseline",
+  "entropy_mean": 0.07248053345598622,
+  "failed": 0,
+  "failure_rate": 0.0,
+  "grid_id": "w8_g26b",
+  "max_cost": 81994.0,
+  "mean_cost": 81994.0,
+  "min_cost": 81994.0,
+  "min_mass": 0.9999962449073792,
+  "model": "w8-r1-1.7b-seed1",
+  "n_runs": 1,
+  "parse_fail": 0,
+  "require_mass": 0.0,
+  "runs": 1,
+  "tag": "w8-r1-1.7b-seed1-argmax-step",
+  "top_letter_share": 0.0,
+  "wall_sec": 7.936355113983154,
+  "zero_letter_share": 0.0
+}
