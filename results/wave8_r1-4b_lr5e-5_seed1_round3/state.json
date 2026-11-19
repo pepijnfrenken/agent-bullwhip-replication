@@ -3,7 +3,7 @@
   "anchor": "base",
   "batch": 32,
   "beta_kl": 0.02,
-  "checkpoint_dir": "checkpoint-79",
+  "checkpoint_dir": "checkpoint-139",
   "epochs": null,
   "grid_id": "w8_g26b",
   "init": "adapter",
@@ -14,7 +14,7 @@
   "permute_options": 1,
   "permute_p": 0.5,
   "phase": "rlcd",
-  "saved_at": "2026-11-20T00:06:23+0100",
+  "saved_at": "2026-11-20T00:22:13+0100",
   "seed": 1,
-  "step": 79
+  "step": 139
 }
