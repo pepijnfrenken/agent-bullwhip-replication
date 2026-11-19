@@ -7,7 +7,13 @@
     "r1:label_behavior",
     "r1:merge",
     "r1:train",
-    "r1:gate"
+    "r1:gate",
+    "r2:collect_argmax",
+    "r2:collect_sampled",
+    "r2:concat_states",
+    "r2:label_policy",
+    "r2:label_behavior",
+    "r2:merge"
   ],
-  "round": 1
+  "round": 2
 }

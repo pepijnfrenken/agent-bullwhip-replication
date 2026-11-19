@@ -14,3 +14,9 @@ states=1360 flat=0.0007 edge=0.4199 entropy=2.632 wall=41.0s
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 94.56it/s]
 collapse-check results/wave8_r1-4b_lr5e-5_seed0_round1/checkpoint-169: collapsed=False medH=1.885 modal_share=0.293 I=0.7480 []
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 89.49it/s]
+collected 2160 policy states -> results/wave8_r1-4b_lr5e-5_seed0/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 84.95it/s]
+collected 2160 policy states -> results/wave8_r1-4b_lr5e-5_seed0/round2/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.3777 entropy=2.729 wall=56.8s
+states=1360 flat=0.0000 edge=0.3654 entropy=2.801 wall=41.6s
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 103.66it/s]
