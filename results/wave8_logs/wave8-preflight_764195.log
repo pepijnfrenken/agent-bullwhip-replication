@@ -1,0 +1,52 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=9db73fe3dffb8769a549ec8a8fa8f81c91ebcbbe rung=0.6b model=Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca
+F0, F1 passing: {'F0': True, 'F1': True}
+=== F2: tokenizer check (Qwen/Qwen3-0.6B) ===
+grid w8_g26b: 26 options A..Z values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 36, 44, 54, 64, 78, 94, 114, 136, 166, 200]
+prompt sha256 (string renderer): 55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49dafc422
+token ids 32..57 (contiguous); apply_chat_template sha equal: True
+-> results/wave8/grid_w8_g26b.json
+=== F3: freeze control stats on S_nom (untrained readout) ===
+F2 ok (ids 32..57, prompt sha equal). F3 frozen: H_lo=1.393 H_hi=2.022 m_hi=0.149 I_hi0=0.0970 -> results/wave8/gates.json
+=== gate report ===
+# WAVE8 gates — results/wave8/gates.json
+F0 grid     : PASS
+   mixed    regret_mean_rel    0.00109 <= 0.005 : ok
+   mixed    regret_p90_rel     0.00340 <= 0.02 : ok
+   mixed    top_argmax_share   0.05800 <= 0.08 : ok
+   mixed    top_mass           0.04044 <= 0.06 : ok
+   nominal  regret_mean_rel    0.00064 <= 0.005 : ok
+   nominal  regret_p90_rel     0.00194 <= 0.02 : ok
+   nominal  top_argmax_share   0.02100 <= 0.03 : ok
+   nominal  top_mass           0.01540 <= 0.03 : ok
+F1 teacher  : PASS (PI1 mean 4,591 vs floor 8,541; wins 30/30)
+F2 interface: PASS (ids contiguous=True, prompt sha equal=True)
+F3 control  : frozen H_lo=1.393 H_hi=2.022 m_hi=0.149 I_hi0=0.0970 (m*=0.127)
+=== wave8-preflight done at 2026-11-19T14:49:22+01:00 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+764195        COMPLETED                       
+764195.batch  COMPLETED   2504156K   2504156K 
+764195.exte+  COMPLETED                       
+
+Job ID: 764195
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:00:40
+CPU Efficiency: 7.14% of 00:09:20 core-walltime
+Job Wall-clock time: 00:01:10
+Memory Utilized: 2.39 GB
+Memory Efficiency: 14.93% of 16.00 GB (16.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

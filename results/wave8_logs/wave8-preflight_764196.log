@@ -1,0 +1,37 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=9db73fe3dffb8769a549ec8a8fa8f81c91ebcbbe rung=0.6b model=Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca
+F0, F1 passing: {'F0': True, 'F1': True}
+=== F2: tokenizer check (Qwen/Qwen3-0.6B) ===
+grid w8_g26b: 26 options A..Z values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 36, 44, 54, 64, 78, 94, 114, 136, 166, 200]
+prompt sha256 (string renderer): 55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49dafc422
+token ids 32..57 (contiguous); apply_chat_template sha equal: True
+-> results/wave8/grid_w8_g26b.json
+=== F3: freeze control stats on S_nom (untrained readout) ===
+results/wave8/gates.json: F2 already set — frozen before training; pass --force to overwrite
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+764196           FAILED                       
+764196.batch     FAILED    906352K    906352K 
+764196.exte+  COMPLETED                       
+
+Job ID: 764196
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 1)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:00:39
+CPU Efficiency: 7.62% of 00:08:32 core-walltime
+Job Wall-clock time: 00:01:04
+Memory Utilized: 885.11 MB
+Memory Efficiency: 5.40% of 16.00 GB (16.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
