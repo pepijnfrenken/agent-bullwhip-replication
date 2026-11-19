@@ -203,3 +203,30 @@ since it must sit under `results/` or `docs/`. Any other change still refuses. A
 | 766031 | bw8-eval 4b | afterok:766029 | PENDING (Dependency) |
 
 Superseded and cancelled: 766014, 766015, 766016, 766017, 766018.
+
+## Prediction 1 confirmed on both rungs; gatecheck passed (2026-11-19T16:2xZ)
+
+`766026` (4b preflight) COMPLETED, 2m41s, exit 0, writing `results/wave8/gates_4b.json` for
+`Qwen/Qwen3-4B@1cfa9a72`. `766027` (gatecheck) then COMPLETED in 4 seconds, exit 0, with
+`overall ok: True` across all 8 checks in `results/wave8/gate_verification.json`:
+
+| rung | field | registered | read from file | rel diff |
+|---|---|---|---|---|
+| 1.7b | H_lo | 9.6527e-05 | 9.65265603466344e-05 | 4.6e-06 |
+| 1.7b | H_hi | 1.6313 | 1.6312969325077367 | 1.9e-06 |
+| 1.7b | I_hi0 | 1.4858 | 1.4857733402975195 | 1.8e-05 |
+| 1.7b | m_hi | 0.1487 | 0.14874833921755284 | 3.3e-04 |
+| 4b | H_lo | 0.038026 | 0.038025627538467104 | 9.8e-06 |
+| 4b | H_hi | 1.910513 | 1.9105125259947648 | 2.5e-07 |
+| 4b | I_hi0 | 0.676551 | 0.6765505195974482 | 7.1e-07 |
+| 4b | m_hi | 0.1487 | 0.14874833921755284 | 3.3e-04 |
+
+Additional reads from `gates_4b.json`, not registered as predictions: `m_star` 0.126953125,
+`H_median_untrained` 1.4007411841055655, untrained readout `min_mass` 0.997614860534668.
+
+What this buys the rebuild: both arrowheads of the protocol, the state sample and the readout, are
+deterministic across a month, a rebuilt venv and freshly downloaded checkpoints. The October gate
+values were real, so the verdicts they gated are not suspect on instrument grounds.
+
+Training is now queued and this is the last gate before numbers exist: `766028` (1.7b, 3 tasks) and
+`766029` (4b, 2 tasks) are PENDING on Resources, then `766030` and `766031` eval.
