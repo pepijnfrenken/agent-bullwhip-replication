@@ -166,3 +166,9 @@
 {"epoch": 0, "event": "val", "mean_regret": 221.217371, "n_val": 272, "nll": 11.01253, "step": 161, "top1": 0.018382}
 {"epoch": 1, "grad_norm": 3.719536, "loss": -0.4158823639154434, "loss_kl": 7.548707, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 162, "wall": 2545.1}
 {"epoch": 1, "grad_norm": 4.361547, "loss": -0.6189397871494293, "loss_kl": 6.861635, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 163, "wall": 2560.5}
+{"epoch": 1, "grad_norm": 3.847049, "loss": -0.41457612067461014, "loss_kl": 6.782557, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 164, "wall": 2575.9}
+{"epoch": 1, "grad_norm": 2.991083, "loss": -0.4807126671075821, "loss_kl": 5.02579, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 165, "wall": 2591.3}
+{"epoch": 1, "grad_norm": 4.844629, "loss": -0.39582336507737637, "loss_kl": 4.924836, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 166, "wall": 2606.7}
+{"epoch": 1, "grad_norm": 4.295094, "loss": -0.19766346365213394, "loss_kl": 6.366203, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 167, "wall": 2622.0}
+{"epoch": 1, "grad_norm": 9.053258, "loss": -0.4352443963289261, "loss_kl": 6.547674, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 168, "wall": 2637.4}
+{"epoch": 1, "grad_norm": 7.721749, "loss": -0.33634686656296253, "loss_kl": 4.492759, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 169, "wall": 2652.8}

@@ -21,7 +21,9 @@
     "r3:concat_states",
     "r3:label_policy",
     "r3:label_behavior",
-    "r3:merge"
+    "r3:merge",
+    "r3:train",
+    "r3:gate"
   ],
   "round": 3
 }
