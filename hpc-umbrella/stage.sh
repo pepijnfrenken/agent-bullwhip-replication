@@ -96,9 +96,11 @@ if [ "$SKIP_VENV" = 0 ]; then
   say "venv -> ${VENV_DIR} (ENV_MODE=${ENV_MODE})"
   # 2026-11-19: -d was the wrong test. The purge left an empty venv/ directory,
   # staging said "venv exists — reusing", then died on the missing activate.
-  # A venv is usable iff its activate script exists.
-  if [ ! -x "${VENV_DIR}/bin/activate" ]; then
-    [ -e "${VENV_DIR}" ] && say "venv dir exists but is not a venv — rebuilding"
+  # A venv is usable iff its activate script AND its interpreter exist; note that
+  # `activate` is mode 644 by design (it is sourced, not executed), so -x would
+  # wrongly condemn a healthy venv. bin/python is the executable test.
+  if [ ! -f "${VENV_DIR}/bin/activate" ] || [ ! -x "${VENV_DIR}/bin/python" ]; then
+    [ -e "${VENV_DIR}" ] && say "venv dir exists but is not a usable venv — rebuilding"
     doit "rm -rf '${VENV_DIR}'"
     if [ "$ENV_MODE" = "module" ]; then
       # --system-site-packages so the module's torch/CUDA bindings are visible
