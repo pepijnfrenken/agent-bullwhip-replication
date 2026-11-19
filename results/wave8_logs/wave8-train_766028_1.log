@@ -2,3 +2,12 @@ repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=40200d47e
 NOTE: HEAD 40200d47efa53340926be7402d109430d2725f68 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates_1.7b.json
 === wave8 r1 task 1: lr=1e-5 seed=1 rung=1.7b rounds=3x170 at 2026-11-19T20:07:24+01:00 ===
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 96.13it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed1/round1/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 99.23it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed1/round1/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.5353 entropy=1.878 wall=94.6s
+states=1360 flat=0.0000 edge=0.4390 entropy=2.624 wall=66.4s
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.27it/s]
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
