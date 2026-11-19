@@ -31,3 +31,5 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed0/round3/states
 states=4080 flat=0.0000 edge=0.6490 entropy=2.390 wall=95.4s
 states=1360 flat=0.0000 edge=0.3441 entropy=2.839 wall=66.9s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 102.18it/s]
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
