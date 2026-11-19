@@ -10,6 +10,11 @@
 #     bash hpc-umbrella/push_results.sh -m "wave-7 eval results (job 398422)" \
 #          results/eval results/wave7_logs/wave7-eval_398422.log
 #     bash hpc-umbrella/push_results.sh -n -m "msg" results/eval    # preview only
+#     bash hpc-umbrella/push_results.sh -m "auto" \
+#          --exclude-glob 'results/**/*.safetensors' results            # skip big weights
+#
+# Checkpoint dirs (`results/**/checkpoint-*/**`) are always excluded. Use
+# --exclude-glob (repeatable) for anything else that must not enter git.
 #
 # Then on the hub:  cd ~/projects/agent-bullwhip-replication && git pull --ff-only
 #
@@ -21,10 +26,12 @@ set -euo pipefail
 MSG=""
 DRY=0
 PATHS=()
+EXCLUDES=()
 while [ $# -gt 0 ]; do
   case "$1" in
     -m|--message) MSG="${2:-}"; shift 2 ;;
     -n|--dry-run) DRY=1; shift ;;
+    --exclude-glob) EXCLUDES+=(":(exclude,glob)${2:-}"); shift 2 ;;
     -h|--help) sed -n '2,18p' "${BASH_SOURCE[0]}"; exit 0 ;;
     --) shift; PATHS+=("$@"); break ;;
     -*) echo "[push] unknown flag: $1 (try --help)" >&2; exit 2 ;;
@@ -47,13 +54,13 @@ done
 
 if [ "${DRY}" -eq 1 ]; then
   echo "[push] dry run — would force-add (results/ is gitignored):"
-  git add -f -n -- "${PATHS[@]}" ":(exclude,glob)results/**/checkpoint-*/**"
+  git add -f -n -- "${PATHS[@]}" ":(exclude,glob)results/**/checkpoint-*/**" ${EXCLUDES[@]+"${EXCLUDES[@]}"}
   echo "[push] would commit: ${MSG}"
   echo "[push] would run: git push"
   exit 0
 fi
 
-git add -f -- "${PATHS[@]}" ":(exclude,glob)results/**/checkpoint-*/**"
+git add -f -- "${PATHS[@]}" ":(exclude,glob)results/**/checkpoint-*/**" ${EXCLUDES[@]+"${EXCLUDES[@]}"}
 if git diff --cached --quiet; then
   echo "[push] nothing staged — the given content is already committed; nothing to push"
   exit 0
