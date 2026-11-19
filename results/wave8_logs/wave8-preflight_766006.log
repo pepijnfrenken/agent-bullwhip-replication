@@ -1,0 +1,45 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=3e1be14d85f262846d465d7be3136cbae988eaa9 rung=1.7b model=Qwen/Qwen3-1.7B@70d244cc86ccca08cf5af4e1e306ecf908b1ad5e
+F0, F1 passing: {'F0': True, 'F1': True}
+=== F2: tokenizer check (Qwen/Qwen3-1.7B) ===
+grid w8_g26b: 26 options A..Z values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 36, 44, 54, 64, 78, 94, 114, 136, 166, 200]
+prompt sha256 (string renderer): 55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49dafc422
+token ids 32..57 (contiguous); apply_chat_template sha equal: True
+-> results/wave8/grid_w8_g26b-1.7b.json
+=== F3: freeze control stats on S_nom (untrained readout) ===
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.68it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  3.34it/s]
+F2 ok (ids 32..57, prompt sha equal). F3 frozen: H_lo=0.000 H_hi=1.631 m_hi=0.149 I_hi0=1.4858 -> results/wave8/gates_1.7b.json
+=== gate report ===
+# WAVE8 gates — results/wave8/gates_1.7b.json
+F0 grid     : not run
+F1 teacher  : not run
+F2 interface: PASS (ids contiguous=True, prompt sha equal=True)
+F3 control  : frozen H_lo=0.000 H_hi=1.631 m_hi=0.149 I_hi0=1.4858 (m*=0.127)
+=== wave8-preflight done at 2026-11-19T16:17:02+01:00 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+766006        COMPLETED                       
+766006.batch  COMPLETED   4569092K   4569092K 
+766006.exte+  COMPLETED                       
+
+Job ID: 766006
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:01:01
+CPU Efficiency: 8.76% of 00:11:36 core-walltime
+Job Wall-clock time: 00:01:27
+Memory Utilized: 4.36 GB
+Memory Efficiency: 27.23% of 16.00 GB (16.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
