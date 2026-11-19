@@ -1,0 +1,12 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=5552136644dbfc3b0f2fe10287655821176da138 rung=4b
+NOTE: HEAD 5552136644dbfc3b0f2fe10287655821176da138 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
+--- eval w8-untrained-4b-argmax-step (step/argmax) at 2026-11-20T00:42:16+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 102.18it/s]
+w8-untrained-4b-argmax-step: runs=1 mean=18,268 min=18,268 max=18,268 parse_fail=0 min_mass=0.99957 wall=14.8s -> results/eval/w8-untrained-4b-argmax-step.jsonl
+--- ok w8-untrained-4b-argmax-step
+--- eval w8-untrained-4b-sampled-step (step/sampled) at 2026-11-20T00:42:41+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 77.43it/s]
+w8-untrained-4b-sampled-step: runs=30 mean=53,674 min=10,580 max=205,682 parse_fail=0 min_mass=0.99387 wall=509.9s -> results/eval/w8-untrained-4b-sampled-step.jsonl
+--- ok w8-untrained-4b-sampled-step
+--- eval w8-untrained-4b-argmax-noisy (noisy/argmax) at 2026-11-20T00:51:19+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 104.05it/s]
