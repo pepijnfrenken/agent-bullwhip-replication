@@ -16,3 +16,9 @@ collapse-check results/wave8_r1-1.7b_lr1e-5_seed2_round1/checkpoint-169: collaps
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 62.49it/s]
 collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed2/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 55.41it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed2/round2/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.7838 entropy=2.122 wall=58.2s
+states=1360 flat=0.0000 edge=0.3051 entropy=2.816 wall=41.3s
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 56.36it/s]
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(

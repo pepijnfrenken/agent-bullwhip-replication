@@ -33,3 +33,57 @@ states=1360 flat=0.0000 edge=0.3846 entropy=2.714 wall=66.3s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.65it/s]
 /scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.82it/s]
+collapse-check results/wave8_r1-1.7b_lr1e-5_seed1_round3/checkpoint-169: collapsed=False medH=0.003 modal_share=0.152 I=2.4519 []
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 101.17it/s]
+w8-val-r1-1.7b-lr1e-5-seed1: runs=30 mean=86,546 min=54,782 max=112,289 parse_fail=0 min_mass=1.00000 wall=293.7s -> results/wave8_val/w8-val-r1-1.7b-lr1e-5-seed1.jsonl
+=== r1 seed=1 lr=1e-5 exit=0 at 2026-11-19T21:57:02+01:00 ===
+results/wave8_r1-1.7b_lr1e-5_seed0
+results/wave8_r1-1.7b_lr1e-5_seed0_round1
+results/wave8_r1-1.7b_lr1e-5_seed0_round2
+results/wave8_r1-1.7b_lr1e-5_seed0_round3
+results/wave8_r1-1.7b_lr1e-5_seed1
+results/wave8_r1-1.7b_lr1e-5_seed1_round1
+results/wave8_r1-1.7b_lr1e-5_seed1_round2
+results/wave8_r1-1.7b_lr1e-5_seed1_round3
+results/wave8_r1-1.7b_lr1e-5_seed2
+results/wave8_r1-1.7b_lr1e-5_seed2_round1
+results/wave8_r1-1.7b_lr1e-5_seed2_round2
+results/wave8_r1-4b_lr5e-5_seed0
+results/wave8_r1-4b_lr5e-5_seed0_round1
+results/wave8_r1-4b_lr5e-5_seed1
+results/wave8_r1-4b_lr5e-5_seed1_round1
+results/wave8_r2rl_lr0.0002_seed0_round1
+results/wave8_r2rl_lr0.0002_seed1
+results/wave8_r2rl_lr0.0002_seed1_round1
+results/wave8_r2rl_lr0.0002_seed1_round2
+results/wave8_r2rl_lr0.0002_seed1_round3
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+766028_1      COMPLETED                       
+766028_1.ba+  COMPLETED   4265088K   4265088K 
+766028_1.ex+  COMPLETED                       
+
+Job ID: 767256
+Array Job ID: 766028_1
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 02:43:21
+CPU Efficiency: 18.61% of 14:37:44 core-walltime
+Job Wall-clock time: 01:49:43
+Memory Utilized: 4.07 GB
+Memory Efficiency: 25.42% of 16.00 GB (16.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
