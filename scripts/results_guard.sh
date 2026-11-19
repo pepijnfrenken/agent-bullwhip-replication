@@ -80,9 +80,11 @@ EOS
 
 # --- 2. GitHub -> local mirror ----------------------------------------------
 mirror_update() {
+  local fresh=0
   if [ ! -d "${ARCHIVE}/.git" ]; then
     log "mirror: cloning ${REPO_URL} -> ${ARCHIVE}"
     git clone --quiet "${REPO_URL}" "${ARCHIVE}" || return 4
+    fresh=1
   fi
   git -C "${ARCHIVE}" fetch --quiet --prune origin '+refs/heads/*:refs/remotes/origin/*' || return 4
   local before after
@@ -90,6 +92,7 @@ mirror_update() {
   git -C "${ARCHIVE}" reset --hard --quiet origin/master || return 4
   after="$(git -C "${ARCHIVE}" rev-parse HEAD 2>/dev/null || echo none)"
   MIRROR_BEFORE="${before}"; MIRROR_AFTER="${after}"
+  [ "${fresh}" -eq 1 ] && return 0
   [ "${before}" != "${after}" ]
 }
 
@@ -127,7 +130,7 @@ drift_check() {
 cycle() {
   local out rc=0
   out="$(cluster_push)" || true
-  printf '%s\n' "${out}" | sed '/^$/d' | while read -r l; do log "push: ${l}"; done
+  printf '%s\n' "${out}" | sed '/^$/d' | grep -v '^\*\*' | while read -r l; do log "push: ${l}"; done
   case "${out}" in
     *"no cluster checkout"*) log "cycle: cluster checkout absent, nothing to push" ;;
   esac
