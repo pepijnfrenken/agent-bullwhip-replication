@@ -25,7 +25,13 @@ KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=config.sh
 . "${KIT_DIR}/config.sh"
 
-STAGE="${1:-}"; RUNG="${2:-}"; shift 2 2>/dev/null || true
+STAGE="${1:-}"; shift 1 2>/dev/null || true
+# `check` runs over both rungs and takes no rung argument; every other stage does.
+if [ "${STAGE}" = "check" ]; then
+  RUNG="both"
+else
+  RUNG="${1:-}"; shift 1 2>/dev/null || true
+fi
 
 LRS=""; SEEDS=""; ARRAY=""; MICRO=""; EVAL_LR=""; DEP=""; ARMS=""
 while [ $# -gt 0 ]; do
@@ -46,8 +52,12 @@ add() { EXPORT="${EXPORT},$1"; }
 
 case "${STAGE}" in
   check)
-    add "W8_RUNG=1.7b"
-    exec sbatch --export="${EXPORT}" cpu-wave8-gatecheck.sbatch ;;
+    # the gatecheck reads both rung files; the rung variable is irrelevant here.
+    # The option loop already consumed --dependency into DEP, so rebuild the args.
+    CHK_ARGS=(--export="${EXPORT}")
+    [ -n "${DEP}" ] && CHK_ARGS+=(--dependency="${DEP}")
+    echo "[w8-submit] check -> sbatch ${CHK_ARGS[*]} cpu-wave8-gatecheck.sbatch"
+    exec sbatch "${CHK_ARGS[@]}" cpu-wave8-gatecheck.sbatch ;;
   preflight|train|eval) ;;
   ""|-h|--help)
     sed -n '2,25p' "${BASH_SOURCE[0]}"; exit 0 ;;
@@ -55,7 +65,7 @@ case "${STAGE}" in
 esac
 
 case "${RUNG}" in
-  0.6b|1.7b|4b|8b) ;;
+  0.6b|1.7b|4b|8b|both) ;;
   *) echo "[w8-submit] rung must be 0.6b|1.7b|4b|8b (got '${RUNG}')" >&2; exit 2 ;;
 esac
 add "W8_RUNG=${RUNG}"
