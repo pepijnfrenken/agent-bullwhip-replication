@@ -66,7 +66,11 @@ if [ "$DRY" = 0 ] && [ "$(cd "${KIT_DIR}" && pwd)" != "$(cd "${BULLWHIP_ROOT}/ki
 fi
 
 say "repo -> ${REPO_DIR}"
-if [ -d "${REPO_DIR}/.git" ]; then
+# 2026-11-19: -d "${REPO_DIR}/.git" was the wrong test. A scratch purge leaves the
+# directory shell and even an empty .git behind, so staging took the "update"
+# branch and died at `remote set-url` with "not a git repository", costing two
+# attempts. Ask git whether the checkout is usable; if it is not, replace it.
+if git -C "${REPO_DIR}" rev-parse --git-dir >/dev/null 2>&1; then
   # F6: a failed fetch/pull must FAIL staging — the sweep once ran pre-fix code
   # with nothing in any log saying so (stage.sh swallowed the pull failure and
   # the array ran a stale checkout). The HEAD + dirty stamp goes into the stage
@@ -82,12 +86,20 @@ if [ -d "${REPO_DIR}/.git" ]; then
   doit "echo \"[stage] repo HEAD=\$(git -C '${REPO_DIR}' rev-parse HEAD) dirty_files=\$(git -C '${REPO_DIR}' status --porcelain | wc -l)\""
   doit "if [ -n \"${EXPECTED_COMMIT:-}\" ] && [ \"\$(git -C '${REPO_DIR}' rev-parse HEAD)\" != \"${EXPECTED_COMMIT:-}\" ]; then echo '[stage] FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but HEAD is not that commit — refusing to stage' >&2; exit 1; fi"
 else
+  # A purged shell is not a checkout: clear it so clone cannot fail on a
+  # non-empty directory.
+  doit "rm -rf '${REPO_DIR}'"
   doit "git clone '${REPO_URL}' '${REPO_DIR}'"
 fi
 
 if [ "$SKIP_VENV" = 0 ]; then
   say "venv -> ${VENV_DIR} (ENV_MODE=${ENV_MODE})"
-  if [ ! -d "${VENV_DIR}" ]; then
+  # 2026-11-19: -d was the wrong test. The purge left an empty venv/ directory,
+  # staging said "venv exists — reusing", then died on the missing activate.
+  # A venv is usable iff its activate script exists.
+  if [ ! -x "${VENV_DIR}/bin/activate" ]; then
+    [ -e "${VENV_DIR}" ] && say "venv dir exists but is not a venv — rebuilding"
+    doit "rm -rf '${VENV_DIR}'"
     if [ "$ENV_MODE" = "module" ]; then
       # --system-site-packages so the module's torch/CUDA bindings are visible
       doit "python3 -m venv --system-site-packages '${VENV_DIR}'"
@@ -113,9 +125,31 @@ else
   say "--skip-venv: leaving ${VENV_DIR} untouched"
 fi
 
+# 2026-11-19, two defects fixed here:
+#   1. bw_load_env exports HF_HUB_OFFLINE=1 for compute nodes; the staging download
+#      inherited it and refused with "couldn't connect" although the login node had
+#      working egress. Staging opts out explicitly.
+#   2. the download ran as bare `python3`, outside the venv, so it depended on the
+#      system interpreter happening to carry huggingface_hub. It now runs inside the
+#      venv, which is what has the pinned client.
+bw_download() {
+  # $1 repo id, $2 revision. Subshell so activation cannot leak.
+  (
+    . "${VENV_DIR}/bin/activate" || exit 1
+    HF_HOME="${HF_HOME}" HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 \
+      python3 -c 'import sys
+from huggingface_hub import snapshot_download as d
+print(d(sys.argv[1], revision=sys.argv[2]))' "$1" "$2"
+  )
+}
+
 if [ "$SKIP_WEIGHTS" = 0 ]; then
   say "weights ${MODEL_ID} -> ${HF_HOME}"
-  doit "HF_HOME='${HF_HOME}' python3 -c \"from huggingface_hub import snapshot_download as d; print(d('${MODEL_ID}', revision='${MODEL_REVISION}'))\" || echo '[stage] HF download failed (no egress?) — upload weights from the laptop, see OPERATOR.md'"
+  if [ "$DRY" = 1 ]; then
+    printf '  would: bw_download %s %s\n' "${MODEL_ID}" "${MODEL_REVISION}"
+  elif ! bw_download "${MODEL_ID}" "${MODEL_REVISION}"; then
+    say "HF download failed (no egress?): upload weights from the laptop, see OPERATOR.md"
+  fi
   say "if this fails: no login-node egress — upload from the laptop instead:"
   say "  tar -C ~/.cache/huggingface/hub -cf - models--Qwen--Qwen3-0.6B | ssh ${USER}@hpc.tue.nl 'mkdir -p ${HF_HOME}/hub && tar -C ${HF_HOME}/hub -xf -'"
 else
@@ -125,7 +159,11 @@ fi
 if [ "$WITH_LADDER" = 1 ]; then
   for pair in "${MODEL_ID_17B}:${MODEL_REVISION_17B}" "${MODEL_ID_4B}:${MODEL_REVISION_4B}"; do
     say "ladder weights ${pair%%:*} @ ${pair##*:} -> ${HF_HOME}"
-    doit "HF_HOME='${HF_HOME}' python3 -c \"from huggingface_hub import snapshot_download as d; print(d('${pair%%:*}', revision='${pair##*:}'))\" || echo '[stage] ladder download failed (no egress?)'"
+    if [ "$DRY" = 1 ]; then
+      printf '  would: bw_download %s %s\n' "${pair%%:*}" "${pair##*:}"
+    elif ! bw_download "${pair%%:*}" "${pair##*:}"; then
+      say "ladder download failed (no egress?): ${pair%%:*}"
+    fi
   done
 fi
 

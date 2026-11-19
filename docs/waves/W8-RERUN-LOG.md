@@ -75,3 +75,31 @@ a 5% perturbation of `H_lo` returns `MISMATCH — do not train` (rc 1).
 
 Watcher: cron job `9f0ebfccfb0d` every 20 minutes, silent unless a state changes or a job fails.
 Retention guard: cron job `426a66b96848` every 15 minutes.
+
+## Staging defects found and fixed (2026-11-19)
+
+Staging took four attempts. Three failures were kit defects, not user error, and they are now
+fixed in `hpc-umbrella/stage.sh` rather than worked around by hand:
+
+1. **Repo detection.** `if [ -d "${REPO_DIR}/.git" ]` was true on a purged directory shell, so
+   staging took the "update" branch and died at `remote set-url` with "not a git repository"
+   (attempts 1 and 2, exit 1 and 128). Now it asks git: `git -C "${REPO_DIR}" rev-parse --git-dir`,
+   and clears the shell before cloning when that fails.
+2. **Venv detection.** `if [ ! -d "${VENV_DIR}" ]` was false on the empty `venv/` left by the purge,
+   so staging said "venv exists, reusing" and died on the missing `bin/activate` (attempt 3,
+   exit 1). Now the test is `[ ! -x "${VENV_DIR}/bin/activate" ]`.
+3. **Offline flag and interpreter for the weight download.** `bw_load_env` exports
+   `HF_HUB_OFFLINE=1` for compute nodes, and the staging download inherited it, so
+   `snapshot_download` refused with "couldn't connect" while `curl https://huggingface.co` returned
+   200 from the same login node (attempt 5, exit 127 after the venv-python error). The download also
+   ran outside the venv, so it depended on the system python carrying `huggingface_hub`. It is now
+   the `bw_download` helper: subshell, venv activated, `HF_HUB_OFFLINE=0`, repository id and
+   revision passed as argv.
+
+Verified after the fix: `bash -n` clean, `stage.sh --dry-run --with-ladder` prints the three
+`bw_download` calls with the pinned revisions, and a real re-stage on the login node reuses the
+existing venv and repo instead of destroying them.
+
+Weight revisions now in the cache, each with a manual `refs/main` pointing at the pin so no code
+path can resolve "main" elsewhere: 0.6B `c1899de2`, 1.7B `70d244cc`, 4B `1cfa9a72` (13 GB total
+under `/scratch-shared/20234428/bullwhip/hf`).
