@@ -1,0 +1,4 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=40200d47efa53340926be7402d109430d2725f68 dirty_files=4
+NOTE: HEAD 40200d47efa53340926be7402d109430d2725f68 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates_1.7b.json
+=== wave8 r1 task 1: lr=1e-5 seed=1 rung=1.7b rounds=3x170 at 2026-11-19T20:07:24+01:00 ===
