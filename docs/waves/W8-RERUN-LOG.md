@@ -47,3 +47,31 @@ Approved: path A from `docs/waves/W8-RERUN-PROPOSAL.md` (rebuild 1.7B and 4B), P
 ## Reads
 
 (appended as artifacts are read; each entry names the file and the field)
+
+## Dependency chain submitted (2026-11-19T12:52Z)
+
+The L4 lane is saturated (the only 8-GPU L4 node reports `AllocTRES=gres/gpu=8`; Slurm estimated
+2026-11-20T13:24Z for a start, and the VPN profile expires 2026-11-20T02:55Z, both before that).
+So the pipeline is expressed as Slurm dependencies and needs nothing from this side:
+
+| job | name | depends on | command |
+|---|---|---|---|
+| 764195 | bw8-preflight 1.7b | - | `W8_RUNG=1.7b gpu-wave8-preflight.sbatch` |
+| 764196 | bw8-preflight 4b | - | `W8_RUNG=4b gpu-wave8-preflight.sbatch` |
+| 764263 | bw8-gatecheck | afterok:764195:764196 | `cpu-wave8-gatecheck.sbatch` |
+| 764264 | bw8-train 1.7b (3 tasks) | afterok:764263 | `W8_RUNG=1.7b W8_LRS=1e-5 W8_SEEDS=3 --array=0-2 gpu-wave8-train.sbatch` |
+| 764265 | bw8-train 4b (2 tasks) | afterok:764263 | `W8_RUNG=4b W8_LRS=5e-5 W8_SEEDS=2 W8_MICRO_BATCH=8 --array=0-1 gpu-wave8-train.sbatch` |
+| 764269 | bw8-eval 1.7b | afterok:764264 | `W8_RUNG=1.7b W8_EVAL_SEEDS="0 1 2" W8_LR=1e-5 gpu-wave8-eval.sbatch` |
+| 764270 | bw8-eval 4b | afterok:764265 | `W8_RUNG=4b W8_EVAL_SEEDS="0 1" W8_LR=5e-5 gpu-wave8-eval.sbatch` |
+
+`EXPECTED_COMMIT=6b2fe7dc93d36b4519b57796dfa25e27311ed29d` on every submit.
+
+`cpu-wave8-gatecheck.sbatch` runs `scripts/verify_rung_gates.py`, which compares the freshly frozen
+`gates_1.7b.json` and `gates_4b.json` against the predictions registered at the top of this file at
+1e-3 relative tolerance and exits non-zero on any deviation. Because training depends `afterok` on
+it, a drifted gate cancels the training jobs instead of letting them run. The verifier was tested
+both ways before submission: a hand-constructed matching pair returns `PREDICTION HOLDS` (rc 0) and
+a 5% perturbation of `H_lo` returns `MISMATCH — do not train` (rc 1).
+
+Watcher: cron job `9f0ebfccfb0d` every 20 minutes, silent unless a state changes or a job fails.
+Retention guard: cron job `426a66b96848` every 15 minutes.
