@@ -103,3 +103,57 @@ existing venv and repo instead of destroying them.
 Weight revisions now in the cache, each with a manual `refs/main` pointing at the pin so no code
 path can resolve "main" elsewhere: 0.6B `c1899de2`, 1.7B `70d244cc`, 4B `1cfa9a72` (13 GB total
 under `/scratch-shared/20234428/bullwhip/hf`).
+
+## First attempt failed: the rung never reached the job (2026-11-19T14:48Z)
+
+Raised by Pino ("some of the waves ran"). Two jobs ran, neither was the rung that was ordered.
+
+**764195 (ordered 1.7b) COMPLETED, but ran as 0.6b.** Its first log line is
+`repo ... HEAD=9db73fe rung=0.6b model=Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca`.
+It therefore re-froze the 0.6B control statistics and wrote `results/wave8/gates.json`, not
+`gates_1.7b.json`. Values written: `H_lo` 1.3933294132789242, `H_hi` 2.021894960269872, `I_hi0`
+0.09699194743853656, `m_hi` 0.14874833921755284. `git status` is clean and `git diff
+results/wave8/gates.json` is empty, so the rewrite is byte-identical to the committed file. Two facts
+follow: the accidental run did no damage, and the 0.6B F3 freeze reproduces exactly across a month
+and a rebuilt environment.
+
+**764196 (ordered 4b) FAILED, exit 1.** It ran as 0.6b too, found the F2 block already frozen in
+`gates.json`, and refused: `F2 already set — frozen before training; pass --force to overwrite`. The
+kit's own protection stopped it from overwriting a frozen gate.
+
+**Consequence:** gatecheck 764263 inherited `DependencyNeverSatisfied`, and 764264, 764265, 764269,
+764270 could never start. All five were cancelled with `scancel` at 2026-11-19T15:0xZ.
+
+**Cause, established by a two-way probe, not by inference.** The documented invocation
+`W8_RUNG=1.7b sbatch gpu-wave8-preflight.sbatch` does not put `W8_RUNG` in the job environment on
+this cluster; `sbatch --export=ALL,W8_RUNG=...` does. Probe: `envprobe2`, two CPU jobs reading
+`${W8_RUNG:-UNSET}`. With `--export=ALL,W8_RUNG=probeA,PROBE_X=yes` the job printed
+`W8_RUNG=[probeA] extra=[yes]`; with the prefix form it printed `W8_RUNG=[UNSET] extra=[UNSET]`.
+(An earlier probe was invalid: its heredoc expanded `${W8_RUNG:-UNSET}` on the login node, so the
+script contained the literal word. Recorded because a broken probe is not evidence.)
+
+**Fixes, committed:**
+- `hpc-umbrella/w8-submit.sh` builds `--export=ALL,...` for every stage, refuses to submit without an
+  explicit rung, exports `EXPECTED_COMMIT`, and takes seeds colon-separated (`--seeds 0:1`) so they
+  survive `--export`.
+- `gpu-wave8-preflight.sbatch`, `gpu-wave8-train.sbatch`, `gpu-wave8-eval.sbatch` now print a loud
+  warning when `W8_RUNG` is absent, instead of looking like a deliberate 0.6b run.
+- `gpu-wave8-eval.sbatch` accepts a colon-separated `W8_EVAL_SEEDS`.
+
+## Resubmitted chain (2026-11-19T15:0xZ)
+
+`EXPECTED_COMMIT=3e1be14d85f262846d465d7be3136cbae988eaa9`, all knobs via `--export=ALL`.
+
+| job | name | depends on |
+|---|---|---|
+| 766006 | bw8-preflight 1.7b | - (RUNNING on tue-gpuc001; log line `rung=1.7b model=Qwen/Qwen3-1.7B@70d244cc`) |
+| 766007 | bw8-preflight 4b | - |
+| 766014 | bw8-gatecheck | afterok:766006:766007 |
+| 766015 | bw8-train 1.7b (0-2) | afterok:766014 |
+| 766016 | bw8-train 4b (0-1) | afterok:766014 |
+| 766017 | bw8-eval 1.7b | afterok:766015 |
+| 766018 | bw8-eval 4b | afterok:766016 |
+
+The lesson for the paper's provenance section: a submit form that silently degrades to the default
+rung would have produced four weeks of "ladder" data at one model size. It did not, because the first
+log line names the rung and the gate files are per-rung.
