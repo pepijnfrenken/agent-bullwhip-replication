@@ -61,8 +61,36 @@ below was taken from an earlier draft or from memory.
    login happens, the claim "full per-run JSON on the primary cluster archive" is a claim, not a
    checked fact.
 
+## Where the raw wave-8 data is, and is not
+
+Searched at Pino's question ("should all data be on device"): `find / -xdev` for `w8-r1-4b*`,
+`w8-r1-1.7b*`, `w8-untrained*`, `gates_1.7b.json`, `gates_4b.json`, whole root filesystem, plus a
+content grep for the path strings across `*.log`, `*.md`, `*.txt`, `*.json` under `$HOME`.
+
+- Not on this machine. The host has one ext4 root and no extra mounts (`df`), so `find / -xdev`
+  covered everything. The only hits for the path strings are chat/agent logs (`~/.hermes/sessions/`,
+  `~/.omp/logs/`), which are transcripts, not artifacts.
+- Never committed. `git log --all --pretty=format: --name-only | grep -ci '4b'` returns 0 across
+  all refs. `results/` holds 328 tracked files and every one is wave-7 or earlier.
+- Never pulled back. `hpc-umbrella/push_results.sh` is the rsync-plus-commit path used for wave-7
+  ("wave-7 eval results (job 398422)"). No wave-8 submission runs it.
+- Other devices are not a fallback: `desktop-wsl` (100.122.67.126) times out, `linuxpepijn-1` and
+  `desktop-9q9u7pv` are offline on the tailnet, and the hub VM (100.69.127.85) refuses this
+  machine's key.
+- Two small `wave8-diag-*.tar.gz` files exist in `$HOME` (8 Oct) and contain one Slurm log plus a
+  diag text each. No evaluation JSON.
+
+So the on-device evidence for the wave-8 rungs is: 40 Slurm logs, `W8-MANIFEST.json` (collapse and
+permutation extracts only), `W8-R1-DRAINED.md`, and `WAVE8_WORD8B_RESULT.md`. The per-run JSONL that
+the paper says regenerates every number is on the cluster archive or nowhere.
+
 ## Consequence
 
 Findings 1 to 4 are text and labelling, no new evidence required, and they are fixable without
 compute. Finding 5 needs one Pino action (SAML login) before any archive path can be written into
 the reproducibility statement or into the arXiv package.
+
+The device search above changes the priority. If the cluster archive has already purged the wave-8
+raw files, the 4B row stops being checkable at all, and the paper's only positive rung would need a
+retrain of that rung before it could be submitted. Everything, including path A on 8B, now queues
+behind one SAML login.
