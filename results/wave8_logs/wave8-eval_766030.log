@@ -1,0 +1,37 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=700846756d13bbe1910c5f80b325358ef1f83994 rung=1.7b
+NOTE: HEAD 700846756d13bbe1910c5f80b325358ef1f83994 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
+--- eval w8-untrained-1.7b-argmax-step (step/argmax) at 2026-11-19T22:54:29+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 81.75it/s]
+w8-untrained-1.7b-argmax-step: runs=1 mean=11,328 min=11,328 max=11,328 parse_fail=0 min_mass=0.85869 wall=6.1s -> results/eval/w8-untrained-1.7b-argmax-step.jsonl
+--- ok w8-untrained-1.7b-argmax-step
+--- eval w8-untrained-1.7b-sampled-step (step/sampled) at 2026-11-19T22:54:45+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 101.65it/s]
+w8-untrained-1.7b-sampled-step: runs=30 mean=12,157 min=8,918 max=19,528 parse_fail=0 min_mass=0.54300 wall=218.9s -> results/eval/w8-untrained-1.7b-sampled-step.jsonl
+--- ok w8-untrained-1.7b-sampled-step
+--- eval w8-untrained-1.7b-argmax-noisy (noisy/argmax) at 2026-11-19T22:58:31+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 101.26it/s]
+w8-untrained-1.7b-argmax-noisy: runs=30 mean=11,405 min=8,540 max=13,702 parse_fail=0 min_mass=0.82305 wall=218.1s -> results/eval/w8-untrained-1.7b-argmax-noisy.jsonl
+--- ok w8-untrained-1.7b-argmax-noisy
+--- perm probe untrained-1.7b at 2026-11-19T23:02:17+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 45.67it/s]
+Traceback (most recent call last):
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 300, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 294, in main
+    return {"sample": cmd_sample, "oracle": cmd_oracle, "control": cmd_control,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 234, in cmd_perm_check
+    return m.main()
+           ^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_permutation_invariance.py", line 104, in main
+    for rec in rm.readout_batch(prompts[i:i + args.batch],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 447, in readout_batch
+    raise AssertionError(
+AssertionError: label mass 0.9893 < 0.99 (prompt 3): candidate-letter invariant violated
+--- PERM untrained-1.7b: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final untrained-1.7b at 2026-11-19T23:02:28+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 55.58it/s]
+collapse-final untrained-1.7b: collapsed=False argmax-histogram top3=[(2, 312), (1, 293), (0, 148)] -> results/wave8/untrained-1.7b-S_nom.json
+--- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at 2026-11-19T23:03:26+01:00
