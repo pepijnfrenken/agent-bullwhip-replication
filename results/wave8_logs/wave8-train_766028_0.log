@@ -11,3 +11,12 @@ states=1360 flat=0.0007 edge=0.4199 entropy=2.632 wall=66.4s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 103.82it/s]
 /scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 58.00it/s]
+collapse-check results/wave8_r1-1.7b_lr1e-5_seed0_round1/checkpoint-169: collapsed=False medH=0.022 modal_share=0.992 I=0.0405 []
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 58.02it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed0/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 99.66it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed0/round2/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.8083 entropy=2.007 wall=95.9s
+states=1360 flat=0.0000 edge=0.3654 entropy=2.801 wall=66.1s
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.04it/s]
