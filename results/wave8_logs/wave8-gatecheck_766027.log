@@ -1,0 +1,42 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=c2e61219c42de18f0ebe95432447667a28fffcd4 at 2026-11-19T16:27:53+01:00
+=== gate files under test ===
+-rw-r--r--. 1 20234428 umbrella 1495 Nov 19 16:17 results/wave8/gates_1.7b.json
+-rw-r--r--. 1 20234428 umbrella 1492 Nov 19 16:27 results/wave8/gates_4b.json
+ok   1.7b  H_lo   expected   9.6527e-05 found 9.65265603466344e-05 rel 4.55e-06
+ok   1.7b  H_hi   expected       1.6313 found 1.6312969325077367 rel 1.88e-06
+ok   1.7b  I_hi0  expected       1.4858 found 1.4857733402975195 rel 1.79e-05
+ok   1.7b  m_hi   expected       0.1487 found 0.14874833921755284 rel 3.25e-04
+ok   4b    H_lo   expected     0.038026 found 0.038025627538467104 rel 9.79e-06
+ok   4b    H_hi   expected     1.910513 found 1.9105125259947648 rel 2.48e-07
+ok   4b    I_hi0  expected     0.676551 found 0.6765505195974482 rel 7.10e-07
+ok   4b    m_hi   expected       0.1487 found 0.14874833921755284 rel 3.25e-04
+report -> results/wave8/gate_verification.json
+RESULT: PREDICTION HOLDS
+gatecheck exit=0
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+766027        COMPLETED                       
+766027.batch  COMPLETED     14924K     14924K 
+766027.exte+  COMPLETED                       
+
+Job ID: 766027
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: COMPLETED (exit code 0)
+Cores: 1
+CPU Utilized: 00:00:01
+CPU Efficiency: 25.00% of 00:00:04 core-walltime
+Job Wall-clock time: 00:00:04
+Memory Utilized: 14.57 MB
+Memory Efficiency: 0.71% of 2.00 GB (2.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.

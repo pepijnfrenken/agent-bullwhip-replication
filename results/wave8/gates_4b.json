@@ -1,0 +1,61 @@
+{
+  "F2": {
+    "contiguous": true,
+    "grid": "w8_g26b",
+    "label_ids": {
+      "A": 32,
+      "B": 33,
+      "C": 34,
+      "D": 35,
+      "E": 36,
+      "F": 37,
+      "G": 38,
+      "H": 39,
+      "I": 40,
+      "J": 41,
+      "K": 42,
+      "L": 43,
+      "M": 44,
+      "N": 45,
+      "O": 46,
+      "P": 47,
+      "Q": 48,
+      "R": 49,
+      "S": 50,
+      "T": 51,
+      "U": 52,
+      "V": 53,
+      "W": 54,
+      "X": 55,
+      "Y": 56,
+      "Z": 57
+    },
+    "min_mass_untrained": 0.997614860534668,
+    "prompt_sha_apply_chat_template": "55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49dafc422",
+    "prompt_sha_equal": true,
+    "prompt_sha_string_renderer": "55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49dafc422"
+  },
+  "F3": {
+    "H_hi": 1.9105125259947648,
+    "H_lo": 0.038025627538467104,
+    "H_median_untrained": 1.4007411841055655,
+    "I0": 0.638003027891979,
+    "I_hi0": 0.6765505195974482,
+    "bootstrap": {
+      "B": 1000,
+      "q": 0.95,
+      "seed": 20261007
+    },
+    "grid": "w8_g26b",
+    "m_hi": 0.14874833921755284,
+    "m_star": 0.126953125,
+    "min_mass": 0.997614860534668,
+    "model": "Qwen/Qwen3-4B",
+    "n_labels": 26,
+    "n_states": 1024,
+    "oracle_modal_letter": 0,
+    "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "rule": "collapsed iff [median H < H_lo AND (modal argmax share > m_hi OR I <= I_hi0)] OR [median H > H_hi AND I <= I_hi0]",
+    "untrained_modal_argmax_share": 0.5576171875
+  }
+}
