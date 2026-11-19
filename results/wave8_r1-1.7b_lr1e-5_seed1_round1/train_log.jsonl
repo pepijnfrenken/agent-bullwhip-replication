@@ -160,3 +160,15 @@
 {"epoch": 0, "grad_norm": 0.001324, "loss": -0.022807732224464417, "loss_kl": 10.903896, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 156, "wall": 1244.5}
 {"epoch": 0, "grad_norm": 0.000216, "loss": -0.055987924337387085, "loss_kl": 11.607242, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 157, "wall": 1252.4}
 {"epoch": 0, "grad_norm": 0.000535, "loss": 0.03556855022907257, "loss_kl": 9.960504, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 158, "wall": 1260.3}
+{"epoch": 0, "grad_norm": 7.5e-05, "loss": -0.2450406402349472, "loss_kl": 10.65027, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 159, "wall": 1268.2}
+{"epoch": 0, "grad_norm": 9.3e-05, "loss": -0.3704715967178345, "loss_kl": 11.987037, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 160, "wall": 1276.5}
+{"epoch": 0, "grad_norm": 0.000626, "loss": -0.7493590712547302, "loss_kl": 11.791859, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 161, "wall": 1280.2}
+{"epoch": 0, "event": "val", "mean_regret": 2092.580423, "n_val": 272, "nll": 16.765533, "step": 161, "top1": 0.110294}
+{"epoch": 1, "grad_norm": 0.000166, "loss": 0.20935028791427612, "loss_kl": 10.928411, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 162, "wall": 1306.0}
+{"epoch": 1, "grad_norm": 0.001977, "loss": 0.07427866756916046, "loss_kl": 12.16094, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 163, "wall": 1313.9}
+{"epoch": 1, "grad_norm": 0.000473, "loss": -0.10810106992721558, "loss_kl": 11.624225, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 164, "wall": 1321.8}
+{"epoch": 1, "grad_norm": 3.9e-05, "loss": -0.20040225982666016, "loss_kl": 10.298166, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 165, "wall": 1329.7}
+{"epoch": 1, "grad_norm": 7.5e-05, "loss": -0.11387614905834198, "loss_kl": 10.413078, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 166, "wall": 1337.6}
+{"epoch": 1, "grad_norm": 0.000118, "loss": -0.3491136431694031, "loss_kl": 10.886902, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 167, "wall": 1345.5}
+{"epoch": 1, "grad_norm": 0.000303, "loss": -0.2923516035079956, "loss_kl": 10.566906, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 168, "wall": 1353.4}
+{"epoch": 1, "grad_norm": 0.000596, "loss": -0.04473070800304413, "loss_kl": 10.974495, "phase": "rlcd", "std_j_clamped_frac": 0.0, "step": 169, "wall": 1361.3}
