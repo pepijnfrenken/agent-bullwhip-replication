@@ -51,6 +51,15 @@ bw_load_env
 export HF_HUB_OFFLINE=1
 mkdir -p "${LOG_DIR}"
 cd "${REPO_DIR}"
+# 2026-11-19: this cluster does NOT carry the submitting shell environment into the job.
+# `W8_RUNG=1.7b sbatch gpu-wave8-preflight.sbatch` therefore ran as the 0.6b default and
+# silently re-froze the 0.6B gate (verified with a two-way probe: --export=ALL works, the
+# prefix form does not). Every knob must travel with --export=ALL,VAR=value, and an unset
+# rung now says so out loud instead of looking like a choice.
+if [ -z "${W8_RUNG:-}" ]; then
+  echo "WARN: W8_RUNG not in the job environment -> defaulting to 0.6b." >&2
+  echo "WARN: submit with sbatch --export=ALL,W8_RUNG=<0.6b|1.7b|4b|8b> ..." >&2
+fi
 bw_w8_rung
 
 REPO_HEAD="$(git -C "${REPO_DIR}" rev-parse HEAD 2>/dev/null || echo unknown)"
@@ -69,6 +78,9 @@ mkdir -p "${OUT}" "${W8DIR}"
 FAILED=0
 EVAL_ARMS="${W8_EVAL_ARMS:-r1}"
 SEEDS="${W8_EVAL_SEEDS:-0 1 2}"
+# knobs travel via --export=ALL, where a comma is the separator, so a seed list
+# with spaces cannot be passed. Accept W8_EVAL_SEEDS=0:1 as well.
+SEEDS="${SEEDS//:/ }"
 SUF="${RUNG_SUFFIX}"
 COMMON=(--model "${RUNG_MODEL}" --revision "${RUNG_REV}" --grid w8_g26b)
 PERM_CASES="${W8_PERM_CASES:-results/wave8/S_nom.jsonl}"

@@ -46,6 +46,15 @@ bw_load_env
 export HF_HUB_OFFLINE=1
 mkdir -p "${LOG_DIR}"
 cd "${REPO_DIR}"
+# 2026-11-19: this cluster does NOT carry the submitting shell environment into the job.
+# `W8_RUNG=1.7b sbatch gpu-wave8-preflight.sbatch` therefore ran as the 0.6b default and
+# silently re-froze the 0.6B gate (verified with a two-way probe: --export=ALL works, the
+# prefix form does not). Every knob must travel with --export=ALL,VAR=value, and an unset
+# rung now says so out loud instead of looking like a choice.
+if [ -z "${W8_RUNG:-}" ]; then
+  echo "WARN: W8_RUNG not in the job environment -> defaulting to 0.6b." >&2
+  echo "WARN: submit with sbatch --export=ALL,W8_RUNG=<0.6b|1.7b|4b|8b> ..." >&2
+fi
 bw_w8_rung
 
 REPO_HEAD="$(git -C "${REPO_DIR}" rev-parse HEAD 2>/dev/null || echo unknown)"
