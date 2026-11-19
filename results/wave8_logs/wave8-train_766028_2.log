@@ -1,0 +1,9 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=8bdd49e7712f26dea380171da39b9de74b3d8063 dirty_files=2
+NOTE: HEAD 8bdd49e7712f26dea380171da39b9de74b3d8063 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
+pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates_1.7b.json
+=== wave8 r1 task 2: lr=1e-5 seed=2 rung=1.7b rounds=3x170 at 2026-11-19T21:06:34+01:00 ===
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  2.24it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  4.41it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed2/round1/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 98.89it/s]
+collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed2/round1/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
+states=4080 flat=0.0000 edge=0.6088 entropy=1.758 wall=58.1s

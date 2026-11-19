@@ -1,0 +1,7 @@
+{
+  "median_mass": 0.9999923706054688,
+  "min_mass": 0.9961470365524292,
+  "n_states": 2160,
+  "note": "trained-adapter collect: label mass recorded per row, not asserted (WAVE7_SPEC A1)",
+  "require_mass": 0.0
+}

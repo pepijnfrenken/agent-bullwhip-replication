@@ -1,0 +1,9 @@
+{
+  "completed": [
+    "r1:collect_argmax",
+    "r1:collect_sampled",
+    "r1:concat_states",
+    "r1:label_policy"
+  ],
+  "round": 1
+}
