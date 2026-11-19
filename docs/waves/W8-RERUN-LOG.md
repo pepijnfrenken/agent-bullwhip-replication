@@ -157,3 +157,49 @@ script contained the literal word. Recorded because a broken probe is not eviden
 The lesson for the paper's provenance section: a submit form that silently degrades to the default
 rung would have produced four weeks of "ladder" data at one model size. It did not, because the first
 log line names the rung and the gate files are per-rung.
+
+## Prediction 1 checked: the 1.7B gate reproduces exactly (2026-11-19)
+
+`766006` completed (1m27s, exit 0) and wrote `results/wave8/gates_1.7b.json` (1495 bytes) for
+`Qwen/Qwen3-1.7B@70d244cc`. Read from the file, field by field:
+
+| field | registered (RECONCILIATION §7) | read from file | rel diff |
+|---|---|---|---|
+| `H_lo` | 9.6527e-05 | 9.65265603466344e-05 | 4.6e-06 |
+| `H_hi` | 1.6313 | 1.6312969325077367 | 1.9e-06 |
+| `I_hi0` | 1.4858 | 1.4857733402975195 | 1.8e-05 |
+| `m_hi` | 0.1487 | 0.14874833921755284 | 3.3e-04 |
+
+`scripts/verify_rung_gates.py --gates results/wave8/gates_1.7b.json --rung 1.7b` returns
+`RESULT: PREDICTION HOLDS` (rc 0). `F2` reports `contiguous True`, `prompt_sha_equal True`.
+Also read but not registered as a prediction: `m_star` 0.126953125, `H_median_untrained`
+0.6148521091212052.
+
+Meaning: the F3 control statistics for 1.7B are reproducible across a month, a rebuilt venv and a
+freshly downloaded checkpoint. The October gate values were not an artefact of that session, and the
+state sample plus readout are deterministic given the pins.
+
+## Second failure and fix: the pin moved under the queued jobs (2026-11-19T15:2xZ)
+
+`766007` (4b preflight) failed in 5 seconds:
+`FATAL: EXPECTED_COMMIT=3e1be14... but repo HEAD=73a2bbc... — refusing to run stale code`.
+`73a2bbc` was the retention guard's own `auto-mirror` commit, pushed to the same branch. So the guard
+that protects the data was invalidating the pin that protects the protocol. My design conflict.
+
+Fixed by narrowing the gate: the pinned commit must be an ancestor of HEAD, and every path changed
+since it must sit under `results/` or `docs/`. Any other change still refuses. Applied to
+`gpu-wave8-preflight.sbatch`, `gpu-wave8-train.sbatch`, `gpu-wave8-eval.sbatch`.
+
+## Chain in flight (2026-11-19T15:3xZ), HEAD `ff88dc7`
+
+| job | name | depends on | state at submit |
+|---|---|---|---|
+| 766006 | bw8-preflight 1.7b | - | COMPLETED (gate file read above) |
+| 766026 | bw8-preflight 4b | - | PENDING (Resources) |
+| 766027 | bw8-gatecheck | afterok:766006:766026 | PENDING (Dependency) |
+| 766028 | bw8-train 1.7b (0-2) | afterok:766027 | PENDING (Dependency) |
+| 766029 | bw8-train 4b (0-1) | afterok:766027 | PENDING (Dependency) |
+| 766030 | bw8-eval 1.7b | afterok:766028 | PENDING (Dependency) |
+| 766031 | bw8-eval 4b | afterok:766029 | PENDING (Dependency) |
+
+Superseded and cancelled: 766014, 766015, 766016, 766017, 766018.
