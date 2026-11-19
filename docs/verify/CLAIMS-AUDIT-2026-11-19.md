@@ -84,6 +84,36 @@ So the on-device evidence for the wave-8 rungs is: 40 Slurm logs, `W8-MANIFEST.j
 permutation extracts only), `W8-R1-DRAINED.md`, and `WAVE8_WORD8B_RESULT.md`. The per-run JSONL that
 the paper says regenerates every number is on the cluster archive or nowhere.
 
+## Archive verification, done with the tunnel up (2026-11-19)
+
+Fresh TU/e profile installed in `~/portal/tue-wireproxy.conf`, wireproxy running, `ssh tue-cluster`
+returns `tue-login001.cluster` as `20234428`. Home is writable.
+
+Result: the project archive is empty.
+
+- `find /scratch-shared/20234428 -type f` returns exactly one file: `/scratch-shared/20234428/.keep`.
+  The directories `agent-bullwhip-replication`, `kit`, `logs`, `hf`, `pipcache` and `venv` exist as
+  empty shells. `du -sh .../agent-bullwhip-replication` is 0, and `git log` there says "not a git
+  repository". The 40 Slurm logs that were pulled to this machine in October are now the only logs.
+- No tarball or zip survives anywhere under the scratch root.
+- Snellius is not a second copy: `ssh snellius` returns `Permission denied (publickey,password)` for
+  the configured key, so the two 8B Snellius legs cannot be reached either.
+- The hub VM (100.69.127.85) refuses this machine's key for both `root` and `pino`, so no
+  hub-side mission copy can be checked.
+- Job accounting survives in `sacct` (job ids, elapsed, state), which is process evidence for what
+  ran, not data evidence for what it produced. The 4B/1.7B evaluation job `456960 bw8-eval` is there,
+  elapsed 01:30:40, COMPLETED 2026-10-21. Its stdout lived in the purged `logs/` directory.
+
+Consequence for the manuscript: the 4B row and the 1.7B row now have no per-run artifact anywhere
+we can reach. `docs/waves/WAVE8_WORD8B_RESULT.md` is the only surviving carrier of the 4B triple,
+and it labels those values "same metric" as the 8B **mean** val cost (lines 4 and 6). No surviving
+document calls 8,315 or 7,612 a median. The paper publishes both as final-eval medians. That
+labelling cannot be checked and is not supported by the one document that carries the numbers.
+
+The free lane is still usable: `sinfo -p tue.gpu.q` shows L4 nodes mixed and up. A 4B training leg
+in `sacct` ran 01:00 to 04:32 wall, and an evaluation job 01:30. So a re-run of the 4B and 1.7B
+rungs is a lane question, not a money question.
+
 ## Consequence
 
 Findings 1 to 4 are text and labelling, no new evidence required, and they are fixable without
