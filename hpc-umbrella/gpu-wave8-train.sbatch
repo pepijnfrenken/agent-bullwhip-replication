@@ -74,9 +74,22 @@ REPO_DIRTY="$(git -C "${REPO_DIR}" status --porcelain 2>/dev/null | wc -l)"
 echo "repo ${REPO_DIR} HEAD=${REPO_HEAD} dirty_files=${REPO_DIRTY}"
 : "${EXPECTED_COMMIT:?FATAL: EXPECTED_COMMIT not exported — set it from the hub (git rev-parse HEAD) before submitting}"
 EXPECTED_COMMIT="$(git -C "${REPO_DIR}" rev-parse "${EXPECTED_COMMIT}" 2>/dev/null || echo "${EXPECTED_COMMIT}")"
+# 2026-11-19: the retention guard commits results to this same branch, so a queued job
+# legitimately sees HEAD ahead of the pinned commit. Refuse only when CODE differs: the
+# pin must be an ancestor and every path changed since it must sit under results/ or docs/.
 if [ "${REPO_HEAD}" != "${EXPECTED_COMMIT}" ]; then
-  echo "FATAL: EXPECTED_COMMIT=${EXPECTED_COMMIT} but repo HEAD=${REPO_HEAD} — refusing to run stale code" >&2
-  exit 1
+  if git -C "${REPO_DIR}" merge-base --is-ancestor "${EXPECTED_COMMIT}" "${REPO_HEAD}" 2>/dev/null; then
+    moved="$(git -C "${REPO_DIR}" diff --name-only "${EXPECTED_COMMIT}" "${REPO_HEAD}" -- . ':(exclude)results' ':(exclude)docs' | head -5)"
+    if [ -z "${moved}" ]; then
+      echo "NOTE: HEAD ${REPO_HEAD} is ahead of pin ${EXPECTED_COMMIT} in results/docs only — running."
+    else
+      echo "FATAL: code differs from pinned ${EXPECTED_COMMIT}: ${moved}" >&2
+      exit 1
+    fi
+  else
+    echo "FATAL: pinned ${EXPECTED_COMMIT} is not an ancestor of HEAD ${REPO_HEAD}" >&2
+    exit 1
+  fi
 fi
 if [ -z "${SLURM_ARRAY_TASK_ID:-}" ]; then
   echo "this script is an array job: sbatch --array=0-5 $0" >&2
