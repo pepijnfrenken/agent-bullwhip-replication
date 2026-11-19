@@ -13,7 +13,15 @@
     "r2:concat_states",
     "r2:label_policy",
     "r2:label_behavior",
-    "r2:merge"
+    "r2:merge",
+    "r2:train",
+    "r2:gate",
+    "r3:collect_argmax",
+    "r3:collect_sampled",
+    "r3:concat_states",
+    "r3:label_policy",
+    "r3:label_behavior",
+    "r3:merge"
   ],
-  "round": 2
+  "round": 3
 }
