@@ -65,6 +65,12 @@ R=/scratch-shared/20234428/bullwhip/agent-bullwhip-replication
 B=/scratch-shared/20234428/bullwhip
 [ -d "$R/.git" ] || { echo "[guard] no cluster checkout at $R"; exit 0; }
 cd "$R" || exit 0
+# Stay in step with origin so the mirror never reports a false drift and the
+# push below cannot be rejected as non-fast-forward. Job output lives in
+# untracked/ignored paths, so a fast-forward never touches a running write.
+git fetch --quiet origin 2>/dev/null || echo "[guard] cluster: fetch failed"
+git merge --ff-only --quiet origin/master 2>/dev/null \
+  || echo "[guard] cluster: cannot fast-forward (local commits present)"
 # Slurm logs live outside the repo; copy the wave-8 ones in so they travel too.
 mkdir -p results/wave8_logs
 cp -p "$B"/logs/wave8-*.log results/wave8_logs/ 2>/dev/null || true
