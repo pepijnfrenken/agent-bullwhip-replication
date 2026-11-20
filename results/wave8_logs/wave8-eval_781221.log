@@ -52,3 +52,9 @@ w8-r1-8b-seed1-sampled-step: runs=30 mean=9,385 min=5,016 max=13,732 parse_fail=
 --- ok w8-r1-8b-seed1-sampled-step
 --- eval w8-r1-8b-seed1-argmax-noisy (noisy/argmax) at 2026-11-20T19:48:44+01:00
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 150.14it/s]
+w8-r1-8b-seed1-argmax-noisy: runs=30 mean=14,525 min=6,010 max=24,196 parse_fail=0 min_mass=0.99810 wall=840.2s -> results/eval/w8-r1-8b-seed1-argmax-noisy.jsonl
+--- ok w8-r1-8b-seed1-argmax-noisy
+--- perm probe r1-8b-seed1 at 2026-11-20T20:02:56+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 147.27it/s]
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
