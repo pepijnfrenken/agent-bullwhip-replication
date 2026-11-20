@@ -42,3 +42,25 @@ w8-r1-4b-seed0-sampled-step: runs=30 mean=11,094 min=8,064 max=15,642 parse_fail
 --- ok w8-r1-4b-seed0-sampled-step
 --- eval w8-r1-4b-seed0-argmax-noisy (noisy/argmax) at 2026-11-20T11:18:01+01:00
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 89.89it/s]
+w8-r1-4b-seed0-argmax-noisy: runs=30 mean=9,279 min=7,472 max=10,690 parse_fail=0 min_mass=1.00000 wall=627.3s -> results/eval/w8-r1-4b-seed0-argmax-noisy.jsonl
+--- ok w8-r1-4b-seed0-argmax-noisy
+--- perm probe r1-4b-seed0 at 2026-11-20T11:28:39+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 105.09it/s]
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=1 rate=0.002 gate=0.90 FAIL (arm=results/wave8_r1-4b_lr5e-5_seed0_round3/checkpoint-169)
+disagreement vs canonical, per shuffled grid: [488, 502, 347]
+min_mass=1.0000 (require_mass=0.0)
+wrote results/eval/w8-r1-4b-seed0-perm.json
+--- PERM r1-4b-seed0: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final r1-4b-seed0 at 2026-11-20T11:33:40+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 80.64it/s]
+collapse-final r1-4b-seed0: collapsed=False argmax-histogram top3=[(10, 395), (3, 301), (4, 199)] -> results/wave8/r1-4b-seed0-S_nom.json
+--- eval w8-r1-4b-seed1-argmax-step (step/argmax) at 2026-11-20T11:36:18+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 83.85it/s]
+w8-r1-4b-seed1-argmax-step: runs=1 mean=18,258 min=18,258 max=18,258 parse_fail=0 min_mass=1.00000 wall=17.6s -> results/eval/w8-r1-4b-seed1-argmax-step.jsonl
+--- ok w8-r1-4b-seed1-argmax-step
+--- eval w8-r1-4b-seed1-sampled-step (step/sampled) at 2026-11-20T11:36:46+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 82.69it/s]
