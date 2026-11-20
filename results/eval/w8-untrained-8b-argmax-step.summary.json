@@ -17,6 +17,6 @@
   "runs": 1,
   "tag": "w8-untrained-8b-argmax-step",
   "top_letter_share": 0.0,
-  "wall_sec": 24.467493534088135,
+  "wall_sec": 24.62932062149048,
   "zero_letter_share": 0.041666666666666664
 }

@@ -1,0 +1,7 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=f0f8969d06bf7c79149e76419bfef7389f8101fa rung=8b
+--- eval w8-untrained-8b-argmax-step (step/argmax) at 2026-11-20T18:52:30+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 143.59it/s]
+w8-untrained-8b-argmax-step: runs=1 mean=93,060 min=93,060 max=93,060 parse_fail=0 min_mass=0.84032 wall=24.6s -> results/eval/w8-untrained-8b-argmax-step.jsonl
+--- ok w8-untrained-8b-argmax-step
+--- eval w8-untrained-8b-sampled-step (step/sampled) at 2026-11-20T18:53:08+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 141.70it/s]
