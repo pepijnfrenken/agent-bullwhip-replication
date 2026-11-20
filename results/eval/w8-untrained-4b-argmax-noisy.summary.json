@@ -9,7 +9,7 @@
   "max_cost": 64432.0,
   "mean_cost": 27885.6,
   "min_cost": 14070.0,
-  "min_mass": 0.057972975075244904,
+  "min_mass": 0.9988715648651123,
   "model": "qwen3-untrained-4b",
   "n_runs": 30,
   "parse_fail": 0,
@@ -17,6 +17,6 @@
   "runs": 30,
   "tag": "w8-untrained-4b-argmax-noisy",
   "top_letter_share": 0.021296296296296296,
-  "wall_sec": 502.52688002586365,
+  "wall_sec": 498.25773525238037,
   "zero_letter_share": 0.04837962962962963
 }
