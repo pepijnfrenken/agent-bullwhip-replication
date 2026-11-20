@@ -57,3 +57,14 @@ wrote results/eval/w8-r1-4b-seed0-perm.json
 --- PERM r1-4b-seed0: gate failed or errored (recorded in the JSON; continuing)
 --- collapse-final r1-4b-seed0 at 2026-11-20T01:41:47+01:00
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 79.49it/s]
+collapse-final r1-4b-seed0: collapsed=False argmax-histogram top3=[(10, 395), (3, 301), (4, 199)] -> results/wave8/r1-4b-seed0-S_nom.json
+--- eval w8-r1-4b-seed1-argmax-step (step/argmax) at 2026-11-20T01:44:26+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 88.40it/s]
+w8-r1-4b-seed1-argmax-step: runs=1 mean=18,258 min=18,258 max=18,258 parse_fail=0 min_mass=1.00000 wall=17.7s -> results/eval/w8-r1-4b-seed1-argmax-step.jsonl
+--- ok w8-r1-4b-seed1-argmax-step
+--- eval w8-r1-4b-seed1-sampled-step (step/sampled) at 2026-11-20T01:44:56+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 81.41it/s]
+w8-r1-4b-seed1-sampled-step: runs=30 mean=17,683 min=14,424 max=21,160 parse_fail=0 min_mass=0.99999 wall=634.1s -> results/eval/w8-r1-4b-seed1-sampled-step.jsonl
+--- ok w8-r1-4b-seed1-sampled-step
+--- eval w8-r1-4b-seed1-argmax-noisy (noisy/argmax) at 2026-11-20T01:55:38+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 100.34it/s]
