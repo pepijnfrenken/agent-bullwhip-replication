@@ -262,3 +262,20 @@ Two caveats that must travel with the 1.7B row:
   It does not change the direction, but it belongs in the limitations paragraph.
 - The 1.7B band numbers in the paper (47,125 / 36,734 / 61,073) do not reproduce: the rebuild gives
   28,825 / 86,546 / 86,595, and the seed ordering inverts (seed0 cheapest here, seed1 cheapest there).
+
+## 10. Determinism check: the eval pipeline is byte-stable (2026-11-20T11:5xZ)
+
+`775522` (4B, 30 paths) completed 1h31m, exit 0, zero `STEP FAILED` lines, and its output files are
+**byte-identical** to the earlier eval of the same arms:
+
+| file | sha256 (first 12) |
+|---|---|
+| `results/eval/w8-r1-4b-seed0-argmax-noisy.jsonl` | `24821f8c4eb2` |
+| `results/eval/w8-r1-4b-seed1-argmax-noisy.jsonl` | `90663e3f079e` |
+| `results/eval/w8-r1-4b-seed0-sampled-step.jsonl` | `77b8590bec15` |
+
+Two independent Slurm jobs, on different days, on different nodes, produced identical bytes for a
+trained arm. Combined with the untrained band control returning 116,948.33 twice, this establishes
+that the **readout side of the protocol is fully deterministic**. Every gap between this rebuild and
+October therefore sits in training, not in the evaluation, which is where the provenance work should
+concentrate.
