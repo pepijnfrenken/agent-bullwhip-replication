@@ -125,3 +125,19 @@ The 8B adapter's `state.json` records `labels_sha = a9ce6cf5...`, against `02097
 arms and `e7db0006...` for the 4B arms. That value is model-dependent by construction (it differs
 between the 1.7B and 4B arms on the same labels file, `results/wave8/S_nom.jsonl`), so it is not
 evidence of a label mismatch.
+
+### Job 780799 failed in five seconds: the 8B gate file was never in git
+
+`780799` exited 1 after 5 s with `FATAL: results/wave8/gates_8b.json missing (F3 not frozen for
+this rung)`. The file exists on the local disk (1,497 bytes, mtime 2026-10-21 15:04) and the paper's
+8B row is derived from it, but `results/` is gitignored (`.gitignore:4`) and it had never been
+force-added, unlike `S_nom.jsonl`, `f0.json` and the other wave-8 inputs. The cluster checkout only
+sees what was pushed, so it has never held the 8B gate freeze.
+
+This is a retention failure on the 8B row itself, not a job configuration bug. Fixed by force-adding
+the file at `3f71c90` and pulling the cluster to that commit; both copies now hash
+`b6194407e03adb35d10d4c54edd0a33c14a9b01d4772a551e4202147db8b1f90`. The file's own content confirms
+the freeze: `Qwen/Qwen3-8B@b968826d`, `H_lo` 0.0005025333805207596, `m_hi` 0.14874833921755284,
+`min_mass` 0.22705760598182678.
+
+Resubmitted as `780926` with the same knobs and `EXPECTED_COMMIT=3f71c90`.
