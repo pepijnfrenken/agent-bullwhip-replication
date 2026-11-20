@@ -28,3 +28,17 @@ wrote results/eval/w8-untrained-4b-perm.json
 collapse-final untrained-4b: collapsed=False argmax-histogram top3=[(3, 571), (1, 236), (24, 63)] -> results/wave8/untrained-4b-S_nom.json
 --- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at 2026-11-20T10:58:18+01:00
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 103.28it/s]
+untrained-curriculum-4b: runs=30 mean=116,948 min=15,160 max=212,697 parse_fail=0 min_mass=0.99523 wall=507.0s -> results/wave8_val/untrained-curriculum-4b.jsonl
+--- ok untrained curriculum control
+r1 lr override: lr5e-5
+r1-4b winner lr tag: lr5e-5
+--- eval w8-r1-4b-seed0-argmax-step (step/argmax) at 2026-11-20T11:06:55+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 103.13it/s]
+w8-r1-4b-seed0-argmax-step: runs=1 mean=11,070 min=11,070 max=11,070 parse_fail=0 min_mass=1.00000 wall=17.7s -> results/eval/w8-r1-4b-seed0-argmax-step.jsonl
+--- ok w8-r1-4b-seed0-argmax-step
+--- eval w8-r1-4b-seed0-sampled-step (step/sampled) at 2026-11-20T11:07:24+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 70.54it/s]
+w8-r1-4b-seed0-sampled-step: runs=30 mean=11,094 min=8,064 max=15,642 parse_fail=0 min_mass=1.00000 wall=629.0s -> results/eval/w8-r1-4b-seed0-sampled-step.jsonl
+--- ok w8-r1-4b-seed0-sampled-step
+--- eval w8-r1-4b-seed0-argmax-noisy (noisy/argmax) at 2026-11-20T11:18:01+01:00
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 89.89it/s]
