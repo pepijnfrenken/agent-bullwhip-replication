@@ -419,6 +419,20 @@ class ReadoutModel:
          tokens}."""
         if not prompts:
             return []
+        import os as _os
+        _chunk = int(_os.environ.get("W8_READOUT_CHUNK", "0") or 0)
+        if _chunk > 0 and len(prompts) > _chunk:
+            # Memory ceiling only. The readout is per-prompt: left-padded, one
+            # forward per group, logits read at the last real position, mass
+            # computed per prompt. Slicing the batch therefore changes the
+            # grouping and nothing else. R=30 paths x 4 roles is 120 prompts
+            # and does not fit a 22 GiB L4 with 8B weights resident; the R=1
+            # runs already proved the 4-prompt footprint fits.
+            out: list[dict] = []
+            for i in range(0, len(prompts), _chunk):
+                out.extend(self.readout_batch(prompts[i:i + _chunk],
+                                              require_mass=require_mass))
+            return out
         import torch
         tok = self.tokenizer
         inputs = tok(prompts, return_tensors="pt", padding=True, truncation=False)
