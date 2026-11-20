@@ -58,3 +58,73 @@ w8-r1-8b-seed1-argmax-noisy: runs=30 mean=14,525 min=6,010 max=24,196 parse_fail
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 147.27it/s]
 grid 0/3: done (512 states)
 grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=38 rate=0.074 gate=0.90 FAIL (arm=results/wave8_r1-8b_lr1e-5_seed1_round3/checkpoint-169)
+disagreement vs canonical, per shuffled grid: [431, 427, 404]
+min_mass=0.9976 (require_mass=0.0)
+wrote results/eval/w8-r1-8b-seed1-perm.json
+--- PERM r1-8b-seed1: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final r1-8b-seed1 at 2026-11-20T20:09:37+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 133.06it/s]
+collapse-final r1-8b-seed1: collapsed=False argmax-histogram top3=[(4, 270), (1, 187), (3, 180)] -> results/wave8/r1-8b-seed1-S_nom.json
+--- artifacts ---
+-rw-r--r--. 1 20234428 umbrella     516 Nov 20 11:36 w8-r1-4b-seed1-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   14683 Nov 20 12:03 w8-r1-4b-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella 2196741 Nov 20 11:47 w8-r1-4b-seed1-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     548 Nov 20 11:47 w8-r1-4b-seed1-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 1946618 Nov 20 20:02 w8-r1-8b-seed1-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     544 Nov 20 20:02 w8-r1-8b-seed1-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   63918 Nov 20 19:34 w8-r1-8b-seed1-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     530 Nov 20 19:34 w8-r1-8b-seed1-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   14431 Nov 20 20:09 w8-r1-8b-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella 1926664 Nov 20 19:48 w8-r1-8b-seed1-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     545 Nov 20 19:48 w8-r1-8b-seed1-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2203740 Nov 20 09:46 w8-untrained-1.7b-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     545 Nov 20 09:46 w8-untrained-1.7b-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   74016 Nov 20 09:39 w8-untrained-1.7b-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     541 Nov 20 09:39 w8-untrained-1.7b-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2214908 Nov 20 09:42 w8-untrained-1.7b-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     556 Nov 20 09:42 w8-untrained-1.7b-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2236297 Nov 20 10:52 w8-untrained-4b-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     558 Nov 20 10:52 w8-untrained-4b-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   74895 Nov 20 10:35 w8-untrained-4b-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     536 Nov 20 10:35 w8-untrained-4b-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   14905 Nov 20 10:56 w8-untrained-4b-perm.json
+-rw-r--r--. 1 20234428 umbrella 2262984 Nov 20 10:43 w8-untrained-4b-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     556 Nov 20 10:43 w8-untrained-4b-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2128478 Nov 20 19:18 w8-untrained-8b-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     569 Nov 20 19:18 w8-untrained-8b-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   69822 Nov 20 18:53 w8-untrained-8b-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     538 Nov 20 18:53 w8-untrained-8b-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2119063 Nov 20 19:05 w8-untrained-8b-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     556 Nov 20 19:05 w8-untrained-8b-sampled-step.summary.json
+=== wave8-eval done at 2026-11-20T20:13:09+01:00 failed=0 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+781221        COMPLETED                       
+781221.batch  COMPLETED   1116976K   1116976K 
+781221.exte+  COMPLETED       388K     23308K 
+
+Job ID: 781221
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 01:19:24
+CPU Efficiency: 12.30% of 10:45:44 core-walltime
+Job Wall-clock time: 01:20:43
+Memory Utilized: 1.07 GB
+Memory Efficiency: 1.66% of 64.00 GB (64.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
