@@ -182,7 +182,7 @@ run_arm "untrained${SUF}" "qwen3-untrained${SUF}" "-"
 #     without it the band numbers have no untrained counterpart — W8-R1-DRAINED.md §8) ---------
 echo "--- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at $(date -Is)"
 if python3 -u -m agent_bullwhip.decision_eval "${COMMON[@]}" --outdir "results/wave8_val" \
-    --tag "untrained-curriculum" --model-name "qwen3-untrained${SUF}" \
+    --tag "untrained-curriculum${SUF}" --model-name "qwen3-untrained${SUF}" \
     --pattern curriculum --mode argmax --runs 30 --seed-base 9500 --traces 1; then
   echo "--- ok untrained curriculum control"
 else
