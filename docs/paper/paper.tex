@@ -364,8 +364,10 @@ untrained-8B control on the same demand paths makes that one arm evaluable (supp
 
   \item \emph{Paired read}: 29/30 paired wins, $p = 2.9\times10^{-8}$, a 0.163 median ratio and a
   0.157 median of per-path reductions. Every frozen G1 gate passes; the tables are in S7.
-  \item \emph{Band agreement}: on the same band the arm reads 22{,}083 against an untrained-8B
-  band of 104{,}676 ($0.21\times$), so the band and the generation agree in direction.
+  \item \emph{Band, both arms}: the evaluated arm reads 22{,}083 on the band against an
+  untrained-8B band of 104{,}676 ($0.21\times$), and the selected 5e-5 arm's document-level band
+  means sit at $0.34\times$ (35{,}289) and $0.12\times$ (12{,}444) of the same control, pooled
+  $0.23\times$. Both arms read favourably at band level; only one has a paired generation.
   \item \emph{Selection mismatch}: the arm that passes is the arm the frozen rule did not select.
   No post-hoc arm switch is taken, so the rung is one arm passing and the selected arm unevaluated,
   weaker than an 8B verdict.

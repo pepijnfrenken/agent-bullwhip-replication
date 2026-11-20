@@ -642,6 +642,12 @@ Every gate passes: the 15\% bar on both statistics, 20/30 wins, $p<0.02$, and th
 text asks for. On the curriculum band the same arm reads 22{,}083.37 against an untrained-8B band of
 104{,}676.07, a 0.211 ratio, so band and generation agree in direction.
 
+The selected 5e-5 arm has no surviving checkpoints and therefore no paired generation, but it does
+have document-recorded band means, and against the same untrained band those sit at $0.337$
+(35{,}289) and $0.119$ (12{,}444), pooled $0.228$. That gives the selected arm a band-level direction
+without a retrain. It is not a substitute for G1: the provenance is the October verdict document
+rather than per-run files, and the control's mass caveat applies to it as much as to the other arm.
+
 \subsection*{Caveats that belong with the number}
 
 \textbf{One arm, and not the selected one.} The frozen rule selects 5e-5 by pooled band mean
