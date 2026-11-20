@@ -17,6 +17,6 @@
   "runs": 30,
   "tag": "w8-r1-1.7b-seed1-argmax-noisy",
   "top_letter_share": 0.0,
-  "wall_sec": 296.07730984687805,
+  "wall_sec": 296.0689125061035,
   "zero_letter_share": 0.0
 }
