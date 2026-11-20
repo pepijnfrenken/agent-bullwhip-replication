@@ -1,0 +1,154 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=3f71c907642dd9cd14b085d944b35c16d3c0cd65 rung=8b
+--- eval w8-untrained-8b-argmax-step (step/argmax) at 2026-11-20T18:12:52+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards:  20%|██        | 1/5 [00:00<00:00,  4.94it/s]Loading checkpoint shards:  40%|████      | 2/5 [00:00<00:00,  4.61it/s]Loading checkpoint shards:  60%|██████    | 3/5 [00:00<00:00,  4.34it/s]Loading checkpoint shards:  80%|████████  | 4/5 [00:00<00:00,  4.64it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  5.73it/s]
+w8-untrained-8b-argmax-step: runs=1 mean=93,060 min=93,060 max=93,060 parse_fail=0 min_mass=0.84032 wall=24.5s -> results/eval/w8-untrained-8b-argmax-step.jsonl
+--- ok w8-untrained-8b-argmax-step
+--- eval w8-untrained-8b-sampled-step (step/sampled) at 2026-11-20T18:14:18+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 143.73it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_eval.py", line 375, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_eval.py", line 341, in main
+    records = run_batched_eval(model, demands, args.mode, args.seed_base,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_eval.py", line 131, in run_batched_eval
+    recs = model.readout_batch(prompts, require_mass=require_mass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 434, in readout_batch
+    logits = self.model(**inputs, **fwd).logits
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 959, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 481, in forward
+    outputs: BaseModelOutputWithPast = self.model(
+                                       ^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 1083, in wrapper
+    outputs = func(self, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 405, in forward
+    hidden_states = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/modeling_layers.py", line 93, in __call__
+    return super().__call__(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 272, in forward
+    hidden_states = self.mlp(hidden_states)
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 81, in forward
+    down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.27 GiB. GPU 0 has a total capacty of 22.06 GiB of which 635.88 MiB is free. Including non-PyTorch memory, this process has 21.43 GiB memory in use. Of the allocated memory 19.51 GiB is allocated by PyTorch, and 1.69 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+--- STEP FAILED: w8-untrained-8b-sampled-step rc=1
+--- eval w8-untrained-8b-argmax-noisy (noisy/argmax) at 2026-11-20T18:14:32+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 115.36it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_eval.py", line 375, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_eval.py", line 341, in main
+    records = run_batched_eval(model, demands, args.mode, args.seed_base,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_eval.py", line 131, in run_batched_eval
+    recs = model.readout_batch(prompts, require_mass=require_mass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 434, in readout_batch
+    logits = self.model(**inputs, **fwd).logits
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 959, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 481, in forward
+    outputs: BaseModelOutputWithPast = self.model(
+                                       ^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 1083, in wrapper
+    outputs = func(self, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 405, in forward
+    hidden_states = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/modeling_layers.py", line 93, in __call__
+    return super().__call__(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 272, in forward
+    hidden_states = self.mlp(hidden_states)
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 81, in forward
+    down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.27 GiB. GPU 0 has a total capacty of 22.06 GiB of which 635.88 MiB is free. Including non-PyTorch memory, this process has 21.43 GiB memory in use. Of the allocated memory 19.51 GiB is allocated by PyTorch, and 1.69 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+--- STEP FAILED: w8-untrained-8b-argmax-noisy rc=1
+--- perm probe untrained-8b at 2026-11-20T18:14:44+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 141.30it/s]
+Traceback (most recent call last):
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 300, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 294, in main
+    return {"sample": cmd_sample, "oracle": cmd_oracle, "control": cmd_control,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 234, in cmd_perm_check
+    return m.main()
+           ^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_permutation_invariance.py", line 104, in main
+    for rec in rm.readout_batch(prompts[i:i + args.batch],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 447, in readout_batch
+    raise AssertionError(
+AssertionError: label mass 0.9198 < 0.99 (prompt 3): candidate-letter invariant violated
+--- PERM untrained-8b: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final untrained-8b at 2026-11-20T18:14:59+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 140.62it/s]

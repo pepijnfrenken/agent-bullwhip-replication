@@ -1,0 +1,31 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=eeb233ccbf241d89a57f6d6b432bd7f119860624 rung=8b
+NOTE: HEAD eeb233ccbf241d89a57f6d6b432bd7f119860624 is ahead of pin 0bcd9dfeb29f71a71b3701b26dbe56cfdb6e908d in results/docs only — running.
+FATAL: results/wave8/gates_8b.json missing (F3 not frozen for this rung)
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+780799           FAILED                       
+780799.batch     FAILED     16604K     16604K 
+780799.exte+  COMPLETED                       
+
+Job ID: 780799
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 1)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:00:01
+CPU Efficiency: 2.50% of 00:00:40 core-walltime
+Job Wall-clock time: 00:00:05
+Memory Utilized: 16.21 MB
+Memory Efficiency: 0.02% of 64.00 GB (64.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
