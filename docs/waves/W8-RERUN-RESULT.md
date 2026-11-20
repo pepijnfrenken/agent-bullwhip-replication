@@ -180,3 +180,85 @@ Does not survive as written:
 Recommendation: rerun nothing else. Rewrite §6 and S3 around the rebuild's own table, report the seed
 spread explicitly, and keep the qualitative rung verdict, which the mechanism data supports
 independently of the cost column. Where the paper needs a single 4B number, use seed0 and say so.
+
+## 8. G1 on the generation the criterion actually names (2026-11-20, 10:5xZ)
+
+`WAVE8_SPEC.md:298` fixes G1 as: paired **noisy-argmax n=30**, median cost reduction >= 15% in *both*
+variants (ratio of medians and median of per-path reductions) **and** >= 20/30 paired wins **and**
+one-sided sign-test p < 0.02; a seed passes iff all three hold, and the arm needs >= 2/3 seeds. The
+paper states the binding win count as >= 22/30, since p < 0.02 at n=30 needs 22.
+
+`decision_eval.py` also carries a binding P0 fix from 2026-10-05 (`ee63271`): step+argmax is
+deterministic, so that arm is emitted as a **single** run by design and the sign tests live on noisy
+n=30, where the 30 demand paths genuinely differ. Section 2b of this document treated the step arm's
+n=1 as a rebuild defect. It is not a defect, it is the spec, and jobs 775521/775522 were therefore
+partly redundant. The noisy arm has been n=30 since the first rebuild eval.
+
+Demand paths depend only on `seed_base + i` (`make_demands`, model-independent), so control and
+trained rows pair by run index. Control medians reproduce the paper's own figures exactly:
+4B noisy median **21,578** (paper: 21,578) and 1.7B noisy median **11,508** with mean 11,405 (paper:
+11,508 / 11,405).
+
+### 4B, noisy n=30, matched untrained control
+
+| seed | wins | med ctl | med trained | ratio of medians | median per-path ratio | mean trained | G1 |
+|---|---|---|---|---|---|---|---|
+| 0 | 30/30 | 21,578 | 9,346 | 0.43 (57% reduction) | 0.40 (60%) | 9,279 | **PASS** |
+| 1 | 25/30 | 21,578 | 17,958 | 0.83 (17% reduction) | 0.75 (25%) | 17,288 | **PASS** |
+
+p(wins) one-sided: 30/30 = 9.3e-10, 25/30 = 1.6e-04. Both seeds clear 20/30 and p < 0.02. The arm is
+2/2 on seeds, so **G1 passes for 4B** on the rebuild's own artifacts.
+
+### 1.7B, noisy n=30, matched untrained control
+
+| seed | wins | med ctl | med trained | ratio of medians | median per-path ratio | mean trained | G1 |
+|---|---|---|---|---|---|---|---|
+| 0 | 7/30 | 11,508 | 27,706 | 2.41x | 2.28x | 28,739 | FAIL |
+| 1 | 0/30 | 11,508 | 79,094 | 6.87x | 7.88x | 92,064 | FAIL |
+| 2 | 0/30 | 11,508 | 94,887 | 8.25x | 8.23x | 93,854 | FAIL |
+
+**G1 fails on all three seeds, so the 1.7B rung is adverse**, as published. Zero ties occurred in any
+pair, matching the paper's tie check.
+
+### Same arms on the curriculum band n=30 (secondary)
+
+| arm | wins | med ctl | med trained | ratio |
+|---|---|---|---|---|
+| 4B seed0 | 30/30 | 133,898 | 9,854 | 0.07x |
+| 4B seed1 | 25/30 | 133,898 | 18,334 | 0.14x |
+| 1.7B seed0 | 6/30 | 20,563 | 28,069 | 1.37x |
+| 1.7B seed1 | 0/30 | 20,563 | 80,033 | 3.89x |
+| 1.7B seed2 | 0/30 | 20,563 | 87,512 | 4.26x |
+
+Band control means: untrained 4B 116,948.33, untrained 1.7B 20,154.80 (`runs=30`,
+`results/wave8_val/untrained-curriculum-4b.summary.json` and `-1.7b.summary.json`). The 4B band
+control came back at 116,948.33 twice, 21 hours apart, bit-identical.
+
+## 9. What survives and what does not, on the rebuild's evidence
+
+Survives, from artifacts read today:
+
+- **4B passes G1 on both seeds.** Seed0 comfortably, seed1 narrowly: 17% reduction against a 15%
+  threshold, 25/30 wins rather than 30/30.
+- **1.7B is adverse on all three seeds**, at larger magnitudes than published (2.41x / 6.87x / 8.25x
+  versus 1.87x / 3.79x / 6.19x), with seed0 short of the published 0/30 (it gets 7/30).
+- The rung ordering, the mechanism (4B entropy stable near 1.5 nats, 1.7B driven to 1e-06..1e-04 with
+  one collapse trip), and the exact determinism of the untrained readout.
+
+Does not survive as written:
+
+- **The per-seed medians.** 4B seed1 is 17,958 in the rebuild against 7,612 published; the published
+  pair (8,315 and 7,612) is tighter than any two seeds this protocol produces. 4B seed0 at 9,346
+  against 8,315 is a 12% gap, which is defensible as reproduction; seed1 is not.
+- **"30/30 per seed" for 4B.** Seed1 gives 25/30. The verdict does not depend on this, because the
+  frozen criterion needs 20/30, but the abstract's phrasing does.
+- **"both effect sizes in full"** for 4B seed1, which clears 15% by two points.
+
+Two caveats that must travel with the 1.7B row:
+
+- The untrained 1.7B band read has `min_mass` 0.60945, and its single-run reads are 0.85869
+  (argmax-step), 0.543 (sampled), 0.823 (argmax-noisy). The control's readout is partly outside the
+  26-letter vocabulary, so the 1.7B comparison rests on a control that fails the C0 mass threshold.
+  It does not change the direction, but it belongs in the limitations paragraph.
+- The 1.7B band numbers in the paper (47,125 / 36,734 / 61,073) do not reproduce: the rebuild gives
+  28,825 / 86,546 / 86,595, and the seed ordering inverts (seed0 cheapest here, seed1 cheapest there).
