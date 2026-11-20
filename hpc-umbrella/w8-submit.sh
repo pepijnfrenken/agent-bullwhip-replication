@@ -33,7 +33,7 @@ else
   RUNG="${1:-}"; shift 1 2>/dev/null || true
 fi
 
-LRS=""; SEEDS=""; ARRAY=""; MICRO=""; EVAL_LR=""; DEP=""; ARMS=""
+LRS=""; SEEDS=""; ARRAY=""; MICRO=""; EVAL_LR=""; DEP=""; ARMS=""; EVAL_RUNS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lrs) LRS="$2"; shift 2 ;;
@@ -41,6 +41,7 @@ while [ $# -gt 0 ]; do
     --array) ARRAY="$2"; shift 2 ;;
     --micro-batch) MICRO="$2"; shift 2 ;;
     --lr) EVAL_LR="$2"; shift 2 ;;
+    --runs) EVAL_RUNS="$2"; shift 2 ;;
     --arms) ARMS="$2"; shift 2 ;;
     --dependency) DEP="$2"; shift 2 ;;
     *) echo "[w8-submit] unknown option: $1" >&2; exit 2 ;;
@@ -82,7 +83,8 @@ case "${STAGE}" in
     FILE="gpu-wave8-eval.sbatch"
     [ -n "${SEEDS}" ] && add "W8_EVAL_SEEDS=${SEEDS}"   # colon-separated: 0:1
     [ -n "${EVAL_LR}" ] && add "W8_LR=${EVAL_LR}"
-    [ -n "${ARMS}" ] && add "W8_EVAL_ARMS=${ARMS}" ;;
+    [ -n "${ARMS}" ] && add "W8_EVAL_ARMS=${ARMS}"
+    [ -n "${EVAL_RUNS}" ] && add "W8_EVAL_RUNS=${EVAL_RUNS}" ;;
 esac
 
 ARGS=(--export="${EXPORT}")

@@ -135,13 +135,19 @@ final_ckpt() {  # final_ckpt <train-out-dir> -> path of the last adapter dir (st
   python3 -c "import json,sys;print(sys.argv[1]+'/'+json.load(open(sys.argv[1]+'/state.json'))['checkpoint_dir'])" "$1"
 }
 
+# W8_EVAL_RUNS sets how many evaluation paths each arm gets on the step/noisy generations.
+# It defaults to 1, which is enough for a cost read but NOT for the paper's paired-wins criterion
+# (30/30 needs 30 paired paths). The 2026-11-19 rebuild ran this at 1 by omission; set it to 30
+# when the verdict, not just the cost, is the object.
+EV_RUNS="${W8_EVAL_RUNS:-1}"
+
 ev() {  # ev <tag> <model-name> <pattern> <mode> [adapter]
   local tag="$1" mname="$2" pattern="$3" mode="$4" adapter="${5:-}"
   local aargs=()
   [ -n "${adapter}" ] && aargs=(--adapter "${adapter}")
   echo "--- eval ${tag} (${pattern}/${mode}) at $(date -Is)"
   if python3 -u -m agent_bullwhip.decision_eval "${COMMON[@]}" --outdir "${OUT}" --tag "${tag}" \
-      --model-name "${mname}" --pattern "${pattern}" --mode "${mode}" --traces 1 \
+      --model-name "${mname}" --pattern "${pattern}" --mode "${mode}" --runs "${EV_RUNS}" --traces 1 \
       ${aargs[@]+"${aargs[@]}"}; then
     echo "--- ok ${tag}"
   else
