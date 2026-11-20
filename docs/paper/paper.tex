@@ -37,7 +37,9 @@ detector tripped on all six arm tasks at round 1, five persisted stop markers su
 were resumed past a stop (one accidentally, one under written override), and the completed read
 still fails the output-mass gate. \textbf{8B is not evaluable within size}: no matched untrained-8B
 control evaluation and no final-eval generation exist, and its arms are reported from the
-validation band only. The frozen seed-pooling rule is the methodological
+validation band only. A November 2026 rebuild from the committed kit reproduces both verdicts
+and the untrained control medians (Section~\ref{sec:rebuild}); its 4B seed-1 median is
+17{,}958 rather than 7{,}612, at 25/30 wins. The frozen seed-pooling rule is the methodological
 product: at 8B it refuses a favorable single-seed reading that a per-seed report would have
 accepted.
 
@@ -387,6 +389,17 @@ that lane's explicit failure-handling rule. A paired free-form-vs-closed-choice 
 matched conditions was not run, so the recorded effect is the \emph{elimination of invalid actions and
 the simplification of the comparison}, not a demonstrated total-cost advantage.
 
+\paragraph{Independent rebuild (November 2026).}\label{sec:rebuild} The October per-run artifacts
+were later lost (Section~\ref{sec:prov}), so we reran the protocol from the committed kit on the same
+pins: gates, training and evaluation for 1.7B (three seeds) and 4B (two seeds). The untrained controls
+reproduce, with a 4B curriculum-band mean of 116{,}948.33 on both occasions and noisy-control medians
+of 21{,}578 (4B) and 11{,}508 (1.7B), the values used above. Both verdicts reproduce.
+\textbf{4B passes G1 on both seeds}, 30/30 wins at median 9{,}346 and 25/30 at 17{,}958 against the
+same control; \textbf{1.7B regresses on all three}, at $2.41\times$, $6.87\times$ and $8.25\times$ the
+control (7/30, 0/30, 0/30 wins). The 4B seed-1 median is thus higher than the 7{,}612 above and its
+win count 25/30 rather than 30/30; the pass depends on neither, since the frozen bar is 20/30 wins and
+a 15\% reduction. Supplement S6 holds the tables, file names and band comparison.
+
 \section{Provenance and amendments}\label{sec:prov}
 We separate planned contingencies (handling pre-written before results), actual amendments
 (documented at the time), and open items. Per-rung artifact paths, the deviations table, and the
@@ -561,12 +574,11 @@ rung (Table~\ref{tab:ledger}) \\
 \end{table}
 
 \section{Where the moved detail lives}\label{app:moved}
-The methods supplement \cite{supplement} carries, in this order: S1 complete gate definitions with
-every frozen threshold to stored precision and a per-rung statement of which gate files are archived;
-S2 per-round detector readings (the eight 4B reads, the sixteen wave-8 0.6B round reads, and the two
-1.7B 5e-5 reads) with the branch verdicts recomputed; S3 the full 24-row task ledger with marker
-sequences and evidence per row; S4 the verbatim registered denominator text and both estimands at the
-learning-rate-arm unit; S5 the provenance inventory (commit anchors, lane and job identifiers, module
-list, and an evidence-availability table per rung). Nothing in the supplement changes a number in this
-paper.
+The methods supplement \cite{supplement} carries: S1 gate definitions with every frozen threshold and
+the archived gate file per rung;
+S2 per-round detector readings with the branch verdicts recomputed; S3 the full 24-row task ledger
+with marker sequences and evidence per row; S4 the registered denominator text and both estimands at
+the learning-rate-arm unit; S5 the provenance inventory (commit anchors, lanes, jobs, modules, evidence
+per rung); S6 the November 2026 rebuild, the only section bearing on a published number: it repeats
+both verdicts from raw artifacts and revises the 4B seed-1 median.
 \end{document}

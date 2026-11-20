@@ -402,11 +402,143 @@ either generation; a matched untrained-8B control evaluation; selection JSON \\
 \end{table}
 
 \paragraph{Closing statement on scope.} This supplement exists to let a reader check the paper's
-numbers rather than trust its prose, and it is explicit about the four places where that is not
-currently possible: the six 1.7B and 4B threshold values (no gate file recovered), the 0.6B wave-8
-per-run directories (removed by the repository's own slim-down), the 8B raw evaluations (never
-recovered from either lane), and one missing detector reason string in the 0.6B wave-8 block. Those
-four gaps are disclosed in the main text as well; none of them is load-bearing for the paper's only
-positive rung, whose numbers are recomputable from the raw paired JSONLs.
+numbers rather than trust its prose. Four gaps were open when the October results were written: the
+six 1.7B and 4B threshold values with no gate file recovered, the 0.6B wave-8 per-run directories
+removed by the repository's own slim-down, the 8B raw evaluations never recovered from either lane,
+and one missing detector reason string in the 0.6B wave-8 block. Their status now differs, and we
+state it per item rather than as a single caveat. The 1.7B and 4B thresholds are no longer
+unchecked: the November rebuild re-froze both from the pinned checkpoints and every value matches
+the registered figures within $3.3\times10^{-4}$ relative (S6, Table~\ref{tab:s6b}), so the gate
+values are confirmed by reproduction even though the October files were not recovered. The 0.6B
+per-run directories, the 8B raw evaluations and the reason string remain missing. The October
+numbers themselves are \emph{not} recomputable from raw data: the 1.7B and 4B per-run JSONLs are
+gone, which is why S6 reports an independent rerun rather than a reconstruction. That rerun is what
+now backs the paper's two verdicts.
+
+\section{S6. Independent rebuild, November 2026}\label{sec:s6}
+
+The wave-8 per-run artifacts were lost with the cluster scratch archive (S5). This section reports an
+independent rerun of the same protocol from the committed kit on the same pinned checkpoints, executed
+on 2026-11-19 and 2026-11-20 on the TU/e Umbrella L4 lane as jobs \texttt{766006}, \texttt{766026},
+\texttt{766027}, \texttt{766028}, \texttt{766029}, \texttt{766030}, \texttt{766031}, \texttt{775521}
+and \texttt{775522}. All completed with exit 0 and no run was stopped: one round-1 read tripped the
+collapse detector (1.7B seed 1) and is recorded below, and training continued past it by design at
+that rung. The method is unchanged: same gate freeze, same training recipe, same evaluation
+generations, same pins.
+
+\subsection*{Why the rebuild is admissible as a reproduction}
+
+It writes its own gate files before training and refuses to start when a statistic drifts. Table
+\ref{tab:s6b} is that check, byte-read from \texttt{results/wave8/gate\_verification.json}, whose
+\texttt{ok} field is \texttt{true} across all eight checks. Because the gate values were fixed in
+\emph{October}, the match is a genuine prediction rather than a re-fit.
+
+Second, the readout side is deterministic to the byte. Two independent evaluation jobs of the same 4B
+checkpoints produced identical files: \texttt{sha256} prefixes \texttt{24821f8c4eb2}
+(\texttt{w8-r1-4b-seed0-argmax-noisy.jsonl}), \texttt{90663e3f079e}
+(\texttt{w8-r1-4b-seed1-argmax-noisy.jsonl}) and \texttt{77b8590bec15}
+(\texttt{w8-r1-4b-seed0-sampled-step.jsonl}). Any difference from October therefore sits in training,
+not in the evaluation.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Re-frozen gate statistics against the values registered before the October runs. Tolerance
+$10^{-3}$ relative. Read from \texttt{results/wave8/\allowbreak gate\_verification.json}.}
+\label{tab:s6b}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+\textbf{Rung} & \textbf{Field} & \textbf{Registered} & \textbf{Re-frozen} & \textbf{Rel.\ diff} \\
+\midrule
+1.7B & $H_{\mathrm{lo}}$ & $9.6527\times10^{-5}$ & $9.6527\times10^{-5}$ & $4.6\times10^{-6}$ \\
+1.7B & $H_{\mathrm{hi}}$ & 1.6313 & 1.6313 & $1.9\times10^{-6}$ \\
+1.7B & $I_{\mathrm{hi0}}$ & 1.4858 & 1.4858 & $1.8\times10^{-5}$ \\
+1.7B & $m_{\mathrm{hi}}$ & 0.1487 & 0.1487 & $3.3\times10^{-4}$ \\
+4B & $H_{\mathrm{lo}}$ & 0.038026 & 0.038026 & $9.8\times10^{-6}$ \\
+4B & $H_{\mathrm{hi}}$ & 1.910513 & 1.910513 & $2.5\times10^{-7}$ \\
+4B & $I_{\mathrm{hi0}}$ & 0.676551 & 0.676551 & $7.1\times10^{-7}$ \\
+4B & $m_{\mathrm{hi}}$ & 0.1487 & 0.1487 & $3.3\times10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{Untrained controls}
+
+The noisy-argmax control medians are 21{,}578 (4B) and 11{,}508 (1.7B), identical to the values in
+the main text, and the 1.7B noisy mean is 11{,}405, also identical. The curriculum-band control means
+are 116{,}948.33 for 4B, which reproduced to the byte on a second job 21 hours later, and 20{,}154.80
+for 1.7B. Files: \texttt{results/eval/w8-untrained-\{1.7b,4b\}-argmax-noisy.jsonl} and
+\texttt{results/wave8\_val/untrained-curriculum-\{1.7b,4b\}.jsonl}.
+
+\subsection*{G1 on the rebuild}
+
+G1 is evaluated on the generation the spec names for it, paired noisy-argmax $n{=}30$
+(\texttt{WAVE8\_SPEC.md} \S G1): median cost reduction $\geq 15\%$ in both variants, $\geq 20/30$
+paired wins, one-sided sign test $p<0.02$. Demand paths depend only on the seed base and are
+model-independent, so control and trained rows pair by run index. No pair tied.
+
+\begin{table}[h]
+\centering
+\small
+\caption{G1 on the rebuild, paired noisy-argmax $n{=}30$, against each rung's own untrained control.
+Odds ratio is the ratio of medians; the per-path ratio is the median of the 30 individual ratios.}
+\label{tab:s6a}
+\begin{tabular}{@{}lrrrrrll@{}}
+\toprule
+\textbf{Arm} & \textbf{Wins} & \textbf{Med.\ ctl} & \textbf{Med.\ trained} & \textbf{Ratio} & \textbf{Per-path} & \textbf{$p$} & \textbf{G1} \\
+\midrule
+4B seed 0 & 30/30 & 21{,}578 & 9{,}346 & 0.43 & 0.40 & $9.3\times10^{-10}$ & pass \\
+4B seed 1 & 25/30 & 21{,}578 & 17{,}958 & 0.83 & 0.75 & $1.6\times10^{-4}$ & pass \\
+\midrule
+1.7B seed 0 & 7/30 & 11{,}508 & 27{,}706 & 2.41 & 2.28 & --- & fail \\
+1.7B seed 1 & 0/30 & 11{,}508 & 79{,}094 & 6.87 & 7.88 & --- & fail \\
+1.7B seed 2 & 0/30 & 11{,}508 & 94{,}887 & 8.25 & 8.23 & --- & fail \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both verdicts reproduce: 4B clears G1 on both seeds (2/2, so the arm passes), and 1.7B fails on all
+three (0/3, adverse). The magnitudes are not identical. The 4B seed-1 median is 17{,}958 rather than
+7{,}612 and its win count 25/30 rather than 30/30; it clears the 15\% reduction bar by two points on
+the ratio of medians. The 1.7B regressions are larger than published (2.41, 6.87, 8.25 against 1.87,
+3.79, 6.19), and its seed 0 gets 7/30 wins where the paper records 0/30.
+
+\subsection*{What differs, and where}
+
+Training outcomes are not stable across the two executions even though the readout is. On the
+curriculum band, 4B moves from 10{,}547.8 and 14{,}681.8 (October) to 9{,}355.1 and 19{,}385.3
+(November), pooled 12{,}614.8 to 14{,}370.2. The 1.7B band moves from 47{,}125 / 36{,}734 / 61{,}073
+to 28{,}825 / 86{,}546 / 86{,}595, and the seed ordering inverts: October's cheapest 1.7B seed is
+seed 1, November's is seed 0. Since evaluation is byte-reproducible, this variance belongs to training,
+and it is reported rather than smoothed: the paper's per-seed numbers are single-execution facts, and
+the seeds are more dispersed than the October pair suggests.
+
+\subsection*{Mechanism, unchanged}
+
+Median entropy per training round, read from
+\texttt{results/wave8\_r1-*/round*/collapse\_round*.json}: 4B holds 1.885 / 1.661 / 1.486 (seed 0) and
+1.525 / 1.493 / 1.461 (seed 1). 1.7B falls to $2.16\times10^{-2}$ / $2.89\times10^{-3}$ /
+$3.20\times10^{-6}$ (seed 0), $1.02\times10^{-1}$ / $3.00\times10^{-2}$ / $2.50\times10^{-4}$ (seed 2),
+and seed 1 trips the collapse gate in round 1 with modal argmax share 1.0 before recovering to 0.243
+and falling back to $3.2\times10^{-3}$.
+
+One dissociation belongs here because a simpler reading would be wrong: 1.7B seed 0 ends at the lowest
+median entropy of any arm and is still the cheapest 1.7B arm (median 27{,}706 against 79{,}094 and
+94{,}887). Degeneracy and cost are not the same axis. A near-deterministic policy is cheap when its
+single action happens to be the canonical one. The defensible statement is that the 1.7B loses the
+policy and its cost rises; ``costs more because it collapses'' is too strong for these data.
+
+\subsection*{Two caveats carried forward}
+
+The untrained 1.7B read has \texttt{min\_mass} 0.60945 on the band and 0.85869 (argmax-step), 0.543
+(sampled-step) and 0.82305 (argmax-noisy) on the single runs, all below the C0 threshold of 0.99. The
+1.7B comparison therefore rests on a control whose readout partly leaves the 26-letter vocabulary. The
+direction is unaffected; the mass caveat belongs in the limitations.
+
+Second, one defect was found and fixed in the rebuild's own kit rather than in the protocol: the
+curriculum-band control tag carried no rung suffix, so the 1.7B and 4B evaluation jobs wrote the same
+path and the last writer won. Both files are now written with the rung in the name, and both are
+reported above. It is stated because a duplication of that kind would have silently deleted half the
+evidence for a second time.
 
 \end{document}
