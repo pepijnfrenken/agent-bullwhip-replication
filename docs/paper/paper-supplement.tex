@@ -400,10 +400,10 @@ final-eval files for the stopped arm (they never existed) \\
 4B & \texttt{gates\_4b.json}, re-frozen 2026-11-20; November rebuild per-run JSONL for both seeds,
 permutation JSONs and both generations (S6) & October raw paired JSONLs for both seeds; October
 permutation JSONs \\
-8B & verdict doc with leg-by-leg timings, lane and job identifiers, band means; one arm's checkpoints
-(lr1e-5 s1, adapter 30.7 MB) and its band table on the Modal volume \texttt{wave8-hf-8b} & any raw
-JSONL of either generation; a matched untrained-8B control evaluation; selection JSON; the other
-three arms' adapters \\
+8B & verdict doc with leg-by-leg timings and band means; the lr1e-5 s1 checkpoints (adapter
+30.7 MB) and band table on the Modal volume; November readouts for both generations, the untrained-8B
+control and its band (S7) & selection JSON; the other three arms' adapters; October raw JSONL of
+either generation \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -547,5 +547,123 @@ curriculum-band control tag carried no rung suffix, so the 1.7B and 4B evaluatio
 path and the last writer won. Both files are now written with the rung in the name, and both are
 reported above. It is stated because a duplication of that kind would have silently deleted half the
 evidence for a second time.
+
+
+\section{S7. The 8B arm that could be evaluated, November 2026}\label{sec:s7}
+
+The body reports 8B as one arm evaluable and three band-only. This section carries the artifacts
+behind that sentence, including the two failed attempts, because the sequence is the evidence.
+
+\subsection*{What survived and where}
+
+Three of the four 8B legs lost their adapters with the archives they ran in. The 5e-5 seed-1 leg's
+archive on the run volume is \texttt{leg\_5e-5\_seed1.zip} at \textbf{22 bytes}: the archival step
+crashed before writing. The $10^{-5}$ seed-1 leg is the exception. Its directory holds
+\texttt{round\_state.json}, a \texttt{DONE} marker, \texttt{collapse\_reads.jsonl}, three rounds of
+checkpoints, and a validation-band table
+(\texttt{w8-val-r1-8b-lr1e-5-seed1.summary.json}: 30 runs, mean 22{,}083.37, \texttt{min\_mass}
+0.99205). The adapter at \texttt{checkpoint-169/adapter\_model.safetensors} is 30{,}709{,}192 bytes,
+and its \texttt{state.json} records \texttt{lr} 1e-5, \texttt{seed} 1, \texttt{step} 169, model
+\texttt{Qwen/Qwen3-8B}, saved 2026-10-22T14:06:37Z. That one file is the difference between an
+unevaluable rung and a partial one.
+
+The gate file \texttt{results/wave8/gates\_8b.json} (1{,}497 bytes, frozen 2026-10-21,
+\texttt{sha256} \texttt{b6194407e03a}) carries the diagnostic thresholds: \texttt{H\_lo}
+0.0005025333805207596, \texttt{m\_hi} 0.14874833921755284, \texttt{min\_mass} 0.22705760598182678 on
+the frozen diagnostic state sample.
+
+\subsection*{Two failed attempts, and why they are recorded}
+
+\textbf{Job \texttt{780799} failed in five seconds} with \texttt{FATAL: results/wave8/gates\_8b.json
+missing}. The file existed on one disk and had never been force-added to git, so the cluster checkout
+never held the 8B gate freeze at all. It is now committed (\texttt{3f71c90}) and both copies hash
+\texttt{b6194407e03a}. A paper whose 8B row depends on that file was one disk failure away from losing
+its thresholds.
+
+\textbf{Job \texttt{780926} hit the memory wall.} Seven of nine steps raised
+\texttt{torch.cuda.OutOfMemoryError} at 21.43\,GiB of a 22.06\,GiB L4: the runner batches every demand
+path in lockstep, so 30 paths $\times$ 4 roles is 120 prompts in one forward. Two steps landed first
+and are reported below because they are valid.
+
+\textbf{The fix and its scope.} \texttt{W8\_READOUT\_CHUNK} slices the prompt list before the forward
+pass. The readout is per prompt (left-padded, one forward per group, logits read at the last real
+position, mass computed per prompt), so chunking changes the grouping and nothing else. Four prompts
+at a time is the footprint the single-path runs had already proved on this card. It is an
+infrastructure parameter, not a change to a gate, a threshold or the pooling rule; the 0.6B, 1.7B and
+4B rungs were not re-run with it and are unaffected.
+
+\subsection*{Readouts, job \texttt{781221}, all steps exit 0, 1h20m43s}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{arm} & \textbf{generation} & \textbf{runs} & \textbf{mean cost} & \textbf{min mass} \\
+\midrule
+untrained & argmax-step & 1 & 93{,}060.00 & 0.84032 \\
+untrained & sampled-step & 30 & 109{,}183.47 & 0.79728 \\
+untrained & argmax-noisy & 30 & 106{,}448.03 & 0.78885 \\
+adapted & argmax-step & 1 & 8{,}376.00 & 0.99986 \\
+adapted & sampled-step & 30 & 9{,}385.13 & 0.99706 \\
+adapted & argmax-noisy & 30 & 14{,}525.43 & 0.99810 \\
+\bottomrule
+\end{tabular}
+\caption{8B readouts from \texttt{results/eval/w8-*-8b-*.summary.json}. The adapted arm is lr $10^{-5}$
+seed 1.}
+\label{tab:s7a}
+\end{table}
+
+\subsection*{The frozen G1 read}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{quantity} & \textbf{value} \\
+\midrule
+paired paths & 30 (no ties) \\
+control median, noisy argmax & 89{,}633.00 \\
+arm median & 14{,}594.50 \\
+median ratio & 0.1628 (83.72\% reduction) \\
+median of per-path reductions & 0.1569 (84.31\%) \\
+paired wins & 29/30, one against \\
+one-sided sign test & $p = 2.89\times10^{-8}$ \\
+\bottomrule
+\end{tabular}
+\caption{G1 at 8B, lr $10^{-5}$ seed 1 against the matched untrained-8B control. Reproduce with
+\texttt{python3 scripts/wave8\_g1\_read.py results/eval/w8-untrained-8b-argmax-noisy.jsonl
+results/eval/w8-r1-8b-seed1-argmax-noisy.jsonl}.}
+\label{tab:s7b}
+\end{table}
+
+Every gate passes: the 15\% bar on both statistics, 20/30 wins, $p<0.02$, and the 22/30 the abstract
+text asks for. On the curriculum band the same arm reads 22{,}083.37 against an untrained-8B band of
+104{,}676.07, a 0.211 ratio, so band and generation agree in direction.
+
+\subsection*{Caveats that belong with the number}
+
+\textbf{One arm, and not the selected one.} The frozen rule selects 5e-5 by pooled band mean
+(23{,}867 against 46{,}969), and that arm's adapters are gone. The passing arm is the one the rule did
+not select. No post-hoc arm switch is taken, so the rung is one arm passing and the selected arm
+unevaluated, which is weaker than an 8B verdict.
+
+\textbf{The control's readout leaves the vocabulary.} The untrained 8B resolves 0.63050 of its mass on
+the 26 letters on the band and 0.84032, 0.79728 and 0.78885 on the three generations, all below the
+C0 threshold of 0.99 and far below the adapted arm's 0.99706 to 0.99986. The frozen gate file's
+diagnostic figure is 0.22706, a different state sample, which is why that artifact could not serve as
+the control. The comparison therefore rests on a control that is partly outside the closed choice set.
+The direction is not in doubt at 29/30 with an 83.7\% reduction; the magnitude carries that caveat.
+
+\textbf{Permutation invariance, in context.} The adapted arm reads 0.0781 with 40 of 512 cases
+invariant, against a registered gate of 0.9. No arm passes that gate on any rung: 4B seed 0 is 0.0020
+and seed 1 0.0273, 1.7B is 0.1172, 0.1543 and 0.1562, and all wave-7 arms are 0.0000. The 8B arm is
+second highest of the trained arms, and \texttt{WAVE8\_SPEC.md} makes invariance below 0.05 a stop only
+in combination with a tripped collapse gate. It is reported so that a reader meeting the raw file does
+not mistake a universal property for an 8B failure.
+
+\textbf{Hardware.} The 8B readouts ran on the same L4 lane as the 0.6B--4B rungs, not on the A100 lanes
+the 8B \emph{training} used. Same code, same pinned checkpoint, same demand paths.
 
 \end{document}

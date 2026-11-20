@@ -528,129 +528,129 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 ) [1
 
 ] [2]
-Underfull \hbox (badness 10000) in paragraph at lines 123--126
+Underfull \hbox (badness 10000) in paragraph at lines 124--127
 []\TU/lmr/bx/n/10.95 F2 interface. \TU/lmr/m/n/10.95 All 26 answer letters are 
 single to-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 123--126
+Underfull \hbox (badness 10000) in paragraph at lines 124--127
 \TU/lmr/m/n/10.95 kens on the rendered continuation (full prompt SHA
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 123--126
+Underfull \hbox (badness 10000) in paragraph at lines 124--127
 \TU/lmtt/c/it/10.95 55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49da
 fc422\TU/lmr/m/n/10.95 ); label
  []
 
 [3] [4]
-Underfull \hbox (badness 5504) in paragraph at lines 274--274
+Underfull \hbox (badness 5504) in paragraph at lines 276--276
 []\TU/lmr/m/n/10 SFT + exact-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 276--276
+Underfull \hbox (badness 10000) in paragraph at lines 278--278
 []\TU/lmr/m/n/10 exact-grad, 3
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 276--276
+Underfull \hbox (badness 10000) in paragraph at lines 278--278
 []\TU/lmr/m/n/10 ctl 11,508; medians
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 276--277
+Underfull \hbox (badness 10000) in paragraph at lines 278--279
 []\TU/lmr/m/n/10 adverse
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 277--277
+Underfull \hbox (badness 10000) in paragraph at lines 279--279
 []\TU/lmr/m/n/10 exact-grad, 2
  []
 
 
-Underfull \hbox (badness 1331) in paragraph at lines 277--277
+Underfull \hbox (badness 1331) in paragraph at lines 279--279
 []\TU/lmr/m/n/10 ctl 21,578; \TU/lmr/bx/n/10 pass both
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 278--278
+Underfull \hbox (badness 10000) in paragraph at lines 280--280
 []\TU/lmr/m/n/10 exact-grad, 4
  []
 
 
-Underfull \hbox (badness 2828) in paragraph at lines 278--279
-[]\TU/lmr/bx/n/10 not evalu-
+Underfull \hbox (badness 10000) in paragraph at lines 280--281
+[]\TU/lmr/bx/n/10 one arm
  []
 
 [5] [6] [7] [8] [9] [10]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 550.
+(hyperref)                removing `math shift' on input line 546.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\times' on input line 550.
+(hyperref)                removing `\times' on input line 546.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 550.
+(hyperref)                removing `math shift' on input line 546.
 
 
-Underfull \hbox (badness 5119) in paragraph at lines 559--559
+Underfull \hbox (badness 5119) in paragraph at lines 555--555
 []\TU/lmr/bx/n/10.95 Reference (2605.17036
  []
 
 
-Underfull \hbox (badness 3019) in paragraph at lines 561--563
+Underfull \hbox (badness 3019) in paragraph at lines 557--559
 []\TU/lmr/m/n/10.95 per-state $\OML/cmm/m/it/10.95 z$\TU/lmr/m/n/10.95 -score e
 numer-
  []
 
 
-Underfull \hbox (badness 6842) in paragraph at lines 563--563
+Underfull \hbox (badness 6842) in paragraph at lines 559--559
 []\TU/lmr/m/n/10.95 frozen $\OML/cmm/m/it/10.95 ^^Y[]$ \TU/lmr/m/n/10.95 (v4 eq
 . 2),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 563--565
+Underfull \hbox (badness 10000) in paragraph at lines 559--561
 []\TU/lmr/m/n/10.95 frozen per-state anchor
  []
 
 
-Underfull \hbox (badness 2903) in paragraph at lines 565--566
+Underfull \hbox (badness 2903) in paragraph at lines 561--562
 []\TU/lmr/m/n/10.95 closed-choice letter logits
  []
 
 
-Underfull \hbox (badness 7576) in paragraph at lines 566--566
+Underfull \hbox (badness 7576) in paragraph at lines 562--562
 []\TU/lmr/m/n/10.95 rollout (return-to-go) vs
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 566--568
+Underfull \hbox (badness 10000) in paragraph at lines 562--564
 []\TU/lmr/m/n/10.95 exact per-(state,action)
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 568--569
+Underfull \hbox (badness 10000) in paragraph at lines 564--565
 []\TU/lmr/m/n/10.95 one shared backbone,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 568--569
+Underfull \hbox (badness 10000) in paragraph at lines 564--565
 \TU/lmr/m/n/10.95 four echelons (global);
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 570--572
+Underfull \hbox (badness 10000) in paragraph at lines 566--568
 []\TU/lmr/m/n/10.95 system-level continuation
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 572--572
+Underfull \hbox (badness 10000) in paragraph at lines 568--568
 []\TU/lmr/m/n/10.95 Training-run seed
  []
 
@@ -661,4 +661,4 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 Package rerunfilecheck Info: File `paper.out' has not changed.
 (rerunfilecheck)             Checksum: E5CFB144C017F4493C5D0ED3EB4ED3D5;1668.
  )
-Output written on paper.xdv (11 pages, 385056 bytes).
+Output written on paper.xdv (11 pages, 383500 bytes).

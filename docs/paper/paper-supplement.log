@@ -565,8 +565,18 @@ Underfull \hbox (badness 1107) in paragraph at lines 401--403
  []
 
 
-Underfull \hbox (badness 3884) in paragraph at lines 403--404
-\TU/lmr/m/n/10 tifiers, band means; one
+Underfull \hbox (badness 3568) in paragraph at lines 403--405
+\TU/lmr/m/n/10 timings and band means;
+ []
+
+
+Underfull \hbox (badness 4341) in paragraph at lines 403--405
+\TU/lmr/m/n/10 the lr1e-5 s1 checkpoints
+ []
+
+
+Underfull \hbox (badness 1242) in paragraph at lines 403--405
+\TU/lmr/m/n/10 generations, the untrained-
  []
 
 
@@ -616,8 +626,51 @@ Overfull \hbox (29.43645pt too wide) in paragraph at lines 525--531
 95 results/wave8_r1-*/round*/collapse_round*.json\TU/lmr/m/n/10.95 :
  []
 
-[6] [7] [8] [9] [10] (paper-supplement.aux)
+[6]
+Underfull \hbox (badness 2680) in paragraph at lines 570--574
+\TU/lmtt/m/n/10.95 b6194407e03a\TU/lmr/m/n/10.95 ) carries the diagnostic thres
+holds: \TU/lmtt/m/n/10.95 H_lo \TU/lmr/m/n/10.95 0.0005025333805207596, \TU/lmt
+t/m/n/10.95 m_hi
+ []
+
+LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10.95> not available
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 577.
+
+Underfull \hbox (badness 10000) in paragraph at lines 583--587
+[]\TU/lmr/bx/n/10.95 Job \TU/lmtt/b/n/10.95 780926 \TU/lmr/bx/n/10.95 hit the m
+emory wall. \TU/lmr/m/n/10.95 Seven of nine steps raised
+ []
+
+[7]
+LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <12> not available
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 595.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 637--637
+[]\TU/lmr/m/n/10.95 Table 13: []G1 at 8B, lr $\OT1/cmr/m/n/10.95 10[]$ \TU/lmr/
+m/n/10.95 seed 1 against the matched untrained-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 637--637
+\TU/lmr/m/n/10.95 8B control. Reproduce with \TU/lmtt/m/n/10.95 python3 scripts
+/wave8_g1_read.py
+ []
+
+
+Overfull \hbox (88.32327pt too wide) in paragraph at lines 637--637
+\TU/lmtt/m/n/10.95 results/eval/w8-untrained-8b-argmax-noisy.jsonl results/eval
+/w8-r1-8b-seed1-argmax-noisy.jsonl\TU/lmr/m/n/10.95 . 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[8] [9] [10] [11] [12] (paper-supplement.aux)
 Package rerunfilecheck Info: File `paper-supplement.out' has not changed.
-(rerunfilecheck)             Checksum: FD46DBA21C83F5CD9C39E442224DEEFC;1441.
+(rerunfilecheck)             Checksum: E4AF14568C56F91FBAE666F4FB0BB811;1776.
  )
-Output written on paper-supplement.xdv (10 pages, 249168 bytes).
+Output written on paper-supplement.xdv (12 pages, 303528 bytes).

@@ -35,13 +35,14 @@ seed; sign-test $p = 2^{-30}$; median-ratio and median-of-per-path reductions 61
 on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
 detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks
 were resumed past a stop (one accidentally, one under written override), and the completed read
-still fails the output-mass gate. \textbf{8B is not evaluable within size}: no matched untrained-8B
-control evaluation and no final-eval generation exist, and its arms are reported from the
-validation band only. A November 2026 rebuild from the committed kit reproduces both verdicts
+still fails the output-mass gate. \textbf{8B is evaluable on one of its four arms}: the $10^{-5}$ seed-1 adapter survived, and
+against a November-matched untrained-8B control it passes every G1 gate (medians 14{,}595 vs
+89{,}633; 29/30 paired wins; $p = 2.9\times10^{-8}$; 83.7\% reduction). Three arms lost their adapters; the
+passing arm is the one the frozen rule did not select. A November 2026 rebuild from the committed kit reproduces both verdicts
 and the untrained control medians (Section~\ref{sec:rebuild}); its 4B seed-1 median is
-17{,}958 rather than 7{,}612, at 25/30 wins. The frozen seed-pooling rule is the methodological
-product: at 8B it refuses a favorable single-seed reading that a per-seed report would have
-accepted.
+17{,}958 rather than 7{,}612, at 25/30 wins. The frozen selection and pooling rules are the methodological
+product: at 8B the outcome-blind rule selects the arm whose weights are gone, and no post-hoc arm
+switch is taken.
 
 \end{abstract}
 
@@ -141,7 +142,8 @@ in brief (full definitions, threshold values per rung, and read schedule: supple
   round reads, and a resume past a stop needs a written override; skipping that check is a runner
   defect, not a rule defect, and one such accidental resume is on the record
   (Section~\ref{sec:prov}). An untrained-8B \emph{diagnostic} checkpoint supplies the 8B thresholds;
-  no untrained-8B final \emph{control evaluation} was ever run. The stop-loss handling is a planned
+  no untrained-8B final \emph{control evaluation} was run in October; the November control
+  behind the one-arm read is dated in S7. The stop-loss handling is a planned
   contingency, not an amendment.
   \item \textbf{Permutation invariance (diagnostic, pre-registered consequence).} 512 states, 3
   shuffled grids besides the canonical one (grid seed 20261006); a state is a \emph{success} iff the
@@ -275,7 +277,7 @@ curriculum-validation means.}
 0.6B w8 & exact-grad & stopped before final eval & collapse tripped on all 6 tasks; 5 stopped pre-eval & stopped \\
 1.7B & exact-grad, 3 seeds & final-eval medians & ctl 11{,}508; medians 21{,}468/43{,}660/71{,}270 & adverse (0/3) \\
 4B & exact-grad, 2 seeds & final-eval medians and means & ctl 21{,}578; \textbf{pass both seeds} & \textbf{pass (2/2)} \\
-8B & exact-grad, 4 legs & validation-band means only & no matched untrained-8B final control & \textbf{not evaluable} \\
+8B & exact-grad, 4 legs & one arm paired 29/30; three band-only & three adapters lost with their archives & \textbf{one arm passes} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -348,30 +350,25 @@ $3.2\times10^{-4}$, the readout having left the label set). Its band means are 9
 has a matched final evaluation, so the wave-8 0.6B outcome is a stopped procedure, distinct from a
 measured cost regression; the wave-7 rows carry the measured negative.
 
-\paragraph{8B, validation-band evidence only, within-size not evaluable.} All four 8B planned
+\paragraph{8B, one arm evaluable, three band-only.} All four 8B planned
 legs (2 lr $\times$ 2 seeds) trained on external A100 lanes (Snellius jobs \texttt{28414248}
 and \texttt{28418615} for the seed-0 legs; two Modal legs completed the seed-1 legs after the
-budget amendment, Section~\ref{sec:prov}). Document-recorded validation-band means (the
-declared selection input, $n{=}30$ argmax runs on the curriculum band): 5e-5 arm 35{,}289 /
-12{,}444 (pooled 23{,}867); 1e-5 arm 71{,}855 / 22{,}083 (pooled 46{,}969). We state what these
-numbers can and cannot support:
+budget amendment, Section~\ref{sec:prov}). Validation-band means (the declared
+selection input, $n{=}30$ argmax runs): 5e-5 arm 35{,}289 / 12{,}444 (pooled 23{,}867); 1e-5 arm
+71{,}855 / 22{,}083 (pooled 46{,}969), so the frozen rule selects 5e-5; no selection JSON was
+recovered.
+Three legs lost their adapters with the archives they ran in. The $10^{-5}$ seed-1 adapter
+survived as a 30.7\,MB checkpoint on a run volume, and a November evaluation against an
+untrained-8B control on the same demand paths makes that one arm evaluable (supplement S7):
 \begin{itemize}
 
-  \item \emph{Selection}: the pooled band means select the 5e-5 arm under the frozen rule
-  (23{,}867 $<$ 46{,}969). The record is document-level (verdict doc with leg-by-leg timings); no
-  selection JSON was recovered from either lane, so selection provenance is incomplete.
-  \item \emph{Band-level comparators}: on the same band the trained-4B reference is pooled mean
-  12{,}614.8 (10{,}547.8 / 14{,}681.8, archived) and the untrained-4B band mean is 116{,}948, so
-  the selected 8B arm's 23{,}867 is $1.89\times$ the trained-4B reference and $0.20\times$ the
-  untrained-4B reference. These are band comparisons, not the final-eval generation, and no
-  matched untrained-8B \emph{final control} exists, so neither establishes an 8B within-size
-  verdict.
-  \item \emph{Seed spread and G1}: inside the selected arm 35{,}289 vs 12{,}444
-  ($2.84\times$), the other arm's ratio larger at $3.25\times$; the frozen rule takes the arm
-  mean, not the favorable seed. Within-size G1 is not computable: no matched untrained-8B control
-  \emph{evaluation} exists (the frozen F3 artifact is a diagnostic checkpoint measured on a
-  different state sample) and no final-eval generation was produced at 8B at all. The row is
-  genuinely unevaluated, not negative, and no cross-size cost-regression claim is made from it.
+  \item \emph{Paired read}: 29/30 paired wins, $p = 2.9\times10^{-8}$, a 0.163 median ratio and a
+  0.157 median of per-path reductions. Every frozen G1 gate passes; the tables are in S7.
+  \item \emph{Band agreement}: on the same band the arm reads 22{,}083 against an untrained-8B
+  band of 104{,}676 ($0.21\times$), so the band and the generation agree in direction.
+  \item \emph{Selection mismatch}: the arm that passes is the arm the frozen rule did not select.
+  No post-hoc arm switch is taken, so the rung is one arm passing and the selected arm unevaluated,
+  weaker than an 8B verdict.
 \end{itemize}
 
 \paragraph{Permutation diagnostic.} The pre-registered consequence of the shared near-zero
@@ -461,11 +458,10 @@ with an incomplete planned second learning-rate arm. One rung (0.6B) is negative
 arm--seed rows, and its wave-8 exact-gradient procedure is a stopped run: collapse tripped on all
 six tasks at round 1, a persisted stop marker survives on five, two were later resumed past a stop
 (one by a runner accident, one under a written override), and the completed read fails the
-output-mass gate. One rung (8B) is not evaluable within size, its band-level numbers carrying
-document-level provenance only. Closed-choice readouts eliminated invalid actions and simplified the
-comparison; exact-enumeration outcome-scored post-training paid off at exactly one scale point (4B)
-under the frozen rule, and the other three scale points are adverse, stopped, or unevaluated
-respectively.
+output-mass gate. One rung (8B) is evaluable on a single arm whose adapter survived; the arm the frozen rule
+chose lost its adapters. Closed-choice readouts eliminated invalid actions and simplified the
+comparison; exact-enumeration outcome-scored post-training paid off under the frozen rule at 4B and on
+one 8B arm, while 1.7B and 0.6B are adverse or stopped and the selected 8B arm is unevaluated.
 
 \paragraph{The selection rule as a methodological point.} The 8B seed spread inside the selected
 arm (35{,}289 vs 12{,}444) is the worked example: a per-seed report can pick the flattering seed, the
@@ -580,7 +576,7 @@ The methods supplement \cite{supplement} carries: S1 gate definitions with every
 the archived gate file per rung;
 S2 per-round detector readings with the branch verdicts recomputed; S3 the full 24-row task ledger
 with marker sequences and evidence per row; S4 the registered denominator text and both estimands at
-the learning-rate-arm unit; S5 the provenance inventory (commit anchors, lanes, jobs, modules, evidence
-per rung); S6 the November 2026 rebuild, the only section bearing on a published number: it repeats
-both verdicts from raw artifacts and revises the 4B seed-1 median.
+the learning-rate-arm unit; S5 the provenance inventory (anchors, lanes, jobs, modules, evidence per rung);
+S6 the November rebuild, which repeats both verdicts and revises the 4B seed-1 median; S7 the November
+8B read, which turns that rung's refusal into a per-arm result. S6 and S7 bear on published numbers.
 \end{document}

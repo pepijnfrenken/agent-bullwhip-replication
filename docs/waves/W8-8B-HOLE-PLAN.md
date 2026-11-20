@@ -175,3 +175,40 @@ env-gated chunking in `readout_batch` (`W8_READOUT_CHUNK`, `agent_bullwhip/decis
 readout is per-prompt, left-padded, logits read at the last real position, mass computed per prompt, so
 slicing the batch changes the grouping and nothing else. Four at a time reproduces the footprint the
 `R=1` runs already proved on this card. Chunk 4, not 16, because the evidence supports 4.
+
+### Closed, 2026-11-20: job 781221, all steps exit 0
+
+`781221` completed in 1h20m43s with all seven steps ok, chunked at 4 prompts. The paired read is the
+frozen G1 statistic, computed by `scripts/wave8_g1_read.py` (validated first on the 4B and 1.7B pairs,
+where it reproduces 30/30 at 0.433/0.403 and 7/30 at 2.41x):
+
+| quantity | value |
+|---|---|
+| control median, noisy argmax n=30 | 89,633.00 |
+| adapted arm median | 14,594.50 |
+| median ratio | 0.1628 (83.72% reduction) |
+| median of per-path reductions | 0.1569 (84.31%) |
+| paired wins | 29/30, one against |
+| one-sided sign test | p = 2.89e-08 |
+| band: untrained / adapted | 104,676.07 vs 22,083.37, ratio 0.2110 |
+
+Every gate passes: 15% on both statistics, 20/30 wins, p < 0.02, and the 22/30 the abstract's text
+asks for. Readouts, all from `results/eval/w8-*-8b-*.summary.json`: untrained 93,060.00 (argmax-step,
+n=1) / 109,183.47 (sampled-step) / 106,448.03 (argmax-noisy); adapted 8,376.00 / 9,385.13 / 14,525.43.
+Mass: untrained 0.84032 / 0.79728 / 0.78885 and 0.63050 on the band, all below C0's 0.99; adapted
+0.99986 / 0.99706 / 0.99810 and 0.99205 on the band.
+
+**What this does not establish.** The passing arm is not the arm the frozen selection rule chose
+(5e-5, pooled 23,867 against 46,969). That arm's adapters are gone. No post-hoc arm switch was taken,
+so the rung is one arm passing and the selected arm unevaluated. The control's readout is partly
+outside the closed-choice vocabulary, which caps what the magnitude can carry. 8B therefore moves from
+"not evaluable within size" to "evaluable on one of four arms, passing", not to a clean rung verdict.
+
+### Manuscript changes made on that result
+
+Abstract 8B clause, the section 8B paragraph, the summary table row, two conclusion sentences, and the
+provenance sentence that said no untrained-8B control was ever run. Supplement: new S7 with the
+survival inventory, both failed attempts, the readout and G1 tables, and the four caveats; S5's 8B
+availability row split into October and November; the appendix note now names S6 and S7 as the two
+sections that bear on a published number. Main paper held at 11 pages (6,000 words), supplement 12
+pages, both logs zero errors.
