@@ -141,3 +141,37 @@ the freeze: `Qwen/Qwen3-8B@b968826d`, `H_lo` 0.0005025333805207596, `m_hi` 0.148
 `min_mass` 0.22705760598182678.
 
 Resubmitted as `780926` with the same knobs and `EXPECTED_COMMIT=3f71c90`.
+
+### Job 780926: two readouts landed, the rest hit the memory wall
+
+`780926` ran 17m45s and exited 1. Seven steps raised `torch.cuda.OutOfMemoryError` at 21.43 GiB of a
+22.06 GiB L4. What landed, read from the artifacts and not from the log line:
+
+| artifact | runs | mean cost | `min_mass` | parse_fail |
+|---|---|---|---|---|
+| `results/eval/w8-untrained-8b-argmax-step.summary.json` | 1 | **93,060.0** | 0.84032 | 0 |
+| `results/eval/w8-r1-8b-seed1-argmax-step.summary.json` | 1 | **8,376.0** | 0.99986 | 0 |
+| `results/eval/w8-r1-8b-seed1-perm.json` | 512 cases | invariance 0.0781 | gate 0.9 | 40 invariant |
+
+Ratio 8,376 / 93,060 = 0.0900, a 91.00% reduction, 11.11x. That is the deterministic argmax-step
+generation, `n=1` per arm by the P0 design that also governs the 4B and 1.7B rows
+(`agent_bullwhip/decision_eval.py:339`), so it carries no sign test. The inferential read still needs
+the noisy generation.
+
+The untrained 8B resolves 0.84032 of its mass on the 26 letters, against 0.99986 for the adapted one.
+The frozen gate file's own figure is 0.22706, on a different readout. Either way the untrained 8B is
+partly outside the closed-choice vocabulary and the adapter is fully inside it.
+
+The permutation invariance of 0.0781 is not an 8B defect. No arm passes the registered 0.9: 4B seed 0
+sits at 0.0020, 4B seed 1 at 0.0273, 1.7B at 0.1172/0.1543/0.1562, all wave-7 arms at 0.0000. The 8B
+adapter is second highest of the trained arms, and `WAVE8_SPEC.md:312` makes invariance below 0.05 a
+stop only when the collapse gate has also tripped.
+
+### Cause of the OOM and the fix
+
+`run_batched_eval` batches every path in lockstep: `R` paths x 4 roles is 120 prompts in one forward
+at `R=30`. The two steps that succeeded used `R=1`, four prompts, ~19.5 GiB resident. The fix is
+env-gated chunking in `readout_batch` (`W8_READOUT_CHUNK`, `agent_bullwhip/decision_readout.py`): the
+readout is per-prompt, left-padded, logits read at the last real position, mass computed per prompt, so
+slicing the batch changes the grouping and nothing else. Four at a time reproduces the footprint the
+`R=1` runs already proved on this card. Chunk 4, not 16, because the evidence supports 4.
