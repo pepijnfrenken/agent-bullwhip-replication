@@ -247,8 +247,9 @@ control median.}
 1.7B lr5e-5 s1 & --- & unattempted & never submitted & submit ledger \\
 1.7B lr5e-5 s2 & --- & unattempted & never submitted & submit ledger \\
 \midrule
-4B lr5e-5 s0 & not C & evaluated, passing & 8{,}315 vs ctl 21{,}578; 30/30 & raw JSONL \\
-4B lr5e-5 s1 & not C & evaluated, passing & 7{,}612; 30/30 & raw JSONL \\
+4B lr5e-5 s0 & not C & evaluated, passing & 8{,}315 vs ctl 21{,}578; 30/30 & verdict doc; raw
+JSONL lost (S5) \\
+4B lr5e-5 s1 & not C & evaluated, passing & 7{,}612; 30/30 & verdict doc; raw JSONL lost (S5) \\
 \midrule
 8B lr5e-5 s0 & n/a & trained, no final eval & band mean 35{,}289 & verdict doc \\
 8B lr5e-5 s1 & n/a & trained, no final eval & band mean 12{,}444 (pooled 23{,}867) & verdict doc \\

@@ -432,8 +432,13 @@ Underfull \hbox (badness 10000) in paragraph at lines 250--250
  []
 
 
-Underfull \hbox (badness 1838) in paragraph at lines 253--253
-[]|\TU/lmr/m/n/9 trained, no final
+Underfull \hbox (badness 10000) in paragraph at lines 250--252
+[]|\TU/lmr/m/n/9 verdict doc; raw
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 252--253
+[]|\TU/lmr/m/n/9 verdict doc; raw
  []
 
 
@@ -442,13 +447,13 @@ Underfull \hbox (badness 1838) in paragraph at lines 254--254
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 254--254
-[]|\TU/lmr/m/n/9 band mean 12,444
+Underfull \hbox (badness 1838) in paragraph at lines 255--255
+[]|\TU/lmr/m/n/9 trained, no final
  []
 
 
-Underfull \hbox (badness 1838) in paragraph at lines 255--255
-[]|\TU/lmr/m/n/9 trained, no final
+Underfull \hbox (badness 10000) in paragraph at lines 255--255
+[]|\TU/lmr/m/n/9 band mean 12,444
  []
 
 
@@ -457,22 +462,25 @@ Underfull \hbox (badness 1838) in paragraph at lines 256--256
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 256--256
+Underfull \hbox (badness 1838) in paragraph at lines 257--257
+[]|\TU/lmr/m/n/9 trained, no final
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 257--257
 []|\TU/lmr/m/n/9 band mean 22,083
  []
 
-[4]
-Underfull \hbox (badness 10000) in paragraph at lines 293--293
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--294
 []|\TU/lmr/m/n/10 1e-5 (exe-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 294--294
-[]|\TU/lmr/m/n/10 undefined (0 evalu-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 296--296
+Underfull \hbox (badness 10000) in paragraph at lines 295--295
 []|\TU/lmr/m/n/10 undefined (0 evalu-
  []
 
@@ -482,84 +490,104 @@ Underfull \hbox (badness 10000) in paragraph at lines 297--297
  []
 
 
-Underfull \hbox (badness 3240) in paragraph at lines 299--299
+Underfull \hbox (badness 10000) in paragraph at lines 298--298
+[]|\TU/lmr/m/n/10 undefined (0 evalu-
+ []
+
+
+Underfull \hbox (badness 3240) in paragraph at lines 300--300
 []|\TU/lmr/m/n/10 not computable (no
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[5]
-Underfull \hbox (badness 2809) in paragraph at lines 357--357
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[4]
+Underfull \hbox (badness 2809) in paragraph at lines 358--358
 []|\TU/lmr/m/n/10 TU/e Umbrella,
  []
 
 
-Underfull \hbox (badness 3179) in paragraph at lines 372--379
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \hbox (badness 3179) in paragraph at lines 373--380
 \TU/lmr/m/n/10.95 game simulator), \TU/lmtt/m/n/10.95 decision_gates.py \TU/lmr
 /m/n/10.95 (F0–F3, collapse detector, permutation check),
  []
 
 
-Underfull \hbox (badness 2334) in paragraph at lines 391--391
+Underfull \hbox (badness 2334) in paragraph at lines 392--392
 []|\TU/lmr/m/n/10 per-run JSON for all six
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 392--393
+Underfull \hbox (badness 10000) in paragraph at lines 393--394
 []|\TU/lmr/m/n/10 job logs with every
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 392--393
+Underfull \hbox (badness 10000) in paragraph at lines 393--394
 \TU/lmr/m/n/10 round read and marker;
  []
 
 
-Underfull \hbox (badness 1337) in paragraph at lines 392--393
+Underfull \hbox (badness 1337) in paragraph at lines 393--394
 \TU/lmtt/m/n/10 w8-band-record.json\TU/lmr/m/n/10 ; six-
  []
 
-[6] [7]
-Underfull \hbox (badness 10000) in paragraph at lines 436--442
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 437--443
 []\TU/lmr/m/n/10.95 Second, the readout side is deterministic to the byte. Two 
 inde-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 436--442
+Underfull \hbox (badness 10000) in paragraph at lines 437--443
 \TU/lmr/m/n/10.95 pendent evaluation jobs of the same 4B checkpoints produced i
 dentical
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 436--442
+Underfull \hbox (badness 10000) in paragraph at lines 437--443
 \TU/lmr/m/n/10.95 files: \TU/lmtt/m/n/10.95 sha256 \TU/lmr/m/n/10.95 prefixes \
 TU/lmtt/m/n/10.95 24821f8c4eb2 \TU/lmr/m/n/10.95 (\TU/lmtt/m/n/10.95 w8-r1-4b-s
 eed0-argmax-noisy.jsonl\TU/lmr/m/n/10.95 ),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 436--442
+Underfull \hbox (badness 10000) in paragraph at lines 437--443
 \TU/lmtt/m/n/10.95 90663e3f079e \TU/lmr/m/n/10.95 (\TU/lmtt/m/n/10.95 w8-r1-4b-
 seed1-argmax-noisy.jsonl\TU/lmr/m/n/10.95 ) and \TU/lmtt/m/n/10.95 77b8590bec15
 
  []
 
 
-Underfull \hbox (badness 1087) in paragraph at lines 475--479
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \hbox (badness 1087) in paragraph at lines 476--480
 \TU/lmr/m/n/10.95 G1 is evaluated on the generation the spec names for it, pair
 ed noisy-argmax $\OML/cmm/m/it/10.95 n[]\OT1/cmr/m/n/10.95 30$
  []
 
-[8]
-Overfull \hbox (29.43645pt too wide) in paragraph at lines 518--524
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Overfull \hbox (29.43645pt too wide) in paragraph at lines 519--525
 \TU/lmr/m/n/10.95 Median entropy per training round, read from \TU/lmtt/m/n/10.
 95 results/wave8_r1-*/round*/collapse_round*.json\TU/lmr/m/n/10.95 :
  []
 
-[9] (paper-supplement.aux)
+[6] [7] [8] [9] [10] (paper-supplement.aux)
 Package rerunfilecheck Info: File `paper-supplement.out' has not changed.
 (rerunfilecheck)             Checksum: FD46DBA21C83F5CD9C39E442224DEEFC;1441.
  )
-Output written on paper-supplement.xdv (9 pages, 244352 bytes).
+Output written on paper-supplement.xdv (10 pages, 245032 bytes).

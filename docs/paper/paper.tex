@@ -284,8 +284,10 @@ curriculum-validation means.}
 the frozen G1 in full on the final-eval generation against the matched untrained-4B control:
 \begin{itemize}
   \item median cost 8{,}315 (seed 0) and 7{,}612 (seed 1) vs matched untrained control 21{,}578;
-  median-ratio reductions 61.5\% and 64.7\%, against a 15\% criterion (mean costs, the median of the
-  30 per-path proportional reductions and the control's dispersions: supplement S1);
+  median-ratio reductions 61.5\% and 64.7\%, against a 15\% criterion (the mean costs, the median of
+  the 30 per-path proportional reductions and the control's dispersions were computed from the
+  October paired files, which did not survive; supplement S5 records their absence and S6 supplies
+  the equivalent figures from the rebuild);
   \item paired wins 30/30 per seed, one-sided exact sign test $p = 2^{-30} = 9.3\times10^{-10}$ per
   seed, against a criterion that effectively requires $\geq 22/30$ wins;
   \item G7 output-mass gate: \texttt{min\_mass} 0.99999 on both seeds (PASS).
