@@ -54,6 +54,43 @@ deterministic across a month and a rebuilt environment. The 4B single-run contro
 published value, which is the first sign that the published 4B column was measured on a slightly
 different footing than this rebuild.
 
+
+## 2b. CORRECTION (2026-11-20, 08:4xZ): the step generation is n=1 and cannot test G1
+
+This document first compared the rebuild's step-generation costs (11,070 and 18,258) against the
+paper's final-eval medians (8,315 and 7,612) and concluded the 4B headline did not reproduce. That
+comparison was invalid and is retracted.
+
+`ev()` in `gpu-wave8-eval.sbatch` passed no `--runs`, so `decision_eval` used its default of 1. Every
+step and noisy row in `results/eval/w8-r1-*` is a **single** path per seed, confirmed by
+`n_runs: 1, runs: 1` in each summary. The paper's 4B claim is a **30/30 paired-wins** statistic, which
+needs 30 paired paths. A 1-run cost cannot adjudicate it in either direction.
+
+What is like-for-like is the curriculum-validation band, which was explicitly run at 30 paths:
+
+| arm | rebuild band mean | paper band mean | delta |
+|---|---|---|---|
+| 4B seed0 | 9,355.13 | 10,547.8 | -11.3% |
+| 4B seed1 | 19,385.3 | 14,681.8 | +32.0% |
+| 4B pooled | 14,370.2 | 12,614.8 | +13.9% |
+| 1.7B seed0 | 28,824.97 | 47,125 | -38.8% |
+| 1.7B seed1 | 86,546.23 | 36,734 | +135.6% |
+| 1.7B seed2 | 86,595.1 | 61,073 | +41.8% |
+| 1.7B pooled | 67,322.1 | 48,311 | +39.4% |
+| untrained band control | 116,948.33 | 116,948 | +0.0003% |
+
+Paper band means are from `paper.tex` line 308 (1.7B "curriculum-validation generation") and line 360
+(4B "10,547.8 / 14,681.8, archived").
+
+The pattern that matters: the **untrained control reproduces exactly** while the **trained arms do
+not**, and the seed ordering inverts for 1.7B (paper has seed1 cheapest at 36,734; the rebuild has
+seed0 cheapest at 28,825). A deterministic readout with non-deterministic training outcomes points at
+training-side variability between October and the rebuild, not at a mis-specified readout.
+
+Consequence: G1 for the 4B rung is **not yet adjudicated**. Jobs `775521` (1.7b, seeds 0:1:2) and
+`775522` (4b, seeds 0:1), both with `W8_EVAL_RUNS=30`, are queued to produce the paired paths. Until
+they return, no sentence about paired wins belongs in the paper.
+
 ## 3. Trained arms: the 30-run validation band
 
 Files: `results/wave8_val/w8-val-r1-<rung>-lr<lr>-seed<k>.summary.json`, 30 runs each, grid `w8_g26b`,
@@ -131,11 +168,11 @@ degrades), the entropy evidence, the confidence inversion.
 
 Does not survive as written:
 
-- **`8,315 / 7,612` are not reproduced.** The rebuild gives 9,355 and 19,385. The published pair is
-  suspiciously tight for two seeds; the rebuild's own seed spread is 2.07x.
-- **"4B trained is ~2.5x better than untrained on both seeds" is not supported.** Seed0 is 0.606 of
-  untrained cost; seed1 is 0.9995, i.e. no effect at all within a single run. The honest claim is a
-  seed0 effect plus a seed-stability problem.
+- **The band numbers shift by +13.9% pooled for 4B and +39.4% pooled for 1.7B**, with the 1.7B seed
+  ordering inverting. These are valid like-for-like comparisons (30 paths, same generation) and they
+  do not reproduce October seed-for-seed.
+- **G1 on the 4B rung is unadjudicated in the rebuild** pending jobs 775521/775522. The single-path
+  step costs must not be cited against the paper's medians.
 - **The 1.7B magnitudes are understated** in the paper by 29% to 88%, in the same direction.
 - The 4B single-run untrained control is 15% below its published value, so the published 4B column
   carries a provenance gap that the audit already flagged and this rebuild now quantifies.
