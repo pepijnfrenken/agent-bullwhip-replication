@@ -17,6 +17,6 @@
   "runs": 30,
   "tag": "w8-untrained-4b-sampled-step",
   "top_letter_share": 0.02175925925925926,
-  "wall_sec": 509.8500943183899,
+  "wall_sec": 506.0059816837311,
   "zero_letter_share": 0.0763888888888889
 }
