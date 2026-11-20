@@ -35,3 +35,16 @@ AssertionError: label mass 0.7840 < 0.99 (prompt 3): candidate-letter invariant 
 --- PERM untrained-8b: gate failed or errored (recorded in the JSON; continuing)
 --- collapse-final untrained-8b at 2026-11-20T19:18:18+01:00
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 143.20it/s]
+collapse-final untrained-8b: collapsed=False argmax-histogram top3=[(3, 302), (4, 278), (0, 147)] -> results/wave8/untrained-8b-S_nom.json
+--- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at 2026-11-20T19:21:23+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 144.40it/s]
+untrained-curriculum-8b: runs=30 mean=104,676 min=12,134 max=261,135 parse_fail=0 min_mass=0.63050 wall=739.3s -> results/wave8_val/untrained-curriculum-8b.jsonl
+--- ok untrained curriculum control
+r1 lr override: lr1e-5
+r1-8b winner lr tag: lr1e-5
+--- eval w8-r1-8b-seed1-argmax-step (step/argmax) at 2026-11-20T19:33:54+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 131.40it/s]
+w8-r1-8b-seed1-argmax-step: runs=1 mean=8,376 min=8,376 max=8,376 parse_fail=0 min_mass=0.99986 wall=28.0s -> results/eval/w8-r1-8b-seed1-argmax-step.jsonl
+--- ok w8-r1-8b-seed1-argmax-step
+--- eval w8-r1-8b-seed1-sampled-step (step/sampled) at 2026-11-20T19:34:34+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 137.41it/s]
