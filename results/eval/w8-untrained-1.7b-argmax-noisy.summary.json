@@ -17,6 +17,6 @@
   "runs": 30,
   "tag": "w8-untrained-1.7b-argmax-noisy",
   "top_letter_share": 0.0,
-  "wall_sec": 218.11584424972534,
+  "wall_sec": 218.25024890899658,
   "zero_letter_share": 0.04189814814814815
 }

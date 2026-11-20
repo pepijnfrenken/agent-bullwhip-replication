@@ -9,3 +9,43 @@ w8-untrained-1.7b-sampled-step: runs=30 mean=12,157 min=8,918 max=19,528 parse_f
 --- ok w8-untrained-1.7b-sampled-step
 --- eval w8-untrained-1.7b-argmax-noisy (noisy/argmax) at 2026-11-20T09:42:58+01:00
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 59.93it/s]
+w8-untrained-1.7b-argmax-noisy: runs=30 mean=11,405 min=8,540 max=13,702 parse_fail=0 min_mass=0.82305 wall=218.3s -> results/eval/w8-untrained-1.7b-argmax-noisy.jsonl
+--- ok w8-untrained-1.7b-argmax-noisy
+--- perm probe untrained-1.7b at 2026-11-20T09:46:46+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 68.63it/s]
+Traceback (most recent call last):
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 300, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 294, in main
+    return {"sample": cmd_sample, "oracle": cmd_oracle, "control": cmd_control,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 234, in cmd_perm_check
+    return m.main()
+           ^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_permutation_invariance.py", line 104, in main
+    for rec in rm.readout_batch(prompts[i:i + args.batch],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 447, in readout_batch
+    raise AssertionError(
+AssertionError: label mass 0.9893 < 0.99 (prompt 3): candidate-letter invariant violated
+--- PERM untrained-1.7b: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final untrained-1.7b at 2026-11-20T09:46:56+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 88.69it/s]
+collapse-final untrained-1.7b: collapsed=False argmax-histogram top3=[(2, 312), (1, 293), (0, 148)] -> results/wave8/untrained-1.7b-S_nom.json
+--- untrained curriculum band control (argmax, runs 30, seeds 9500..9529) at 2026-11-20T09:47:55+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 46.56it/s]
+untrained-curriculum-1.7b: runs=30 mean=20,155 min=7,578 max=39,006 parse_fail=0 min_mass=0.60945 wall=219.1s -> results/wave8_val/untrained-curriculum-1.7b.jsonl
+--- ok untrained curriculum control
+r1 lr override: lr1e-5
+r1-1.7b winner lr tag: lr1e-5
+--- eval w8-r1-1.7b-seed0-argmax-step (step/argmax) at 2026-11-20T09:51:43+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 57.35it/s]
+w8-r1-1.7b-seed0-argmax-step: runs=1 mean=38,490 min=38,490 max=38,490 parse_fail=0 min_mass=1.00000 wall=7.9s -> results/eval/w8-r1-1.7b-seed0-argmax-step.jsonl
+--- ok w8-r1-1.7b-seed0-argmax-step
+--- eval w8-r1-1.7b-seed0-sampled-step (step/sampled) at 2026-11-20T09:52:01+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 99.11it/s]
+w8-r1-1.7b-seed0-sampled-step: runs=30 mean=40,270 min=11,308 max=68,896 parse_fail=0 min_mass=1.00000 wall=297.2s -> results/eval/w8-r1-1.7b-seed0-sampled-step.jsonl
+--- ok w8-r1-1.7b-seed0-sampled-step
+--- eval w8-r1-1.7b-seed0-argmax-noisy (noisy/argmax) at 2026-11-20T09:57:06+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 58.74it/s]

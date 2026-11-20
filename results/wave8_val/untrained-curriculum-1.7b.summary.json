@@ -1,0 +1,22 @@
+{
+  "completed": 30,
+  "confidence_mean": 0.8856275837962956,
+  "config": "baseline",
+  "entropy_mean": 0.3339103978285704,
+  "failed": 0,
+  "failure_rate": 0.0,
+  "grid_id": "w8_g26b",
+  "max_cost": 39006.0,
+  "mean_cost": 20154.8,
+  "min_cost": 7578.0,
+  "min_mass": 0.60945063829422,
+  "model": "qwen3-untrained-1.7b",
+  "n_runs": 30,
+  "parse_fail": 0,
+  "require_mass": 0.0,
+  "runs": 30,
+  "tag": "untrained-curriculum-1.7b",
+  "top_letter_share": 0.0,
+  "wall_sec": 219.06253266334534,
+  "zero_letter_share": 0.04652777777777778
+}
