@@ -1,0 +1,22 @@
+{
+  "completed": 30,
+  "confidence_mean": 0.9015931331018531,
+  "config": "baseline",
+  "entropy_mean": 0.30355068774946725,
+  "failed": 0,
+  "failure_rate": 0.0,
+  "grid_id": "w8_g26b",
+  "max_cost": 475004.0,
+  "mean_cost": 109183.46666666666,
+  "min_cost": 20966.0,
+  "min_mass": 0.7972756028175354,
+  "model": "qwen3-untrained-8b",
+  "n_runs": 30,
+  "parse_fail": 0,
+  "require_mass": 0.0,
+  "runs": 30,
+  "tag": "w8-untrained-8b-sampled-step",
+  "top_letter_share": 0.0625,
+  "wall_sec": 738.0149147510529,
+  "zero_letter_share": 0.04282407407407408
+}

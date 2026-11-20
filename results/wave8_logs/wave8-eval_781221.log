@@ -5,3 +5,33 @@ w8-untrained-8b-argmax-step: runs=1 mean=93,060 min=93,060 max=93,060 parse_fail
 --- ok w8-untrained-8b-argmax-step
 --- eval w8-untrained-8b-sampled-step (step/sampled) at 2026-11-20T18:53:08+01:00
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 141.70it/s]
+w8-untrained-8b-sampled-step: runs=30 mean=109,183 min=20,966 max=475,004 parse_fail=0 min_mass=0.79728 wall=738.0s -> results/eval/w8-untrained-8b-sampled-step.jsonl
+--- ok w8-untrained-8b-sampled-step
+--- eval w8-untrained-8b-argmax-noisy (noisy/argmax) at 2026-11-20T19:05:36+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 150.25it/s]
+w8-untrained-8b-argmax-noisy: runs=30 mean=106,448 min=10,150 max=298,690 parse_fail=0 min_mass=0.78885 wall=737.1s -> results/eval/w8-untrained-8b-argmax-noisy.jsonl
+--- ok w8-untrained-8b-argmax-noisy
+--- perm probe untrained-8b at 2026-11-20T19:18:06+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 147.35it/s]
+Traceback (most recent call last):
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 300, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 294, in main
+    return {"sample": cmd_sample, "oracle": cmd_oracle, "control": cmd_control,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 234, in cmd_perm_check
+    return m.main()
+           ^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_permutation_invariance.py", line 104, in main
+    for rec in rm.readout_batch(prompts[i:i + args.batch],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 433, in readout_batch
+    out.extend(self.readout_batch(prompts[i:i + _chunk],
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 461, in readout_batch
+    raise AssertionError(
+AssertionError: label mass 0.7840 < 0.99 (prompt 3): candidate-letter invariant violated
+--- PERM untrained-8b: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final untrained-8b at 2026-11-20T19:18:18+01:00
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 143.20it/s]
