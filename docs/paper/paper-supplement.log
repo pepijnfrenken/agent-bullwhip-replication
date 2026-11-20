@@ -540,29 +540,59 @@ Underfull \hbox (badness 1337) in paragraph at lines 393--394
  []
 
 
+Underfull \hbox (badness 10000) in paragraph at lines 400--401
+[]|\TU/lmtt/m/n/10 gates_4b.json\TU/lmr/m/n/10 , re-frozen
+ []
+
+
+Underfull \hbox (badness 5064) in paragraph at lines 400--401
+\TU/lmr/m/n/10 2026-11-20; November re-
+ []
+
+
+Underfull \hbox (badness 3525) in paragraph at lines 400--401
+\TU/lmr/m/n/10 build per-run JSONL for
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--401
+\TU/lmr/m/n/10 both seeds, permutation
+ []
+
+
+Underfull \hbox (badness 1107) in paragraph at lines 401--403
+[]|\TU/lmr/m/n/10 October raw paired JSONLs for both
+ []
+
+
+Underfull \hbox (badness 3884) in paragraph at lines 403--404
+\TU/lmr/m/n/10 tifiers, band means; one
+ []
+
+
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 437--443
+Underfull \hbox (badness 10000) in paragraph at lines 443--449
 []\TU/lmr/m/n/10.95 Second, the readout side is deterministic to the byte. Two 
 inde-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 437--443
+Underfull \hbox (badness 10000) in paragraph at lines 443--449
 \TU/lmr/m/n/10.95 pendent evaluation jobs of the same 4B checkpoints produced i
 dentical
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 437--443
+Underfull \hbox (badness 10000) in paragraph at lines 443--449
 \TU/lmr/m/n/10.95 files: \TU/lmtt/m/n/10.95 sha256 \TU/lmr/m/n/10.95 prefixes \
 TU/lmtt/m/n/10.95 24821f8c4eb2 \TU/lmr/m/n/10.95 (\TU/lmtt/m/n/10.95 w8-r1-4b-s
 eed0-argmax-noisy.jsonl\TU/lmr/m/n/10.95 ),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 437--443
+Underfull \hbox (badness 10000) in paragraph at lines 443--449
 \TU/lmtt/m/n/10.95 90663e3f079e \TU/lmr/m/n/10.95 (\TU/lmtt/m/n/10.95 w8-r1-4b-
 seed1-argmax-noisy.jsonl\TU/lmr/m/n/10.95 ) and \TU/lmtt/m/n/10.95 77b8590bec15
 
@@ -572,7 +602,7 @@ seed1-argmax-noisy.jsonl\TU/lmr/m/n/10.95 ) and \TU/lmtt/m/n/10.95 77b8590bec15
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Underfull \hbox (badness 1087) in paragraph at lines 476--480
+Underfull \hbox (badness 1087) in paragraph at lines 482--486
 \TU/lmr/m/n/10.95 G1 is evaluated on the generation the spec names for it, pair
 ed noisy-argmax $\OML/cmm/m/it/10.95 n[]\OT1/cmr/m/n/10.95 30$
  []
@@ -581,7 +611,7 @@ ed noisy-argmax $\OML/cmm/m/it/10.95 n[]\OT1/cmr/m/n/10.95 30$
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (29.43645pt too wide) in paragraph at lines 519--525
+Overfull \hbox (29.43645pt too wide) in paragraph at lines 525--531
 \TU/lmr/m/n/10.95 Median entropy per training round, read from \TU/lmtt/m/n/10.
 95 results/wave8_r1-*/round*/collapse_round*.json\TU/lmr/m/n/10.95 :
  []
@@ -590,4 +620,4 @@ Overfull \hbox (29.43645pt too wide) in paragraph at lines 519--525
 Package rerunfilecheck Info: File `paper-supplement.out' has not changed.
 (rerunfilecheck)             Checksum: FD46DBA21C83F5CD9C39E442224DEEFC;1441.
  )
-Output written on paper-supplement.xdv (10 pages, 245032 bytes).
+Output written on paper-supplement.xdv (10 pages, 249168 bytes).

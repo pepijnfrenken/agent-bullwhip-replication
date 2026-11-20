@@ -393,11 +393,17 @@ measurement.
 0.6B w8 & job logs with every round read and marker; \texttt{w8-band-record.json};
 sixteen reads in the manifest & arm directories and the two curriculum-band files (removed by the
 repository's results slim-down, not by this paper) \\
-1.7B & per-run JSON for the three evaluated seeds (both generations); stop record for the
-5e-5 arm & \texttt{gates\_1.7b.json}; any final-eval files for the stopped arm (they never existed) \\
-4B & raw paired JSONLs for both seeds; permutation JSONs; both generations & \texttt{gates\_4b.json} \\
-8B & verdict doc with leg-by-leg timings, lane and job identifiers, band means & any raw JSONL of
-either generation; a matched untrained-8B control evaluation; selection JSON \\
+1.7B & \texttt{gates\_1.7b.json}, re-frozen 2026-11-20 and matching the registered values; stop
+record for the 5e-5 arm; November rebuild per-run JSONL for the three 1e-5 seeds and the untrained
+controls (S6) & October per-run JSONL for the three evaluated seeds, either generation; any
+final-eval files for the stopped arm (they never existed) \\
+4B & \texttt{gates\_4b.json}, re-frozen 2026-11-20; November rebuild per-run JSONL for both seeds,
+permutation JSONs and both generations (S6) & October raw paired JSONLs for both seeds; October
+permutation JSONs \\
+8B & verdict doc with leg-by-leg timings, lane and job identifiers, band means; one arm's checkpoints
+(lr1e-5 s1, adapter 30.7 MB) and its band table on the Modal volume \texttt{wave8-hf-8b} & any raw
+JSONL of either generation; a matched untrained-8B control evaluation; selection JSON; the other
+three arms' adapters \\
 \bottomrule
 \end{tabular}
 \end{table}
