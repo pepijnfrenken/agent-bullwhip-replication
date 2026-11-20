@@ -100,3 +100,28 @@ until those results exist, because if the untrained 8B control fails the mass ga
 more arms buys nothing the paper can use.
 
 Nothing here is submitted. The lane, the spend ceiling and the go are Pino's.
+
+## Submission record (Parts 1 and 2, approved 2026-11-20)
+
+Pino approved Parts 1 and 2 only. Nothing from Part 3 was submitted and no Modal spend was incurred.
+
+| item | value |
+|---|---|
+| job | `780799` `bw8-eval`, `tue.gpu.q`, `--gres=gpu:1`, `--mem=64G`, 8 h cap |
+| export | `EXPECTED_COMMIT=0bcd9df`, `W8_RUNG=8b`, `W8_EVAL_SEEDS=1`, `W8_LR=1e-5`, `W8_EVAL_RUNS=30` |
+| base model | `Qwen/Qwen3-8B@b968826d9c46dd6066d109eabc6255188de91218`, 16 GB fetched to the scratch HF cache |
+| adapter | `results/wave8_r1-8b_lr1e-5_seed1_round3/checkpoint-169/adapter_model.safetensors`, 30,709,192 bytes, staged from the Modal volume; `state.json` records lr 1e-5, seed 1, step 169, saved 2026-10-22T14:06:37Z |
+| log | `/scratch-shared/20234428/bullwhip/logs/wave8-eval_780799.log` |
+
+The job runs the untrained 8B control first (three generations plus the 30-path curriculum band), then
+the trained arm for seed 1. Part 1 and Part 2 therefore land in one job and share the same demand
+paths, which is what makes the pairing valid.
+
+`decision_eval` sets `require_mass = 0.0` on the main path and records `min_mass` in every summary
+rather than aborting on it (`agent_bullwhip/decision_eval.py:339`). A low mass on the untrained 8B
+control is therefore an outcome to read, not a crash to retry, exactly as the stop condition intends.
+
+The 8B adapter's `state.json` records `labels_sha = a9ce6cf5...`, against `02097b5a...` for the 1.7B
+arms and `e7db0006...` for the 4B arms. That value is model-dependent by construction (it differs
+between the 1.7B and 4B arms on the same labels file, `results/wave8/S_nom.jsonl`), so it is not
+evidence of a label mismatch.
