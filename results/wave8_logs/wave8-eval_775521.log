@@ -49,3 +49,29 @@ w8-r1-1.7b-seed0-sampled-step: runs=30 mean=40,270 min=11,308 max=68,896 parse_f
 --- ok w8-r1-1.7b-seed0-sampled-step
 --- eval w8-r1-1.7b-seed0-argmax-noisy (noisy/argmax) at 2026-11-20T09:57:06+01:00
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 58.74it/s]
+w8-r1-1.7b-seed0-argmax-noisy: runs=30 mean=28,739 min=8,071 max=59,309 parse_fail=0 min_mass=1.00000 wall=296.1s -> results/eval/w8-r1-1.7b-seed0-argmax-noisy.jsonl
+--- ok w8-r1-1.7b-seed0-argmax-noisy
+--- perm probe r1-1.7b-seed0 at 2026-11-20T10:02:12+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 64.34it/s]
+grid 0/3: done (512 states)
+grid 1/3: done (512 states)
+grid 2/3: done (512 states)
+grid 3/3: done (512 states)
+permutation gate: states=512 grids=4 invariant=80 rate=0.156 gate=0.90 FAIL (arm=results/wave8_r1-1.7b_lr1e-5_seed0_round3/checkpoint-169)
+disagreement vs canonical, per shuffled grid: [313, 273, 240]
+min_mass=1.0000 (require_mass=0.0)
+wrote results/eval/w8-r1-1.7b-seed0-perm.json
+--- PERM r1-1.7b-seed0: gate failed or errored (recorded in the JSON; continuing)
+--- collapse-final r1-1.7b-seed0 at 2026-11-20T10:04:39+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 61.25it/s]
+collapse-final r1-1.7b-seed0: collapsed=True argmax-histogram top3=[(13, 176), (11, 109), (12, 103)] -> results/wave8/r1-1.7b-seed0-S_nom.json
+--- eval w8-r1-1.7b-seed1-argmax-step (step/argmax) at 2026-11-20T10:05:58+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.46it/s]
+w8-r1-1.7b-seed1-argmax-step: runs=1 mean=81,994 min=81,994 max=81,994 parse_fail=0 min_mass=1.00000 wall=7.9s -> results/eval/w8-r1-1.7b-seed1-argmax-step.jsonl
+--- ok w8-r1-1.7b-seed1-argmax-step
+--- eval w8-r1-1.7b-seed1-sampled-step (step/sampled) at 2026-11-20T10:06:16+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 67.82it/s]
+w8-r1-1.7b-seed1-sampled-step: runs=30 mean=98,196 min=45,670 max=227,190 parse_fail=0 min_mass=1.00000 wall=299.1s -> results/eval/w8-r1-1.7b-seed1-sampled-step.jsonl
+--- ok w8-r1-1.7b-seed1-sampled-step
+--- eval w8-r1-1.7b-seed1-argmax-noisy (noisy/argmax) at 2026-11-20T10:11:23+01:00
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 99.08it/s]
