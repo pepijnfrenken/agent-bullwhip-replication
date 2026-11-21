@@ -88,12 +88,13 @@ PASSED=""
 # 798684 ruled out both earlier guesses: variant B (no auto-wrap) failed the same
 # way and C (untied lm_head) changed nothing, so the fault was the fp32 LoRA next
 # to a bf16 base. With the dtype unified, A is retried and C stays as fallback.
-for V in "auto 0 A" "auto 1 C"; do
+for V in "0 A" "1 B"; do
   set -- $V
-  export W8B_FSDP_WRAP="$1"
-  export W8B_UNTIE="$2"
-  TAG="$3"
-  echo "--- variant ${TAG}: wrap=$1 untie=$2 ---"
+  export W8B_FSDP_WRAP=auto
+  export W8B_UNTIE=0
+  export W8B_SYNC_STATES="$1"
+  TAG="$2"
+  echo "--- variant ${TAG}: sync_states=$1 ---"
   set +e
   srun --ntasks="${SLURM_NTASKS:-2}" --ntasks-per-node="${SLURM_NTASKS:-2}" \
     python3 scripts/probe_fsdp_lora.py 2>&1 | grep -vE "Loading checkpoint|it/s\]" | tail -30

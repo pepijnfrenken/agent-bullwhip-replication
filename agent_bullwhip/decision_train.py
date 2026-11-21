@@ -766,6 +766,12 @@ class _Policy:
         # rank's own card before the first step, not "cuda"
         self._torch.cuda.set_device(local)
         self.device = f"cuda:{local}"
+        # Job 799766: both ranks timed out inside the SAME collective (SeqNum=1,
+        # BROADCAST, 142.8M elements) rather than one dying. FSDP was broadcasting
+        # CPU-resident parameters over NCCL, which deadlocks instead of raising.
+        # Put the model on the card first (16 GB fits a 22 GiB L4; FSDP shards it
+        # down after), then wrap.
+        self.model.to(self.device)
         # Job 798684: FSDP flattens each unit into one tensor and refuses mixed
         # dtypes -> "Must flatten tensors with uniform dtype but got
         # torch.bfloat16 and torch.float32". PEFT builds lora_A/lora_B in fp32
@@ -802,12 +808,16 @@ class _Policy:
         # individually visible and trainable after flat-parameter sharding
         print(f"[fsdp] rank{self._rank} wrapping wrap={wrap_mode} untie={untie}",
               flush=True)
+        # every rank loads the same pinned checkpoint, so states are already
+        # identical and the broadcast buys nothing. Off by default because on this
+        # stack it is exactly what hung (W8B_SYNC_STATES=1 re-enables it).
+        sync_states = _os.environ.get("W8B_SYNC_STATES", "") == "1"
         self.model = FSDP(
             self.model,
             auto_wrap_policy=policy,
             use_orig_params=True,
             device_id=local,
-            sync_module_states=True,
+            sync_module_states=sync_states,
             mixed_precision=MixedPrecision(
                 param_dtype=self._torch.bfloat16,
                 reduce_dtype=self._torch.bfloat16,
