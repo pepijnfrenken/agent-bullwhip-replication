@@ -88,13 +88,19 @@ PASSED=""
 # 798684 ruled out both earlier guesses: variant B (no auto-wrap) failed the same
 # way and C (untied lm_head) changed nothing, so the fault was the fp32 LoRA next
 # to a bf16 base. With the dtype unified, A is retried and C stays as fallback.
-for V in "0 A" "1 B"; do
+# 808124 wrapped 8B and then hung in the first all-gather of the embedding
+# (622M elements, both ranks, 120 s). That is the transport, not FSDP, and it is
+# model-independent, so the 0.6B model answers it in seconds instead of minutes.
+for V in "Qwen/Qwen3-0.6B 1 A06-p2pon" "Qwen/Qwen3-0.6B 0 B06-p2poff" "Qwen/Qwen3-8B 0 C8b-p2poff"; do
   set -- $V
+  export PROBE_MODEL="$1"
+  export NCCL_P2P_DISABLE="$2"
+  export NCCL_IB_DISABLE=1
   export W8B_FSDP_WRAP=auto
   export W8B_UNTIE=0
-  export W8B_SYNC_STATES="$1"
-  TAG="$2"
-  echo "--- variant ${TAG}: sync_states=$1 ---"
+  export W8B_SYNC_STATES=0
+  TAG="$3"
+  echo "--- variant ${TAG}: model=$1 NCCL_P2P_DISABLE=$2 ---"
   set +e
   srun --ntasks="${SLURM_NTASKS:-2}" --ntasks-per-node="${SLURM_NTASKS:-2}" \
     python3 scripts/probe_fsdp_lora.py 2>&1 | grep -vE "Loading checkpoint|it/s\]" | tail -30

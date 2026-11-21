@@ -26,8 +26,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-MODEL = "Qwen/Qwen3-8B"
-REV = "b968826d9c46dd6066d109eabc6255188de91218"
+# Job 808124 wrapped 8B successfully and then hung in the first 622M-element
+# all-gather, which points at the NCCL transport rather than at FSDP. The
+# transport question does not need an 8B model to answer, so the probe takes the
+# model from the environment and can run the small one first.
+MODEL = os.environ.get("PROBE_MODEL", "Qwen/Qwen3-8B")
+REV = os.environ.get("PROBE_REV", {
+    "Qwen/Qwen3-8B": "b968826d9c46dd6066d109eabc6255188de91218",
+    "Qwen/Qwen3-0.6B": "c1899de289a04d12100db370d81485cdf75e47ca",
+}.get(MODEL, "")) or None
 LABELS = ROOT / "results/wave8/S_nom.jsonl"
 GRID = "w8_g26b"
 
