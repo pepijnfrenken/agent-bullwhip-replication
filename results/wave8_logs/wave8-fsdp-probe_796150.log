@@ -1,0 +1,29 @@
+FATAL: config.sh not found in KIT_DIR=/var/spool/slurmd/job796150
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+796150           FAILED                       
+796150.batch     FAILED      3084K      3084K 
+796150.exte+  COMPLETED                       
+
+Job ID: 796150
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 2)
+Nodes: 1
+Cores per node: 16
+CPU Utilized: 00:00:00
+CPU Efficiency: 0.00% of 00:00:32 core-walltime
+Job Wall-clock time: 00:00:02
+Memory Utilized: 3.01 MB
+Memory Efficiency: 0.00% of 64.00 GB (64.00 GB/node)
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
