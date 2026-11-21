@@ -1,0 +1,75 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=f260ecb09dbbac858658912b7722255df5308bcd ranks=2
+NOTE: HEAD is ahead of pin in results/docs only — running.
+=== fsdp probe at 2026-11-21T18:41:56+01:00 ranks=2 master=127.0.0.1:39766 ===
+--- variant A: wrap=auto untie=0 ---
+[fsdp] rank0 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
+[fsdp] rank0 wrapping wrap=auto untie=False
+[fsdp] rank1 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
+[fsdp] rank1 wrapping wrap=auto untie=False
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120486 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120487 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120487 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120487 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120486 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120486 milliseconds before timing out.
+srun: error: tue-gpub001: task 0: Aborted (core dumped)
+srun: error: tue-gpub001: task 1: Aborted (core dumped)
+--- variant A: rc=134 ---
+--- variant C: wrap=auto untie=1 ---
+[fsdp] rank0 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
+[fsdp] rank0 wrapping wrap=auto untie=True
+[fsdp] rank1 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
+[fsdp] rank1 wrapping wrap=auto untie=True
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120481 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120483 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120483 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120483 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120481 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142819584, NumelOut=142819584, Timeout(ms)=120000) ran for 120481 milliseconds before timing out.
+srun: error: tue-gpub001: task 0: Aborted (core dumped)
+srun: error: tue-gpub001: task 1: Aborted (core dumped)
+--- variant C: rc=134 ---
+=== fsdp probe done: ALL VARIANTS FAILED ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+799766           FAILED                       
+799766.batch     FAILED     16540K     16540K 
+799766.exte+  COMPLETED                       
+799766.0      CANCELLED    730456K    736840K 
+799766.1      CANCELLED    733488K    734840K 
+
+Job ID: 799766
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 1)
+Nodes: 1
+Cores per node: 16
+CPU Utilized: 00:08:18
+CPU Efficiency: 10.27% of 01:20:48 core-walltime
+Job Wall-clock time: 00:05:03
+Memory Utilized: 1.40 GB
+Memory Efficiency: 2.19% of 64.00 GB (64.00 GB/node)
+The task which had the largest memory consumption differs by 100.18% from the average task max memory consumption
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
