@@ -185,21 +185,35 @@ def save_checkpoint(policy: DecisionPolicy, ckpt_path: Path, state_path: Path,
     adapter_saved = optimizer_saved = False
     final_dir = ckpt_path.with_name(f"{ckpt_path.name}-{step}")
     if has_torch():
+        rank = getattr(policy, "_rank", 0)
+        sharded = bool(getattr(policy, "_fsdp", False))
         tmp = final_dir.with_name(final_dir.name + ".tmp")
-        if tmp.exists():
-            shutil.rmtree(tmp)
-        tmp.mkdir(parents=True)
-        policy.model.save_pretrained(tmp)
-        tok = getattr(policy, "tok", None)
-        if tok is not None:
-            tok.save_pretrained(tmp)
-        save_opt = getattr(policy, "save_optimizer", None)
-        if callable(save_opt):
-            optimizer_saved = bool(save_opt(tmp))
-        if final_dir.exists():
-            shutil.rmtree(final_dir)
-        os.replace(tmp, final_dir)
-        adapter_saved = True
+        if rank == 0:
+            if tmp.exists():
+                shutil.rmtree(tmp)
+            tmp.mkdir(parents=True)
+        save_adapter = getattr(policy, "save_adapter", None)
+        if callable(save_adapter):
+            save_adapter(tmp)   # collective when sharded; writes on rank 0 only
+        elif rank == 0:
+            policy.model.save_pretrained(tmp)
+        if rank == 0:
+            tok = getattr(policy, "tok", None)
+            if tok is not None:
+                tok.save_pretrained(tmp)
+            save_opt = getattr(policy, "save_optimizer", None)
+            # an FSDP optimizer state is rank-0's local shard: resuming from it
+            # at a different world size would silently load the wrong thing, so
+            # a sharded leg restarts the round instead of resuming
+            if callable(save_opt) and not sharded:
+                optimizer_saved = bool(save_opt(tmp))
+            if final_dir.exists():
+                shutil.rmtree(final_dir)
+            os.replace(tmp, final_dir)
+            adapter_saved = True
+        if sharded:
+            import torch.distributed as dist
+            dist.barrier()
     payload = {
         "step": step,                    # last completed step; resume at step+1
         "seed": seed,
@@ -631,6 +645,23 @@ def _attach_adapter(model, *, phase: str, base_adapter: str | None,
     return get_peft_model(model, cfg)
 
 
+def _fsdp_active() -> bool:
+    """Env gate for the FSDP path (W8B-FSDP-SCOPE.md). Off by default: every
+    rung that completed before this exists keeps the single-device code path,
+    byte for byte."""
+    import os as _os
+    return _os.environ.get("W8B_FSDP", "") == "1"
+
+
+def _fsdp_env() -> tuple[int, int, int]:
+    """(rank, local_rank, world_size) from torchrun or the SLURM environment."""
+    import os as _os
+    rank = int(_os.environ.get("RANK", _os.environ.get("SLURM_PROCID", "0")))
+    local = int(_os.environ.get("LOCAL_RANK", _os.environ.get("SLURM_LOCALID", rank)))
+    world = int(_os.environ.get("WORLD_SIZE", _os.environ.get("SLURM_NTASKS", "1")))
+    return rank, local, world
+
+
 class _Policy:
     def __init__(self, model_name: str, *, device: str | None = None,
                  dtype: str | None = None, revision: str | None = None,
@@ -691,7 +722,12 @@ class _Policy:
         for name, p in self.model.named_parameters():
             if "lora_" in name:
                 p.requires_grad_(True)
-        if not hasattr(self.model, "hf_device_map"):
+        self._fsdp = False
+        self._rank = 0
+        self._world = 1
+        if _fsdp_active():
+            self._fsdp_wrap()
+        if not hasattr(self.model, "hf_device_map") and not self._fsdp:
             self.model.to(self.device)   # skipped when accelerate shards across GPUs
         self.model.train()          # LoRA dropout active during training
         if grad_ckpt:
@@ -706,6 +742,76 @@ class _Policy:
         self._use_logits_to_keep = self._probe_logits_to_keep()
 
     # -- helpers ------------------------------------------------------------ #
+    # -- FSDP (W8B-FSDP-SCOPE.md) ------------------------------------------- #
+    def _fsdp_wrap(self) -> None:
+        import functools
+        import torch.distributed as dist
+        from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+        from torch.distributed.fsdp import MixedPrecision
+        from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
+        rank, local, world = _fsdp_env()
+        if world < 2:
+            raise RuntimeError("W8B_FSDP=1 needs at least 2 ranks (got "
+                               f"world_size={world}); one rank has no shards")
+        if not dist.is_initialized():
+            dist.init_process_group(backend="nccl", rank=rank, world_size=world)
+        self._rank, self._world = rank, world
+        # every tensor in this file is created on self.device, so it must be the
+        # rank's own card before the first step, not "cuda"
+        self._torch.cuda.set_device(local)
+        self.device = f"cuda:{local}"
+        base = self.model.get_base_model()
+        layer_cls = type(base.model.layers[0])
+        policy = functools.partial(transformer_auto_wrap_policy,
+                                   transformer_layer_cls={layer_cls})
+        # use_orig_params is mandatory with PEFT: LoRA params must stay
+        # individually visible and trainable after flat-parameter sharding
+        self.model = FSDP(
+            self.model,
+            auto_wrap_policy=policy,
+            use_orig_params=True,
+            device_id=local,
+            sync_module_states=True,
+            mixed_precision=MixedPrecision(
+                param_dtype=self._torch.bfloat16,
+                reduce_dtype=self._torch.bfloat16,
+                buffer_dtype=self._torch.bfloat16),
+        )
+        self._fsdp = True
+        if self._rank == 0:
+            print(f"[fsdp] wrapped on {self._world} ranks, "
+                  f"{sum(p.numel() for p in self.model.parameters()):,} params total",
+                  flush=True)
+
+    def _backward(self, loss, *, last: bool) -> None:
+        """Backward inside no_sync for every micro-batch but the last, so the
+        gradient all-reduce happens once per optimizer step rather than eight
+        times."""
+        import contextlib
+        ctx = (self.model.no_sync()
+               if (self._fsdp and not last) else contextlib.nullcontext())
+        with ctx:
+            loss.backward()
+
+    def _clip_grad_norm(self, max_norm: float):
+        """FSDP clips its own flat shards; torch's helper would clip the
+        per-rank pieces and get the norm wrong."""
+        if self._fsdp:
+            return self.model.clip_grad_norm_(max_norm)
+        ps = [p for p in self.model.parameters() if p.requires_grad]
+        return self._torch.nn.utils.clip_grad_norm_(ps, max_norm)
+
+    def save_adapter(self, path) -> None:
+        """Adapter save that works on both paths. summon_full_params is
+        collective, so every rank enters it; only rank 0 writes."""
+        if not self._fsdp:
+            self.model.save_pretrained(path)
+            return
+        from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+        with FSDP.summon_full_params(self.model, writeback=False, recurse=True):
+            if self._rank == 0:
+                self.model.save_pretrained(path)
+
     def _probe_logits_to_keep(self) -> bool:
         try:
             self.model.eval()
@@ -809,14 +915,13 @@ class _Policy:
             loss = -(t * (probs + 1e-9).log()).sum(-1).mean()
             if self._brier:
                 loss = loss + self._brier * ((probs - t) ** 2).sum(-1).mean()
-            (loss * w).backward()
+            self._backward(loss * w, last=(rg.stop == B))
             with torch.no_grad():
                 top1_sum += (probs.argmax(-1) == t.argmax(-1)).float().mean().item() * w
                 ent_sum += float(-(t * (t + 1e-9).log()).sum(-1).mean().detach()) * w
             loss_sum += float(loss.detach()) * w
             masses.append(mass)
-        gn = torch.nn.utils.clip_grad_norm_(
-            [p for p in self.model.parameters() if p.requires_grad], 1.0)
+        gn = self._clip_grad_norm(1.0)
         self.optimizer.step()
         mass_all = torch.cat(masses)
         return StepResult(loss=loss_sum,
@@ -939,11 +1044,10 @@ class _Policy:
                 ref = ref / ref.sum(-1, keepdim=True)
                 kl = (probs * (log_probs - ref.log())).sum(-1).mean()
             loss = pg + beta_kl * kl
-            (loss * w).backward()
+            self._backward(loss * w, last=(rg.stop == B))
             loss_sum += float(loss.detach()) * w
             kl_sum += float(kl.detach()) * w
-        gn = torch.nn.utils.clip_grad_norm_(
-            [p for p in self.model.parameters() if p.requires_grad], 1.0)
+        gn = self._clip_grad_norm(1.0)
         self.optimizer.step()
         return StepResult(loss=loss_sum, loss_kl=kl_sum, grad_norm=float(gn))
 
