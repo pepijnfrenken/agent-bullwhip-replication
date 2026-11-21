@@ -753,19 +753,40 @@ class _Policy:
         if world < 2:
             raise RuntimeError("W8B_FSDP=1 needs at least 2 ranks (got "
                                f"world_size={world}); one rank has no shards")
+        from datetime import timedelta
+        import os as _os
+        # job 796505 burned 30 min because a rank-0 wrap error left rank 1 in a
+        # BROADCAST until the default watchdog fired; make that fail fast
+        nccl_to = int(_os.environ.get("W8B_NCCL_TIMEOUT", "180"))
         if not dist.is_initialized():
-            dist.init_process_group(backend="nccl", rank=rank, world_size=world)
+            dist.init_process_group(backend="nccl", rank=rank, world_size=world,
+                                    timeout=timedelta(seconds=nccl_to))
         self._rank, self._world = rank, world
         # every tensor in this file is created on self.device, so it must be the
         # rank's own card before the first step, not "cuda"
         self._torch.cuda.set_device(local)
         self.device = f"cuda:{local}"
+        wrap_mode = _os.environ.get("W8B_FSDP_WRAP", "auto")
+        untie = _os.environ.get("W8B_UNTIE", "") == "1"
         base = self.model.get_base_model()
+        if untie and getattr(base.config, "tie_word_embeddings", False):
+            # Qwen3 ties lm_head.weight to embed_tokens.weight (verified on CPU:
+            # lm_head is embed_tokens -> True). FSDP cannot flatten one tensor
+            # shared between the root unit and a wrapped child, so the probe
+            # offers an untied variant. Both copies hold the same values and
+            # both are frozen (LoRA only), so this is numerically inert here.
+            base.config.tie_word_embeddings = False
+            base.lm_head.weight = self._torch.nn.Parameter(
+                base.lm_head.weight.detach().clone())
+            print(f"[fsdp] rank{self._rank} untied lm_head from embed_tokens", flush=True)
         layer_cls = type(base.model.layers[0])
-        policy = functools.partial(transformer_auto_wrap_policy,
-                                   transformer_layer_cls={layer_cls})
+        policy = (functools.partial(transformer_auto_wrap_policy,
+                                    transformer_layer_cls={layer_cls})
+                  if wrap_mode == "auto" else None)
         # use_orig_params is mandatory with PEFT: LoRA params must stay
         # individually visible and trainable after flat-parameter sharding
+        print(f"[fsdp] rank{self._rank} wrapping wrap={wrap_mode} untie={untie}",
+              flush=True)
         self.model = FSDP(
             self.model,
             auto_wrap_policy=policy,

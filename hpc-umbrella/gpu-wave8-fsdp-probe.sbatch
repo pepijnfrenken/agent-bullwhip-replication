@@ -25,7 +25,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --output=/scratch-shared/%u/bullwhip/logs/wave8-fsdp-probe_%j.log
-#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-type=NONE
 #SBATCH --mail-user=umbrella-cluster@pepijnfrenken.nl
 
 set -euo pipefail
@@ -77,10 +77,31 @@ export MASTER_PORT=$(( 20000 + SLURM_JOB_ID % 20000 ))
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-8}"
 
 echo "=== fsdp probe at $(date -Is) ranks=${SLURM_NTASKS} master=${MASTER_ADDR}:${MASTER_PORT} ==="
-set +e
-srun --ntasks="${SLURM_NTASKS:-2}" --ntasks-per-node="${SLURM_NTASKS:-2}" \
-  python3 scripts/probe_fsdp_lora.py
-RC=$?
-set -e
-echo "=== fsdp probe done at $(date -Is) rc=${RC} ==="
-exit "${RC}"
+# Job 796505 died in FSDP's parameter-handle init and the exception never reached
+# the log because the peer rank sat in a collective for 30 minutes. Three variants
+# run in one slot so a queue wait buys a diagnosis, not a guess:
+#   A auto-wrap, tied     (what failed)
+#   B no auto-wrap, tied  (sidesteps the recursive wrap)
+#   C auto-wrap, untied   (Qwen3 ties lm_head to embed_tokens)
+export W8B_NCCL_TIMEOUT=120
+PASSED=""
+for V in "auto 0 A" "none 0 B" "auto 1 C"; do
+  set -- $V
+  export W8B_FSDP_WRAP="$1"
+  export W8B_UNTIE="$2"
+  TAG="$3"
+  echo "--- variant ${TAG}: wrap=$1 untie=$2 ---"
+  set +e
+  srun --ntasks="${SLURM_NTASKS:-2}" --ntasks-per-node="${SLURM_NTASKS:-2}" \
+    python3 scripts/probe_fsdp_lora.py 2>&1 | grep -vE "Loading checkpoint|it/s\]" | tail -30
+  RCV=$?
+  set -e
+  echo "--- variant ${TAG}: rc=${RCV} ---"
+  if [ "${RCV}" -eq 0 ]; then PASSED="${PASSED} ${TAG}"; fi
+done
+if [ -n "${PASSED}" ]; then
+  echo "=== fsdp probe done: PASSING VARIANTS:${PASSED} ==="
+  exit 0
+fi
+echo "=== fsdp probe done: ALL VARIANTS FAILED ==="
+exit 1
