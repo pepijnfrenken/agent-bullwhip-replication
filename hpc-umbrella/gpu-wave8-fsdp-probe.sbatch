@@ -85,7 +85,10 @@ echo "=== fsdp probe at $(date -Is) ranks=${SLURM_NTASKS} master=${MASTER_ADDR}:
 #   C auto-wrap, untied   (Qwen3 ties lm_head to embed_tokens)
 export W8B_NCCL_TIMEOUT=120
 PASSED=""
-for V in "auto 0 A" "none 0 B" "auto 1 C"; do
+# 798684 ruled out both earlier guesses: variant B (no auto-wrap) failed the same
+# way and C (untied lm_head) changed nothing, so the fault was the fp32 LoRA next
+# to a bf16 base. With the dtype unified, A is retried and C stays as fallback.
+for V in "auto 0 A" "auto 1 C"; do
   set -- $V
   export W8B_FSDP_WRAP="$1"
   export W8B_UNTIE="$2"

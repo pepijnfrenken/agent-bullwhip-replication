@@ -766,6 +766,21 @@ class _Policy:
         # rank's own card before the first step, not "cuda"
         self._torch.cuda.set_device(local)
         self.device = f"cuda:{local}"
+        # Job 798684: FSDP flattens each unit into one tensor and refuses mixed
+        # dtypes -> "Must flatten tensors with uniform dtype but got
+        # torch.bfloat16 and torch.float32". PEFT builds lora_A/lora_B in fp32
+        # while the base is bf16, so unify before wrapping. The base is already
+        # bf16 and frozen; this only moves the adapters.
+        want = self._torch.bfloat16
+        census: dict[str, int] = {}
+        cast = 0
+        for _n, p in self.model.named_parameters():
+            census[str(p.dtype)] = census.get(str(p.dtype), 0) + 1
+            if p.dtype != want:
+                p.data = p.data.to(want)
+                cast += 1
+        print(f"[fsdp] rank{self._rank} dtype census {census}, cast {cast} to bf16",
+              flush=True)
         wrap_mode = _os.environ.get("W8B_FSDP_WRAP", "auto")
         untie = _os.environ.get("W8B_UNTIE", "") == "1"
         base = self.model.get_base_model()
