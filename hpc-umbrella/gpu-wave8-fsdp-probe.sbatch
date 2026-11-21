@@ -32,6 +32,12 @@ set -euo pipefail
 
 KIT_DIR="${W8_KIT_DIR:-}"
 if [ -z "${KIT_DIR}" ] || [ ! -r "${KIT_DIR}/config.sh" ]; then
+  # slurmd runs a spool copy, so BASH_SOURCE points at /var/spool/slurmd/job<id>
+  # and not at where it was submitted from: SLURM_SUBMIT_DIR is the only reliable
+  # anchor here (job 796150 died in 2 s learning this).
+  KIT_DIR="${SLURM_SUBMIT_DIR:-}"
+fi
+if [ -z "${KIT_DIR}" ] || [ ! -r "${KIT_DIR}/config.sh" ]; then
   KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 fi
 if [ ! -r "${KIT_DIR}/config.sh" ]; then
