@@ -34,3 +34,85 @@ srun: error: tue-gpub001: task 1: Aborted (core dumped)
 srun: error: tue-gpub001: task 0: Aborted (core dumped)
 --- variant A: rc=134 ---
 --- variant B: wrap=none untie=0 ---
+[fsdp] rank0 wrapping wrap=none untie=False
+[fsdp] rank1 wrapping wrap=none untie=False
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=7667776, NumelOut=7667776, Timeout(ms)=120000) ran for 120380 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=7667776, NumelOut=7667776, Timeout(ms)=120000) ran for 120380 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=7667776, NumelOut=7667776, Timeout(ms)=120000) ran for 120380 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=7667776, NumelOut=7667776, Timeout(ms)=120000) ran for 120380 milliseconds before timing out.
+srun: error: tue-gpub001: task 1: Aborted (core dumped)
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=7667776, NumelOut=7667776, Timeout(ms)=120000) ran for 120380 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=7667776, NumelOut=7667776, Timeout(ms)=120000) ran for 120380 milliseconds before timing out.
+srun: error: tue-gpub001: task 0: Aborted (core dumped)
+--- variant B: rc=134 ---
+--- variant C: wrap=auto untie=1 ---
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py", line 487, in __init__
+    _init_param_handle_from_module(
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/_init_utils.py", line 519, in _init_param_handle_from_module
+    _init_param_handle_from_params(state, managed_params, fully_sharded_module)
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/_init_utils.py", line 531, in _init_param_handle_from_params
+    handle = FlatParamHandle(
+             ^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 537, in __init__
+    self._init_flat_param_and_metadata(
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 585, in _init_flat_param_and_metadata
+    ) = self._validate_tensors_to_flatten(params)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 722, in _validate_tensors_to_flatten
+    raise ValueError(
+ValueError: Must flatten tensors with uniform dtype but got torch.bfloat16 and torch.float32
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+srun: error: tue-gpub001: task 1: Aborted (core dumped)
+srun: error: tue-gpub001: task 0: Aborted (core dumped)
+--- variant C: rc=134 ---
+=== fsdp probe done: ALL VARIANTS FAILED ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+798684           FAILED                       
+798684.batch     FAILED     16552K     16552K 
+798684.exte+  COMPLETED                       
+798684.0      CANCELLED    872018K    984760K 
+798684.1      CANCELLED    816438K    876384K 
+798684.2      CANCELLED    733538K    741080K 
+
+Job ID: 798684
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 1)
+Nodes: 1
+Cores per node: 16
+CPU Utilized: 00:15:19
+CPU Efficiency: 6.90% of 03:41:52 core-walltime
+Job Wall-clock time: 00:13:52
+Memory Utilized: 1.66 GB
+Memory Efficiency: 2.60% of 64.00 GB (64.00 GB/node)
+The task which had the largest memory consumption differs by 112.93% from the average task max memory consumption
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
