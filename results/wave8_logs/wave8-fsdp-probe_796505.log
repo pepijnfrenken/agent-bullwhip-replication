@@ -99,3 +99,48 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 722, in _validate_tensors_to_flatten
     raise ValueError(
 ValueError: Must flatten tensors with uniform dtype but got torch.bfloat16 and torch.float32
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=1800000) ran for 1800000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=1800000) ran for 1800000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=1800000) ran for 1800000 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=1800000) ran for 1800000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=1800000) ran for 1800000 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=1800000) ran for 1800000 milliseconds before timing out.
+srun: error: tue-gpuc001: task 0: Aborted (core dumped)
+srun: error: tue-gpuc001: task 1: Aborted (core dumped)
+=== fsdp probe done at 2026-11-21T12:59:59+01:00 rc=134 ===
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+796505           FAILED                       
+796505.batch     FAILED     16372K     16372K 
+796505.exte+  COMPLETED                       
+796505.0      CANCELLED   1149322K   1180188K 
+
+Job ID: 796505
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: FAILED (exit code 134)
+Nodes: 1
+Cores per node: 16
+CPU Utilized: 01:00:03
+CPU Efficiency: 12.29% of 08:08:32 core-walltime
+Job Wall-clock time: 00:30:32
+Memory Utilized: 2.19 GB
+Memory Efficiency: 3.43% of 64.00 GB (64.00 GB/node)
+The task which had the largest memory consumption differs by 102.69% from the average task max memory consumption
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
