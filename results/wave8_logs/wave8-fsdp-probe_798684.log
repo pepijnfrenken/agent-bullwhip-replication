@@ -1,0 +1,36 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=9f67227c96f57b5cd366515644422ca1c7a7f0eb ranks=2
+NOTE: HEAD is ahead of pin in results/docs only — running.
+=== fsdp probe at 2026-11-21T15:25:25+01:00 ranks=2 master=127.0.0.1:38684 ===
+--- variant A: wrap=auto untie=0 ---
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py", line 487, in __init__
+    _init_param_handle_from_module(
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/_init_utils.py", line 519, in _init_param_handle_from_module
+    _init_param_handle_from_params(state, managed_params, fully_sharded_module)
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/_init_utils.py", line 531, in _init_param_handle_from_params
+    handle = FlatParamHandle(
+             ^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 537, in __init__
+    self._init_flat_param_and_metadata(
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 585, in _init_flat_param_and_metadata
+    ) = self._validate_tensors_to_flatten(params)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/flat_param.py", line 722, in _validate_tensors_to_flatten
+    raise ValueError(
+ValueError: Must flatten tensors with uniform dtype but got torch.bfloat16 and torch.float32
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=BROADCAST, NumelIn=142606592, NumelOut=142606592, Timeout(ms)=120000) ran for 120000 milliseconds before timing out.
+srun: error: tue-gpub001: task 1: Aborted (core dumped)
+srun: error: tue-gpub001: task 0: Aborted (core dumped)
+--- variant A: rc=134 ---
+--- variant B: wrap=none untie=0 ---
