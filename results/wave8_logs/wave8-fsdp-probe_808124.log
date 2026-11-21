@@ -1,3 +1,24 @@
 repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=a81f51110c5f3a1dc6516555a10dd1c4fb44e543 ranks=2
 === fsdp probe at 2026-11-21T20:06:28+01:00 ranks=2 master=127.0.0.1:28124 ===
 --- variant A: sync_states=0 ---
+[fsdp] rank1 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
+[fsdp] rank1 wrapping wrap=auto untie=False
+[fsdp] rank0 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
+[fsdp] rank0 wrapping wrap=auto untie=False
+[fsdp] wrapped on 2 ranks, 4,099,201,536 params total
+[E ProcessGroupNCCL.cpp:475] [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=_ALLGATHER_BASE, NumelIn=622331904, NumelOut=1244663808, Timeout(ms)=120000) ran for 120654 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:475] [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=_ALLGATHER_BASE, NumelIn=622331904, NumelOut=1244663808, Timeout(ms)=120000) ran for 120654 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=_ALLGATHER_BASE, NumelIn=622331904, NumelOut=1244663808, Timeout(ms)=120000) ran for 120654 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] NCCL watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=_ALLGATHER_BASE, NumelIn=622331904, NumelOut=1244663808, Timeout(ms)=120000) ran for 120654 milliseconds before timing out.
+[E ProcessGroupNCCL.cpp:489] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[E ProcessGroupNCCL.cpp:495] To avoid data inconsistency, we are taking the entire process down.
+[E ProcessGroupNCCL.cpp:916] [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=_ALLGATHER_BASE, NumelIn=622331904, NumelOut=1244663808, Timeout(ms)=120000) ran for 120654 milliseconds before timing out.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] NCCL watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=1, OpType=_ALLGATHER_BASE, NumelIn=622331904, NumelOut=1244663808, Timeout(ms)=120000) ran for 120654 milliseconds before timing out.
+srun: error: tue-gpuc001: task 1: Aborted (core dumped)
+srun: error: tue-gpuc001: task 0: Aborted (core dumped)
+--- variant A: rc=134 ---
+--- variant B: sync_states=1 ---
