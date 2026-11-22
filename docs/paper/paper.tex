@@ -109,8 +109,11 @@ recipe's sampled-$K$ (Appendix~\ref{app:deltas}).
 \section{Protocol and Gates}\label{sec:gates}
 The protocol is commit-then-run: every gate and the selection rule are frozen in
 version-derived spec files committed 2026-10-07 (spec commit \texttt{7d3260b},
-13:01:04Z; byte-equal cluster kit commit \texttt{4b8bffb}, 14:55:36Z) before any GPU job for
-this wave. The first wave-8 training log is job \texttt{405143} at 2026-10-08T00:24:06+02:00
+13:01:04Z, with the cluster kit following at \texttt{4b8bffb}, 14:55:36Z) before any GPU job for
+this wave. The spec blob is not byte-identical between those commits: the later ones add a
+status header and a changes-log entry. What is invariant is the decision-rule text; the file-level
+hashes are \texttt{ad28b747} at \texttt{7d3260b}, \texttt{02273e4a} at \texttt{4b8bffb} and
+\texttt{cc1f5cef} at \texttt{b61cea6} and \texttt{d720701}. The first wave-8 training log is job \texttt{405143} at 2026-10-08T00:24:06+02:00
 (2026-10-07T22:24:06Z), 7.5 hours after the kit commit; later arrays in the same wave
 (\texttt{405887}, \texttt{406726}, \texttt{407006}) re-ran the arm tasks and are dated in the
 supplement. Amendments and open items are listed in Section~\ref{sec:prov}. The frozen gates,

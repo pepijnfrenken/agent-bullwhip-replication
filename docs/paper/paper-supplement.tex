@@ -720,11 +720,13 @@ diagnostic figure is 0.22706, a different state sample, which is why that artifa
 the control. The comparison therefore rests on a control that is partly outside the closed choice set.
 The direction is not in doubt at 29/30 with an 83.7\% reduction; the magnitude carries that caveat.
 
-\textbf{Permutation invariance, in context.} The adapted arm reads 0.0781 with 40 of 512 cases
-invariant, against a registered gate of 0.9. No arm passes that gate on any rung: 4B seed 0 is 0.0020
-and seed 1 0.0273, 1.7B is 0.1172, 0.1543 and 0.1562, and all wave-7 arms are 0.0000. The 8B arm is
-second highest of the trained arms, and \texttt{WAVE8\_SPEC.md} makes invariance below 0.05 a stop only
-in combination with a tripped collapse gate. It is reported so that a reader meeting the raw file does
+\textbf{Permutation invariance, in context.} The adapted arm's final read is 0.0742, 38 of 512
+cases invariant (\texttt{results/eval/w8-r1-8b-seed1-perm.json}), against a registered gate of 0.9.
+No arm passes that gate on any rung: 4B seed 0 is 0.0020 and seed 1 0.0273, 1.7B is 0.1172, 0.1543 and
+0.1562, and all wave-7 arms are 0.0000. The 8B arm therefore sits fourth among the trained arms, and
+an earlier draft's 0.0781 with 40 of 512 came from the failed first job rather than the final one.
+\texttt{WAVE8\_SPEC.md} makes invariance below 0.05 a stop only in combination with a tripped collapse
+gate. It is reported so that a reader meeting the raw file does
 not mistake a universal property for an 8B failure.
 
 \textbf{Hardware.} The 8B readouts ran on the same L4 lane as the 0.6B--4B rungs, not on the A100 lanes
