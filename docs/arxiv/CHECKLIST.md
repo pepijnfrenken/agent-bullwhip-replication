@@ -1,6 +1,6 @@
 # arXiv submission checklist
 
-Built against commit `22ca471`. Nothing here is submitted; the upload is Pino's hand on the key.
+Built against tag `arxiv-submission-1` (cut from `6993227`). Nothing here is submitted; the upload is Pino's hand on the key.
 
 ## Files
 
@@ -22,10 +22,10 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 - **Primary category**: `cs.AI`; cross-list `cs.LG`
 - **Comments**: `12 pages main text, 13 pages methods supplement. Pre-registered adaptation study of
   arXiv:2605.17036v4. The protocol, gates, stop-loss and run ledger are the product; artifacts are
-  committed at sha 22ca471.`
+  committed at tag arxiv-submission-1.`
 - **License**: CC BY 4.0 for the paper, MIT for the code. Do not describe the code license as
   covering the reference paper's material.
-- **Reproducibility pointer**: `https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/22ca471`
+- **Reproducibility pointer**: `https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/arxiv-submission-1`
 
 ## Decisions already made, and the cost of each
 
@@ -48,7 +48,7 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 2. No absolute local paths, tokens, or notebook URLs in `metadata.json` or either `.tex`.
 3. The abstract in `metadata.json` matches the abstract in `paper.pdf` word-for-word after LaTeX
    stripping. It was generated from the same source, so a mismatch means the source moved.
-4. The commit named in the Comments exists on the remote and is public-readable. If the repository is
+4. The tag named in the Comments exists on the remote and is public-readable (`git ls-remote --tags`). If the repository is
    still private at submission time, either make it public or drop the pointer rather than ship a
    dead link.
 5. `CONTACT-NOTE-v0.md` is a separate decision. Sending it to the reference authors is not part of the
