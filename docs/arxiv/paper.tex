@@ -1,0 +1,610 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage[htt]{hyphenat}
+\sloppy
+
+\title{Post-Tuning Closed-Choice LLM Agents Across Four Model Sizes:\\
+Cost Comparisons, Training Stops, and Incomplete Evaluation\\
+on a Simulated Bullwhip Environment}
+\author{Pepijn Frenken\\
+Independent researcher\\
+\texttt{pepijnfrenken@mailbox.org}}
+\date{2026-10-22}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A published claim \cite{long2026} reports that a GRPO-tuned 4B agent beats its own untrained
+baseline on cost in a four-tier beer-game environment. We report a pre-registered, commit-dated
+protocol testing a claim of that type at four model scales (0.6B, 1.7B, 4B, 8B), as an adaptation
+study: our training procedure and readout differ from the published recipe in enumerated ways
+(Appendix~\ref{app:deltas}). \textbf{4B passes} the frozen paired cost criteria. The November rebuild, whose per-run files are
+committed, passes on both seeds (30/30 and 25/30 paired wins; medians 9{,}346 and 17{,}958 against
+a matched control of 21{,}578; $p \le 1.6\times10^{-4}$). The October pair recorded 8{,}315 and
+7{,}612 at 30/30 per seed in a verdict document whose raw paired files did not survive, so its
+reductions are document-recorded rather than recomputable.
+\textbf{1.7B is adverse}: all three evaluated seeds regress against their matched control
+($1.87\times$--$6.19\times$, 0/30 wins each). \textbf{0.6B} has negative wave-7 paired comparisons
+on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
+detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks
+were resumed past a stop, two of them by one unattended resubmission, and the completed read
+still fails the output-mass gate. \textbf{8B is evaluable on one of its four arms}: the $10^{-5}$ seed-1 adapter survived, and
+against a matched untrained-8B control it passes every G1 gate on the pre-registered noisy-argmax
+generation (medians 14{,}595 vs 89{,}633; 29/30 paired wins; $p = 2.9\times10^{-8}$). The arm the
+frozen rule selected was re-trained in November on both seeds, and reads $0.108$ and $0.164$ of a
+curriculum control (10{,}097 and 15{,}355 vs 93{,}603; 30/30 and 28/30) but has no pre-registered
+paired generation; the $10^{-5}$ seed-0 leg was not completed. A November 2026 rebuild from the committed kit reproduces both verdicts
+and the untrained control medians (Section~\ref{sec:rebuild}); its 4B seed-1 median is
+17{,}958 rather than 7{,}612, at 25/30 wins. The frozen selection and pooling rules are the methodological
+product: the two seeds at one learning rate differ by $1.52\times$, so the arm-level mean is
+reported and neither seed is quoted alone.
+
+\end{abstract}
+
+\section{Introduction}\label{sec:intro}
+Post-training LLM agents for operational decision problems is an active recipe family. The
+motivating published claim is \cite{long2026}: Long, Simchi-Levi, Zhu, Su, A.~P.~Calmon, and
+F.~P.~Calmon (\texttt{arXiv:2605.17036}, version 4, 21 September 2026), reporting that a
+GRPO-tuned autoregressive 4B agent (Qwen-3 4B; mean total cost 1{,}585 untrained vs 952 trained,
+both across 30 identical MIT Beer Game runs, v4 \S5.2) beats the untrained 4B baseline on cost in a
+four-tier beer-game simulator. The open question is not whether such a claim can hold once at one
+scale, but whether a claim of that type holds under pre-registered controls and whether it survives
+scaling. We test that on a public four-tier beer-game style environment with our own adapted
+training procedure (Section~\ref{sec:method}). In the reference study facilities occasionally
+ordered enormous multiples of demand out of the box across repeated runs, the reliability symptom
+our closed readout first attacks \cite{aimbench}; Sterman \cite{sterman} supplies the inventory
+behavior background. Deviations made along the way are documented in Section~\ref{sec:prov} rather
+than absorbed silently.
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item A pre-registered protocol instance for post-tuning a closed-choice decision readout on a
+  beer-game cost signal: frozen pre-flight gates (F0--F3), a fully specified collapse detector, a
+  frozen paired performance test, and a chronology separating planned contingencies from
+  amendments with commit hashes.
+  \item An outcome vector across four scales (0.6B--8B) under that fixed protocol, with per-rung
+  matched untrained controls where one exists, and terminal dispositions for all 24 planned tasks
+  (Table~\ref{tab:ledger}; full ledger in the supplement).
+  \item A methodological result: the frozen seed-pooling selection rule blocks a favorable
+  single-seed reading at 8B that a per-seed report would have accepted.
+  \item A diagnostic observation, not a mechanism claim: \emph{no tested arm met the
+  pre-registered $90\%$ permutation value-preservation criterion} (success counts
+  $24/512 = 0.046875$ and $20/512 = 0.0390625$ on the two passing 4B seeds; $0/512$ on the
+  untrained control and every wave-7 arm). A rate of 24/512 is not zero preservation. The
+  interface claim ``the model reads option values'' is withheld for every arm, per the
+  pre-registered consequence clause.
+\end{itemize}
+
+\section{Environment}\label{sec:env}
+The environment is a four-tier (retailer / wholesaler / distributor / factory) Beer-Game
+simulator (\texttt{agent\_bullwhip/engine.py}): weekly demand, shipment delay 2 weeks,
+holding cost 1.0 per unit-week, backlog cost 2.0 per unit-week, horizon 36 weeks, initial
+stocks, outstanding orders, and backlogs all zero, no backlog cap or overflow penalty
+(otherwise stated, nothing is truncated). Agents output one order per stage per week on a
+frozen, closed ordinal choice grid of 26 letters mapping to fixed order quantities, cited
+from the implemented frozen revision \texttt{make\_w8\_g26b()}:
+\begin{center}
+0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 36, 44, 54, 64, 78, 94, 114, 136, 166, 200.
+\end{center}
+Sixteen values cover the demand-mean band 0--30 in step-2 resolution; the ten tail values are the
+generated geometric ladder $v_k = 2\cdot\mathrm{round}(30(200/30)^{k/10}/2)$ for $k=1..10$
+(\texttt{w8\_g26 -> w8\_g26b}, revised after F0 failed on 1{,}000 probe states per regime; the
+failing record and the revision were committed before any training, as the spec's \S3.1
+pre-authorizes).
+Evaluation readout is the \textbf{noisy-argmax} interface: for each decision the model produces
+logits over the 26 label tokens at the answer position, $\pi(a \mid s) = \mathrm{softmax}$ over
+those 26 positions, the \emph{argmax} arm reads the modal letter deterministically, and the
+\emph{noisy-argmax} arm samples the letter from $\pi(\cdot \mid s)$ with 30 distinct
+evaluation-path seeds (1000--1029) at the per-decision sampling level, one simulated game per seed
+path. Training uses the same enumeration without the sampling, a deliberate delta from the reference
+recipe's sampled-$K$ (Appendix~\ref{app:deltas}).
+
+\section{Protocol and Gates}\label{sec:gates}
+The protocol is commit-then-run: every gate and the selection rule are frozen in
+version-derived spec files committed 2026-10-07 (spec commit \texttt{7d3260b},
+13:01:04Z, with the cluster kit following at \texttt{4b8bffb}, 14:55:36Z) before any GPU job for
+this wave. The spec blob is not byte-identical between those commits: the later ones add a
+status header and a changes-log entry. What is invariant is the decision-rule text; the file-level
+hashes are \texttt{ad28b747} at \texttt{7d3260b}, \texttt{02273e4a} at \texttt{4b8bffb} and
+\texttt{cc1f5cef} at \texttt{b61cea6} and \texttt{d720701}. The first wave-8 training log is job \texttt{405143} at 2026-10-08T00:24:06+02:00
+(2026-10-07T22:24:06Z), 7.5 hours after the kit commit; later arrays in the same wave
+(\texttt{405887}, \texttt{406726}, \texttt{407006}) re-ran the arm tasks and are dated in the
+supplement. Amendments and open items are listed in Section~\ref{sec:prov}. The frozen gates,
+in brief (full definitions, threshold values per rung, and read schedule: supplement \S1):
+\begin{itemize}
+  \item \textbf{F0 grid regret.} The choice grid must express the simulator's optimum in both
+  demand regimes within pre-set regret and letter-mass bounds, on 1{,}000 states per regime.
+  \texttt{w8\_g26} failed F0; the revision to \texttt{w8\_g26b} used the pre-authorized
+  pre-F0-test procedure.
+  \item \textbf{F1 teacher.} The one-step-improvement teacher must beat the continuation floor
+  on 30 paired curriculum paths, else no training arm is run (it passed: PI1 mean cost 4{,}591
+  vs floor 8{,}541, 30/30 paths, seeds 9000--9029, disjoint from the eval band 1000--1029).
+  \item \textbf{F2 interface.} All 26 answer letters are single tokens on the rendered
+  continuation (full prompt SHA \texttt{55bdc663eee13e101be89e1ddf112e48fcafc62d4c8bf4950b39a2b49dafc422});
+  label ids contiguous.
+  \item \textbf{F3 control statistics (collapse detector).} The state \emph{answer} variable is
+  the readout's per-state 26-letter probability row $\pi(\cdot \mid s)$, not a categorical state
+  identifier, so no deterministic-argmax degeneracy arises. The \emph{state-dependence} statistic
+  is $I = H(\overline{\pi}) - \overline{H}$ in nats over the 1{,}024 frozen states
+  $S_{\mathrm{nom}}$ (\texttt{decision\_gates.py}). Thresholds are frozen per rung before training
+  from that rung's own untrained readout: entropy percentiles for $H_{\mathrm{lo}}$ and
+  $H_{\mathrm{hi}}$, a Wilson upper bound for the oracle argmin letter's modal share
+  $m_{\mathrm{hi}}$, and a bootstrap percentile for $I_{\mathrm{hi0}}$ (definitions, all sixteen
+  stored values, and the archiving status of each rung's gate file: supplement S1). A trained arm is \emph{collapsed} iff [median entropy
+  $< H_{\mathrm{lo}}$ AND (modal share $> m_{\mathrm{hi}}$ OR $I \leq I_{\mathrm{hi0}}$)] OR
+  [median entropy $> H_{\mathrm{hi}}$ AND $I \leq I_{\mathrm{hi0}}$]; low entropy alone is not
+  collapse. The 1.7B cutoff is a small \emph{positive} value ($9.65\times10^{-5}$) rather than zero,
+  since a literal zero would make the strict low-entropy inequality unsatisfiable. The gate is read
+  at every round end on 256 states and on all 1,024 at final evaluation (rounds 1-indexed). The
+  stop-loss is terminal: a task stops when the gate reports \emph{collapsed} at two consecutive
+  round reads, and a resume past a stop needs a written override; skipping that check is a runner
+  defect, not a rule defect, and one such accidental resume is on the record
+  (Section~\ref{sec:prov}). An untrained-8B \emph{diagnostic} checkpoint supplies the 8B thresholds;
+  no untrained-8B final \emph{control evaluation} was run in October; the November control
+  behind the one-arm read is dated in S7. The stop-loss handling is a planned
+  contingency, not an amendment.
+  \item \textbf{Permutation invariance (diagnostic, pre-registered consequence).} 512 states, 3
+  shuffled grids besides the canonical one (grid seed 20261006); a state is a \emph{success} iff the
+  argmax letter's \emph{value} survives all three shuffles, and the arm passes iff the success
+  fraction $\geq 0.90$. The check is NOT part of the performance-claim conjunction: on a fail the
+  cost gates still decide the performance claim, the interface claim is withheld, and every arm is
+  labelled a \emph{fixed-ordinal-scale specialist}.
+  \item \textbf{G7 output-mass gate.} Per decision, the fraction of full-vocabulary probability
+  on the 26 label tokens; a summary's \texttt{min\_mass} is the minimum over runs of the per-run
+  minimum over decisions, and a trained arm requires $\geq 0.9$. The bounded quantity is a
+  \emph{sum}, so a healthy readout sits near 1 while one that drifted onto other vocabulary
+  scores far below 0.9; no $1/26$ bound applies to it or to an individual letter's probability.
+  G7 is mandatory for eligibility from wave 7 onwards, where observed values 0.925--0.983
+  motivated the threshold.
+  \item \textbf{Selection rule (per learning-rate arm, frozen).} Seeds are pooled by \emph{mean}
+  validation cost on the fixed curriculum-validation band; the arm with the lower pooled mean is
+  selected and the other reported as sensitivity. The selected arm must then beat its rung's
+  matched untrained control under G1: median cost reduction $\geq 15\%$ AND
+  median-of-per-path-reductions $\geq 15\%$, $\geq 20/30$ paired wins, one-sided exact sign test
+  $p < 0.02$ (which at $n=30$ non-tied pairs implies $\geq 22/30$ wins). All 60 paired comparisons here had zero ties (verified from raw JSONLs).
+\end{itemize}
+
+\paragraph{The registered seed denominator was underspecified.} The registered text
+(\texttt{WAVE8\_SPEC.md} \S6.3, committed 2026-10-07, before any wave-8 run) says, verbatim: ``A
+seed passes iff all three hold; the arm needs $\geq$ 2/3 seeds.'' It does not say how a planned seed
+that never produces an evaluated checkpoint enters the fraction, so the registered treatment is
+\emph{underspecified} and we do not amend it retrospectively. Both readings are printed at the
+rule's actual unit, the learning-rate arm. \emph{Evaluated denominator}: 4B $2/2$ pass, 1.7B 1e-5
+arm $0/3$, and the 1.7B 5e-5 arm and the six wave-8 0.6B tasks \emph{undefined} (zero evaluated
+seeds), so those arms are reported incomplete rather than failing; a collapsed arm cannot support
+the success claim under any denominator (\S6.2). \emph{Planned denominator}: 4B $2/2$ pass, wave-8
+0.6B $0/3$ per arm (pooled $0/6$), 1.7B $0/3$ in the executed 1e-5 arm and $0/3$ in the planned
+5e-5 arm ($0/6$ at rung level). Both readings agree on the only positive rung; the evaluated
+reading's estimand is conditional on a checkpoint having reached evaluation, and that conditionality
+is disclosed rather than absorbed. The underspecification reaches the selection step too: the rule
+ranks arms by \emph{pooled mean validation cost over seeds}, so a missing seed corrupts arm
+selection as well as the pass fraction. At 8B no seed is missing and selection was computable. At
+1.7B the planned 5e-5 arm produced one trained-but-stopped seed with no validation read and two
+seeds never submitted, so the mean-based rule could not rank the arms at all: the evaluated 1e-5 arm
+is the arm with selection data, not an arm the rule chose. At wave-8 0.6B the band means exist for
+one seed per arm (90{,}448 and 16{,}035), so no pooled-mean selection was performed there either.
+
+\section{Training objective and configuration}\label{sec:method}
+We deliberately avoid borrowing algorithm names for what we run. The trained objective at
+every rung is, per state $s_i$ and over the frozen 26-letter choice set $A$:
+\begin{align}
+L(\theta) &= \frac{1}{N}\sum_{i=1}^{N}\bigg[\sum_{a \in A} \pi_\theta(a \mid s_i)\, z_i(a)
++ \beta\, D_{\mathrm{KL}}\!\left(\pi_\theta(\cdot \mid s_i)\,\Vert\,\pi_{\mathrm{ref}}(\cdot \mid s_i)\right)\bigg],\\
+z_i(a) &= \frac{J(s_i,a)-\overline{J}_i}{\max(\mathrm{std}_{a}J_i,\,10^{-3})}.
+\end{align}
+Here $J(s_i,a)$ is the simulator's expected total cost of playing action $a$ from state $s_i$
+and then continuing with the frozen reference policy for the remainder of the game, averaged
+over the labeler's continuation rollouts; $\overline{J}_i$ and $\mathrm{std}_a J_i$ are
+per-state statistics over the full choice set; $\pi_{\mathrm{ref}}$ is a frozen
+policy-independent anchor. The KL term is averaged inside the state sum, $\beta = 0.02$ in all
+wave-8 runs. Per round: fresh collection over the curriculum band (argmax and sampled passes
+re-labelled each round, 5{,}168 training / 272 validation states at 4B), 162 batches per
+round, batch size 32, optimizer AdamW, learning rate per arm (0.6B: 1e-5 and 5e-5; 1.7B: 5e-5
+planned, 1e-5 executed; 4B: 5e-5; 8B: 5e-5 and 1e-5), LoRA $r{=}8$, $\alpha{=}16$, dropout
+0.05, attention-only targets (\texttt{q\_proj, k\_proj, v\_proj, o\_proj}), checkpoint at step
+169 selected by the frozen validate stage. Three rounds per arm. The gradient is \emph{exact}
+in a qualified sense: the action sum enumerates every member of the 26-value choice set, and
+$J$ is deterministic per (state, action) at scoring time; simulator-level stochasticity
+(demand draws inside $J$'s continuation) is part of $J$'s value, not resampled per gradient
+step. Deltas from the reference GRPO objective \cite{grpo,long2026} are enumerated in
+Appendix~\ref{app:deltas}; notably the reference objective (v4 eq.~2) also carries a
+frozen-KL term to its reference policy, which this recipe shares, and the reference normalizes
+advantages per sampled group while this recipe $z$-scores per state over the enumerated set.
+Published RLCD \cite{rlcd} builds contrastive preference pairs and a preference model; no
+preference model exists here. Both are cited as lineage, not as what we execute; a verbatim
+re-run of either is future work.
+
+\section{Run ledger}\label{sec:ledger}
+Every planned task (recipe arm $\times$ learning-rate arm $\times$ seed) is one row of the
+full ledger in the supplement (S3), 24 rows, nothing aggregated; every status there was read
+from the task's own marker files, round reads, or generation summaries on the primary cluster
+archive, with the machine-readable extract in \texttt{docs/verify/W8-MANIFEST.json}.
+Table~\ref{tab:ledger} states the terminal dispositions, which are the counts used throughout
+this paper.
+
+\begin{table}[ht]
+\centering
+\caption{Terminal dispositions of the 24 planned tasks, with the precedence of
+Section~\ref{sec:gates} so the classes are disjoint. Stopped tasks are counted as stopped even
+where a later resume exists.}
+\label{tab:ledger}
+\small
+\begin{tabular}{@{}p{4.6cm}p{1.5cm}p{6.2cm}@{}}
+\toprule
+\textbf{Disposition} & \textbf{Tasks} & \textbf{Which tasks} \\
+\midrule
+Unattempted & 2 & 1.7B \texttt{lr5e-5} seeds 1--2 (never submitted) \\
+Stopped by the collapse stop-loss & 6 & 0.6B wave-8 \texttt{lr1e-5} seeds 0--2, \texttt{lr5e-5} seeds 1--2; 1.7B \texttt{lr5e-5} seed 0 \\
+Trained, no final evaluation & 5 & 8B four legs; 0.6B wave-8 \texttt{lr5e-5} seed 0 (\texttt{DONE} only) \\
+Evaluated, failing & 9 & 0.6B wave-7 six arm--seed rows; 1.7B \texttt{lr1e-5} seeds 0--2 \\
+Evaluated, passing & 2 & 4B seeds 0--1 \\
+\midrule
+Planned total & 24 & 22 attempted with a trained checkpoint; 11 with a matched paired final evaluation; 13 without \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The five classes are disjoint by the stated precedence, and one further property is recorded
+\emph{separately} rather than as a sixth class: six tasks carry a persisted \texttt{STOPPED\_collapse}
+marker, two of which were later resumed and therefore also hold a completion marker. Stop history and
+terminal disposition are two flags over the same rows, not one partition, and the supplement prints
+both per row (S3). Wave-7's ``all six arm--seed rows'' elsewhere in this paper means the six rows of
+the two-recipe $\times$ three-seed block, not six independent recipe arms. The wave-8 0.6B task
+directories and their two curriculum-band files were removed from the archive by the
+repository's own results slim-down; their round reads, markers, and the two band means survive
+in \texttt{results/wave8\_logs} and \texttt{w8-band-record.json}, which is why the 0.6B rows
+are sourced to logs rather than to per-run JSON.
+
+\section{Results}\label{sec:results}
+Table~\ref{tab:ladder} is the headline table. Lower cost is better. Every row names its own
+estimand explicitly: the statistic, the evaluation generation, and the control it is compared
+to. Paired wins are per-path (paired on the demand path index), one-sided sign test.
+
+\begin{table}[ht]
+\centering
+\caption{Outcome vector. ``final eval'' = matching noisy-argmax $n{=}30$ generation from
+\texttt{eval/} (same adapters as the \texttt{wave8\_val} selection band); ``band'' =
+curriculum-validation means.}
+\label{tab:ladder}
+\small
+\begin{tabular}{@{}p{1.5cm}p{2.5cm}p{4.4cm}p{3.9cm}p{1.9cm}@{}}
+\toprule
+\textbf{Rung} & \textbf{Arms} & \textbf{Estimand} & \textbf{Values vs control} & \textbf{Status} \\
+\midrule
+0.6B w7 & SFT + exact-grad & C1, noisy-argmax n=30, per arm--seed & 0/30 wins on all six arm--seed rows & adverse \\
+0.6B w8 & exact-grad & stopped before final eval & collapse tripped on all 6 tasks; 5 stopped pre-eval & stopped \\
+1.7B & exact-grad, 3 seeds & final-eval medians & ctl 11{,}508; medians 21{,}468/43{,}660/71{,}270 & adverse (0/3) \\
+4B & exact-grad, 2 seeds & final-eval medians and means & ctl 21{,}578; \textbf{pass both seeds} & \textbf{pass (2/2)} \\
+8B & exact-grad, 4 legs & one arm paired 29/30 (unselected rate); selected rate band-only & one arm band-only, one not completed & \textbf{one arm passes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{4B, the passing rung, in two cohorts.} Two generations pass the frozen G1 on the
+final-eval generation against a matched untrained-4B control, and they are not the same evidence.
+The October cohort is document-recorded: the verdict document gives 8{,}315 and 7{,}612 at 30/30
+wins per seed, its per-run files did not survive, and the document calls the metric the ``same
+metric'' as an 8B validation mean rather than naming it a median, so the estimand of those two
+figures is unresolved (supplement S5, and the audit record). The November rebuild is
+artifact-backed and is what the committed rows regenerate: 9{,}346 (seed 0) and 17{,}958 (seed 1)
+against the same control, at 30/30 and 25/30 wins. The October rows below carry both statistics
+because the paper reports them; the November rows carry only what a file holds:
+\begin{itemize}
+  \item median cost 8{,}315 (seed 0) and 7{,}612 (seed 1) vs matched untrained control 21{,}578;
+  median-ratio reductions 61.5\% and 64.7\%, against a 15\% criterion (the mean costs, the median of
+  the 30 per-path proportional reductions and the control's dispersions were computed from the
+  October paired files, which did not survive; supplement S5 records their absence and S6 supplies
+  the equivalent figures from the rebuild);
+  \item paired wins 30/30 per seed, one-sided exact sign test $p = 2^{-30} = 9.3\times10^{-10}$ per
+  seed, against a criterion that effectively requires $\geq 22/30$ wins;
+  \item G7 output-mass gate: \texttt{min\_mass} 0.99999 on both seeds (PASS).
+\end{itemize}
+Inference scope of the sign test: 30 paired evaluations of a trained checkpoint against the frozen
+control on fixed demand paths, not 30 training seeds and not a test of a scaling claim; the two
+seed-level tests share control paths, so they are dependent reads, reported separately and never
+combined.
+
+\paragraph{Collapse gate on the passing 4B checkpoints.} All eight reads, with every component and
+the detector's own verdict, are in supplement S2, and neither branch can fire on any of them by hand
+check: no read has median entropy below $H_{\mathrm{lo}}{=}0.038$ (smallest 0.5765), and the single
+read above $H_{\mathrm{hi}}{=}1.911$ (seed 0 round 1) carries $I{=}0.871$ against
+$I_{\mathrm{hi0}}{=}0.677$, so neither the low-entropy nor the diffuse branch fires. The high round-3
+modal shares (0.746, 0.840) are therefore not collapse evidence: the registered rule requires the
+entropy condition too.
+
+\paragraph{1.7B, a within-size regression with a matched control.} Final-eval medians
+21{,}468 / 43{,}660 / 71{,}270 (seeds 0/1/2 of the executed 1e-5 arm) against the matched
+untrained-1.7B control of 11{,}508 (mean 11{,}405): 0/30 paired wins on every seed, median
+regressions $1.87\times$, $3.79\times$, $6.19\times$. The curriculum-validation generation (means
+47{,}125 / 36{,}734 / 61{,}073; pooled 48{,}311) is the frozen selection input, and both
+generations agree. Training made this rung worse than its own starting readout. The planned 5e-5
+arm trained seed 0 only and tripped the gate on \emph{both} branches at consecutive reads, an
+unusually clean demonstration that the branches catch different failure modes: round 1 on the
+low-entropy branch (median $H = 6.28\times10^{-5} < 9.65\times10^{-5}$ with modal share
+$1.00 > 0.149$) and round 2 on the diffuse branch ($H = 2.059 > 1.631$ with
+$I = 0.109 \leq 1.486$), then stopped (\texttt{stopped\_after\_round: 2}). Seeds 1 and 2 of that
+arm were never submitted; with no validation and no evaluation it neither strengthens nor weakens
+the 1.7B adverse result. The executed 1e-5 arm's round reads are as read: seed 0 tripped at round 3
+only (one read, below the two-consecutive rule), seeds 1 and 2 finished clean or with a single
+trip, and no 1.7B 1e-5 task was stopped. Seed 1's G7 failure is binding at three measured scopes,
+\texttt{min\_mass} $7.33\times10^{-9}$ / $8.93\times10^{-9}$ / $7.85\times10^{-9}$ (final
+noisy-argmax generation, 256-state round read, 1{,}024-state final read), all far below 0.9.
+
+\paragraph{0.6B, two training variants and a stopped procedure.} Wave 7 ran two recipe arms
+(SFT and exact-gradient R1) at three matched seeds each against the matched untrained-0.6B control
+(median 11{,}569): 0/30 on every arm--seed row of the binding noisy-argmax read (arm medians
+20{,}594 / 25{,}721 / 25{,}508 SFT and 37{,}384 / 32{,}516 / 27{,}652 exact-grad; the
+exact-gradient rows are historically labelled ``RLCD'' in internal files; sign $p = 1.0$ on each
+row; the exact-grad arms also showed letter-lock, 1--2 distinct order values). Wave 8's
+exact-gradient instance at the same scale tripped the collapse gate on \emph{six of six} arm tasks
+at round 1, satisfying the full registered conjunction and not only the modal-share half: with the
+frozen 0.6B cutoff at $H_{\mathrm{lo}}{=}1.393$ nats, every round-1 read is below it with modal
+share above $m_{\mathrm{hi}}{=}0.149$ ($H$ spans 0.000--0.938, share 0.508--0.996; all twelve
+values per task in supplement Table~S2b). The stop-loss then persisted a
+\texttt{STOPPED\_collapse} marker on five of the six tasks; \texttt{lr5e-5} seed 0 never met two
+consecutive collapses and completed with \texttt{DONE} only. Three tasks were resumed past a stop.
+\texttt{lr1e-5} seed 0 was stopped after round 2 and resumed. \texttt{lr1e-5} seeds 1 and 2 were
+both resumed by one unattended bare-array resubmission (no \texttt{W8\_ARM}, stale \texttt{HEAD},
+\texttt{EXPECTED\_COMMIT} unset), later recorded as the sanctioned completion run for those seeds.
+The memo also documents the runner defect that made the
+first resume possible (the task loop writes the marker but never reads it on entry). Per-task
+marker sequences and round reads are in supplement S3. \texttt{lr1e-5} seed 0 therefore carries
+\texttt{DONE} and \texttt{STOPPED\_collapse} both; its round-3 read is clean (median
+$H = 1.760$) while its 1{,}024-state final read fails G7 (\texttt{min\_mass}
+$3.2\times10^{-4}$, the readout having left the label set). Its band means are 90{,}448
+(\texttt{lr1e-5} seed 0) and 16{,}035 (\texttt{lr5e-5} seed 0), one seed each. No wave-8 0.6B arm
+has a matched final evaluation, so the wave-8 0.6B outcome is a stopped procedure, distinct from a
+measured cost regression; the wave-7 rows carry the measured negative.
+
+\paragraph{8B: the selected learning rate, re-trained and evaluated.} The four 8B planned legs
+(2 lr $\times$ 2 seeds) trained on external A100 lanes in October (Snellius \texttt{28414248} and
+\texttt{28418615} for seed 0; two Modal legs for seed 1 after the budget amendment,
+Section~\ref{sec:prov}). Validation-band means, the declared selection input
+($n{=}30$ argmax runs): 5e-5 arm 35{,}289 / 12{,}444 (pooled 23{,}867); 1e-5 arm 71{,}855 /
+22{,}083 (pooled 46{,}969), so the frozen rule selects 5e-5. No selection JSON was recovered and three
+adapters were lost with their archives, so the selected rate was re-trained rather than recovered:
+two seeds in November on one Blackwell card, same gates, labels and configuration. A separate
+$10^{-5}$ seed-0 8B run on the TU/e L4 lane read 99{,}618 on its band; it is not one of the four
+selection legs and is excluded from the selection means by the reconciliation note. These legs carry
+a \emph{curriculum-band} read, not the pre-registered noisy-argmax generation. Against the untrained
+curriculum control (median 93{,}603, mean 104{,}676) they read:
+\begin{itemize}
+
+  \item \emph{Seed 0}: 30/30 wins, $p = 9.3\times10^{-10}$, median ratio 0.108, band mean 10{,}892.
+  \item \emph{Seed 1}: 28/30 wins, $p = 4.3\times10^{-7}$, median ratio 0.164, band mean 15{,}411.
+  \item \emph{Seed spread}: 10{,}097 against 15{,}355 on one control, $1.52\times$ apart, so the
+  frozen rule reports the arm mean and not a seed.
+  \item \emph{Not the frozen estimand}: G1 is defined on the paired noisy-argmax generation. No such
+  read exists for either November leg, so the selected rate is band-level favourable and
+  \emph{unestablished} under G1. The $10^{-5}$ seed-1 arm is the one 8B arm with a pre-registered
+  paired pass, and $10^{-5}$ seed 0 was never completed.
+\end{itemize}
+The prompt SHA is identical across arms and both controls because the rendered prompt is hashed
+independently of the demand draw; it does not establish matched demand paths. The November numbers
+are compared against the curriculum control they were actually run against, and the gates and labels
+are byte-identical to the frozen files.
+
+\paragraph{Permutation diagnostic.} The pre-registered consequence of the shared near-zero
+permutation read (0.000 on the untrained control and every wave-7 arm; 0.047 and 0.039 on the passing
+4B seeds; all below the 0.90 gate) is a label and a withheld interface claim. Zero observed successes
+is not proof that the success probability is zero. Our \emph{hypothesis}, proposed and not
+demonstrated, is that the passing 4B arm is a specialist scorer on the trained choice set; the
+diagnostic does not separate it from failing rungs and no intervention isolates a mediator, so no
+causal account of any between-size difference is offered.
+
+\paragraph{Interface validity.} A 26-action constrained letter-logit readout structurally
+guarantees that the selected action is in the set; a free-form lane does not. On the program's own
+noisy-argmax generations, wave-7 and wave-8 records show zero \texttt{parse\_fail} at the decision
+level: 0 invalid-decision events across 14 archived arm--generation summary files and 60{,}480
+decisions, with no run containing one, against 7--188 such events per wave-6 free-form arm under
+that lane's explicit failure-handling rule. A paired free-form-vs-closed-choice cost test at
+matched conditions was not run, so the recorded effect is the \emph{elimination of invalid actions and
+the simplification of the comparison}, not a demonstrated total-cost advantage.
+
+\paragraph{Independent rebuild (November 2026).}\label{sec:rebuild} The October per-run artifacts
+were later lost (Section~\ref{sec:prov}), so we reran the protocol from the committed kit on the same
+pins: gates, training and evaluation for 1.7B (three seeds) and 4B (two seeds). The untrained controls
+reproduce, with a 4B curriculum-band mean of 116{,}948.33 on both occasions and noisy-control medians
+of 21{,}578 (4B) and 11{,}508 (1.7B), the values used above. Both verdicts reproduce.
+\textbf{4B passes G1 on both seeds}, 30/30 wins at median 9{,}346 and 25/30 at 17{,}958 against the
+same control; \textbf{1.7B regresses on all three}, at $2.41\times$, $6.87\times$ and $8.25\times$ the
+control (7/30, 0/30, 0/30 wins). The 4B seed-1 median is thus higher than the 7{,}612 above and its
+win count 25/30 rather than 30/30; the pass depends on neither, since the frozen bar is 20/30 wins and
+a 15\% reduction. Supplement S6 holds the tables, file names and band comparison.
+
+\section{Provenance and amendments}\label{sec:prov}
+We separate planned contingencies (handling pre-written before results), actual amendments
+(documented at the time), and open items. Per-rung artifact paths, the deviations table, and the
+evidence-availability inventory are in supplement S5.
+\begin{itemize}
+  \item \textbf{Frozen before wave-8 training.} Spec and wave-8 pre-registration committed
+  2026-10-07 (spec \texttt{7d3260b}, 13:01:04Z; byte-equal cluster kit \texttt{4b8bffb},
+  14:55:36Z), containing the failing grid record, the revised grid \texttt{w8\_g26b}, the
+  F0/F1/F2/F3 and G1/G2/G7 definitions, and the seed-pooling rule. The spec file was edited once
+  afterwards, at \texttt{b61cea6} (14:57:38Z), in two places only: the status header and an
+  appended changes log; the rule text is byte-identical at \texttt{7d3260b} and at the commits the
+  training arrays actually checked out (\texttt{b61cea6}, then \texttt{d720701} from 2026-10-08
+  08:05:31Z). The first wave-8 GPU job is \texttt{405143} at 22:24:06Z, 7.5 hours after the kit
+  commit, and the wave-8 logs carry that checkout SHA and the pre-flight \texttt{F0/F1 ok} line.
+  Wave-7 observations predate all of it and informed the permutation consequence clause, whose text
+  was frozen in the wave-8 spec: a planned contingency of that spec, not an amendment.
+  \item \textbf{Planned contingencies, not amendments.} The collapse stop-loss and the marker
+  semantics (terminal; a resume needs a written override), the G1 pass rule, the seed-pooling
+  selection rule, and every threshold in Section~\ref{sec:gates} were frozen before training.
+  \item \textbf{Amendments actually made.} (a) 8B budget: two seed-1 legs were re-run on a second
+  lane (Modal A100) after the first lane's GPU budget ended; per-rung thresholds stayed the frozen
+  \texttt{gates\_8b.json} and nominal effective batch 32 was matched via a grad-accum split
+  (micro-batch 8 vs 4), with no optimizer-step or numerical equivalence claimed or tested across
+  providers. (b) 4B ran a single lr arm (5e-5), because the operating plan stages each rung at the
+  previous rung's selected lr; the 4B result is reported for the evaluated checkpoints as they are,
+  and completeness of rate selection at 4B is a separate design question, not support for the pass.
+  \item \textbf{Open provenance item.} The 1.7B operating plan (\texttt{W8-START-17B.md},
+  \texttt{W8-NEXT-SUBMITS.md}) names 5e-5 as the planned lr; executed artifacts show 5e-5 seed 0
+  trained and collapsed to a stop at round 2 with no final evaluation, while the seeds that
+  reached final eval ran at 1e-5, and no amendment note for that switch exists in the committed
+  docs. The evaluated arm is therefore not the arm the plan names, the executed-1e-5 evidence does
+  not constitute a protocol-compliant 5e-5 1.7B read, and no pooled-mean arm selection was
+  computable at 1.7B (Section~\ref{sec:gates}). The adverse result stands on the executed arm's own
+  numbers; the discrepancy is carried forward unresolved rather than reconstructed from submit
+  history.
+  \item \textbf{Incomplete gate artifacts.} The 0.6B frozen F3 thresholds exist only as the
+  pre-flight job's log line (\texttt{wave8-preflight\_404131.log}); \texttt{results/wave8/gates.json}
+  carries no \texttt{F3} block, so those values cannot be re-read from a gate file and the 0.6B
+  reads are checked against the log line. Only two gate files are archived in this repository:
+  \texttt{gates.json} (0.6B) and \texttt{gates\_8b.json}. The 1.7B and 4B F3 thresholds quoted in
+  Section~\ref{sec:results} are recorded in the reconciliation note; their per-rung gate files
+  (\texttt{gates\_1.7b.json}, \texttt{gates\_4b.json}) exist in no committed revision of this
+  repository and were not recovered from the cluster archive, so those six threshold values are
+  currently the weakest link in the 1.7B and 4B gate story. The \emph{readings} they are compared
+  against are archived and independently recomputed in supplement S2.
+  \item \textbf{Result-inspection ordering.} The curriculum-validation band
+  (\texttt{wave8\_val}) was the selection input; the final-eval generation (\texttt{eval/}, newer by
+  17 h at 4B and 31 h at 1.7B, same adapters at checkpoint-169) came afterwards, so no selection step
+  used it. Facts that changed between drafts, each with artifact, generation, aggregation and reason,
+  are tabulated in \texttt{docs/paper/RECONCILIATION-2026-10-22.md}, not narrated here.
+\end{itemize}
+
+\section{Analysis}\label{sec:analysis}
+\paragraph{What the evidence supports.} One rung (4B) passes the frozen cost criteria on both
+evaluated seeds. One rung (1.7B) is adverse on all three evaluated seeds against a matched control,
+with an incomplete planned second learning-rate arm. One rung (0.6B) is negative on all six wave-7
+arm--seed rows, and its wave-8 exact-gradient procedure is a stopped run: collapse tripped on all
+six tasks at round 1, a persisted stop marker survives on five, and three were later resumed past a stop
+(one by a runner accident, one under a written override), and the completed read fails the
+output-mass gate. One rung (8B) is evaluable on a single arm whose adapter survived; the arm the frozen rule chose
+was re-trained in November and reads favourably on the band, but has no pre-registered paired
+generation. Closed-choice readouts eliminated invalid actions and simplified the comparison;
+exact-enumeration outcome-scored post-training paid off under the frozen rule at 4B and on one 8B arm,
+while 1.7B and 0.6B are adverse or stopped and the selected 8B rate is unestablished.
+
+\paragraph{The selection rule as a methodological point.} The 8B seed spread inside the selected
+arm (35{,}289 vs 12{,}444) is the worked example: a per-seed report can pick the flattering seed, the
+frozen in-arm pooled mean cannot. The rule was frozen in the spec before outcomes were reviewed by the
+analyst, and the realized pooled mean was computed by a non-blinded analyst when the validation
+outputs landed. It removes post-hoc interpretive freedom, not analyst hindsight; no blinding is
+claimed.
+
+\section{Limitations}\label{sec:limits}
+\begin{itemize}
+  \item Simulated environment; external validity is a shared problem of this study and the
+  reference claim.
+  \item \textbf{Bookkeeping, exact.} From the ledger rows: 24 planned tasks, 22 attempted with a
+  trained checkpoint, 11 with a matched paired final evaluation, 13 without one (6 stopped, 5
+  trained without evaluation, 2 unattempted). Every within-size verdict is conditional on its
+  pre-registered seed count and on the declared denominator reading; with this many experimental
+  units there is no statistical test of any scaling claim, and none is offered. Cross-size
+  comparisons are descriptive.
+  \item The training objective is an exact-enumeration policy gradient with a frozen per-state KL
+  anchor; the reference objective also uses a frozen reference KL (v4 eq.~2), so that component is
+  shared, not a delta (Appendix~\ref{app:deltas}). A verbatim re-run of the reference GRPO recipe
+  or of published RLCD \cite{rlcd} is future work, and this study's positive rung is conditional
+  on our recipe deltas.
+  \item Hardware and stack differ across rungs: L4 for 0.6B--4B, A100 lanes for the October 8B legs,
+  one Blackwell card for the November 8B legs (torch 2.11 against the October 2.1.2); nominal
+  effective batch was matched, optimizer-step and numerical equivalence were not.
+  \item The 8B rung is not a full $2\times2$ and not uniform in evidence class: one arm carries the
+  pre-registered paired generation (the $10^{-5}$ seed-1 survivor), the selected $5\times10^{-5}$
+  rate has curriculum-band reads on two seeds with no paired generation, and the $10^{-5}$ seed-0 leg
+  was never completed. Within-size coverage is partial and the October A100 legs are not reproduced.
+  \item The 1.7B learning-rate provenance item is unresolved and further narrows what the 1.7B
+  rows can claim protocol compliance for.
+  \item No bullwhip-amplification statistic, order-trajectory plot, or reliability-tail analysis is
+  supplied; costs alone do not measure the reliability dimension the reference paper targets (its
+  headline is variance compression).
+\end{itemize}
+
+\section{Reproducibility statement}\label{sec:repro}
+The audit trail is tiered, stated as such, and the tiers are per cohort rather than per rung.
+(a) Full per-run JSON on the primary cluster archive, committed: the 0.6B wave-7 arms, the untrained
+0.6B/1.7B/4B controls, the \emph{November} 1.7B and 4B generations with their permutation JSON, the
+November 8B curriculum-band cost rows, and the frozen per-rung gate files with per-rung model
+revisions. The \emph{October} 1.7B and 4B per-run files are not in this tier: they were never
+committed and did not survive, so every October 4B and 1.7B figure in this paper is
+document-recorded from the verdict documents and labelled as such.
+(b) Incomplete: the wave-8 0.6B R1 arm directories and their two curriculum-band files are
+\emph{no longer present} on the archive, removed by the repository's own results slim-down rather
+than by this paper's preparation. What survives is the job log holding every round read, the stop
+and \texttt{DONE} markers, the record of the accidental resume, and
+\texttt{w8-band-record.json}, which makes the 0.6B wave-8 rows log-sourced and the weakest
+provenance in the paper. The 1.7B 5e-5 arm is in the same class minus the removal: its checkpoint
+directory and stop marker exist, and its final-eval files never existed because the task stopped
+before evaluation (a stop, not an archive defect). (c) 8B is split: the October legs are document-level only (verdict doc with leg-by-leg timings,
+sbatch and Modal job IDs, lane metadata) and no October 8B raw JSONL was recovered; the November
+legs have committed cost rows and summaries, no committed full traces (a transfer corrupted them),
+and no surviving adapters. Module names, commit anchors, and the per-provider library stack
+(declared versions, not runtime-verified) are inventoried in supplement S5. Raw pairs regenerate every November number in Section~\ref{sec:results}; October numbers are
+document-recorded and labelled per row, and no reader should expect them to regenerate, and recovering raw 8B evals would be new evidence that would not
+silently replace the historical rows. The repository and artifacts are available on request.
+
+\section*{Acknowledgments}
+This is an unfunded independent replication program. The authors of \cite{long2026} are the
+reference pole, not co-authors. Thanks to the TU/e Umbrella compute staff for generous L4 time.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}\itemsep 0pt
+\bibitem{long2026} C.~X. Long, D.~Simchi-Levi, F.~Zhu, H.~Su, A.~P.~Calmon,
+F.~P.~Calmon, ``Reliability and Effectiveness of Autonomous AI Agents in Supply Chain
+Management,'' \texttt{arXiv:2605.17036}, version 4 (21 September 2026); v1 2026-05-16;
+accessed 22 October 2026.
+\bibitem{supplement} P.~Frenken, ``Methods supplement: gates, per-round readings, task ledger and
+provenance inventory for the four-scale closed-choice bullwhip study,''
+\texttt{docs/paper/paper-supplement.tex}, 2026.
+\bibitem{rlcd} K.~Yang, D.~Klein, A.~Celikyilmaz, N.~Peng, Y.~Tian,
+``RLCD: Reinforcement Learning from Contrastive Distillation for Language Model Alignment,''
+\texttt{arXiv:2307.12950} (2023; ICLR 2024).
+\bibitem{grpo} Z.~Shao, P.~Wang, Q.~Zhu, R.~Xu, J.~Song, X.~Bi, H.~Zhang, M.~Zhang,
+Y.~K.~Li, Y.~Wu, D.~Guo, ``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
+Language Models,'' \texttt{arXiv:2402.03300} (2024). (GRPO.)
+\bibitem{lora} E.~J.~Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang,
+W.~Chen, ``LoRA: Low-Rank Adaptation of Large Language Models,'' \texttt{arXiv:2106.09685} (2021).
+\bibitem{aimbench} X.~Zhao, Y.~Xie, C.~Chen, Y.~Sun, ``AIM-Bench: Evaluating Decision-making
+Biases of Agentic LLM as Inventory Manager,'' \texttt{arXiv:2508.11416} (2025).
+\bibitem{sterman} J.~D. Sterman, ``Modeling Managerial Behavior: Misperceptions of Feedback in a
+Dynamic Decision Making Experiment,'' \textit{Management Science} 35(3), 321--339 (1989).
+\end{thebibliography}
+
+\appendix
+\section{Recipe $\times$ protocol delta table}\label{app:deltas}
+Rows are split by component; the KL-reference row is shared (the reference's v4 objective eq.~2
+already penalizes $D_{\mathrm{KL}}(\pi_\theta \Vert \pi_{\mathrm{ref}})$ to a frozen
+$\pi_{\mathrm{ref}}$), so it is NOT a delta.
+
+\noindent The methods supplement \cite{supplement} carries S1--S5, the gates, detector readings, task
+ledger, denominators and provenance inventory, and then the two sections bearing on numbers here: S6
+the November rebuild, which repeats both verdicts and revises the 4B seed-1 median, and S7 the
+November 8B re-training, two seeds, both passing G1.
+
+\begin{table}[ht]
+\centering
+\caption{\cite{long2026} v4 vs this paper, per component.}
+\begin{tabular}{@{}p{3.4cm}p{4.6cm}p{4.6cm}@{}}
+\toprule
+\textbf{Component} & \textbf{Reference (2605.17036 v4)} & \textbf{This paper} \\
+\midrule
+Cost/advantage normalization & group-sampled form over $G$ rollouts & per-state
+$z$-score enumerated over all 26 choices \\
+KL reference policy & frozen $\pi_{\mathrm{ref}}$ (v4 eq.~2), shared & frozen
+per-state anchor (shared) \\
+Readout & free-form autoregressive orders & closed-choice letter logits (26 letters) \\
+Reward attribution & rollout (return-to-go) vs episode & exact per-(state,action)
+continuation cost $J$ \\
+Model & one shared backbone, four echelons (global); per-echelon models
+(decentralized) & one shared backbone across roles \\
+Reward aggregation studied & agent-level vs system-level & system-level continuation
+cost (closest to rollout + system scope) \\
+Training-run seed count & not stated in the v4 text we could read & pre-registered per
+rung (Table~\ref{tab:ledger}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

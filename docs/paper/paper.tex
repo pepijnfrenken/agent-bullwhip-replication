@@ -27,9 +27,11 @@ A published claim \cite{long2026} reports that a GRPO-tuned 4B agent beats its o
 baseline on cost in a four-tier beer-game environment. We report a pre-registered, commit-dated
 protocol testing a claim of that type at four model scales (0.6B, 1.7B, 4B, 8B), as an adaptation
 study: our training procedure and readout differ from the published recipe in enumerated ways
-(Appendix~\ref{app:deltas}). \textbf{4B passes} the frozen paired cost criteria on both evaluated
-seeds (medians 8{,}315 and 7{,}612 vs matched untrained control 21{,}578; 30/30 paired wins per
-seed; sign-test $p = 2^{-30}$; median-ratio and median-of-per-path reductions 61.5--64.8\%).
+(Appendix~\ref{app:deltas}). \textbf{4B passes} the frozen paired cost criteria. The November rebuild, whose per-run files are
+committed, passes on both seeds (30/30 and 25/30 paired wins; medians 9{,}346 and 17{,}958 against
+a matched control of 21{,}578; $p \le 1.6\times10^{-4}$). The October pair recorded 8{,}315 and
+7{,}612 at 30/30 per seed in a verdict document whose raw paired files did not survive, so its
+reductions are document-recorded rather than recomputable.
 \textbf{1.7B is adverse}: all three evaluated seeds regress against their matched control
 ($1.87\times$--$6.19\times$, 0/30 wins each). \textbf{0.6B} has negative wave-7 paired comparisons
 on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
@@ -287,8 +289,15 @@ curriculum-validation means.}
 \end{tabular}
 \end{table}
 
-\paragraph{4B, the passing rung, with both effect sizes and both statistics.} Both seeds pass
-the frozen G1 in full on the final-eval generation against the matched untrained-4B control:
+\paragraph{4B, the passing rung, in two cohorts.} Two generations pass the frozen G1 on the
+final-eval generation against a matched untrained-4B control, and they are not the same evidence.
+The October cohort is document-recorded: the verdict document gives 8{,}315 and 7{,}612 at 30/30
+wins per seed, its per-run files did not survive, and the document calls the metric the ``same
+metric'' as an 8B validation mean rather than naming it a median, so the estimand of those two
+figures is unresolved (supplement S5, and the audit record). The November rebuild is
+artifact-backed and is what the committed rows regenerate: 9{,}346 (seed 0) and 17{,}958 (seed 1)
+against the same control, at 30/30 and 25/30 wins. The October rows below carry both statistics
+because the paper reports them; the November rows carry only what a file holds:
 \begin{itemize}
   \item median cost 8{,}315 (seed 0) and 7{,}612 (seed 1) vs matched untrained control 21{,}578;
   median-ratio reductions 61.5\% and 64.7\%, against a 15\% criterion (the mean costs, the median of
@@ -363,7 +372,9 @@ Section~\ref{sec:prov}). Validation-band means, the declared selection input
 ($n{=}30$ argmax runs): 5e-5 arm 35{,}289 / 12{,}444 (pooled 23{,}867); 1e-5 arm 71{,}855 /
 22{,}083 (pooled 46{,}969), so the frozen rule selects 5e-5. No selection JSON was recovered and three
 adapters were lost with their archives, so the selected rate was re-trained rather than recovered:
-two seeds in November on one Blackwell card, same gates, labels and configuration. These legs carry
+two seeds in November on one Blackwell card, same gates, labels and configuration. A separate
+$10^{-5}$ seed-0 8B run on the TU/e L4 lane read 99{,}618 on its band; it is not one of the four
+selection legs and is excluded from the selection means by the reconciliation note. These legs carry
 a \emph{curriculum-band} read, not the pre-registered noisy-argmax generation. Against the untrained
 curriculum control (median 93{,}603, mean 104{,}676) they read:
 \begin{itemize}
@@ -512,9 +523,13 @@ claimed.
 \end{itemize}
 
 \section{Reproducibility statement}\label{sec:repro}
-The audit trail is tiered, stated as such. (a) Full per-run JSON on the primary cluster archive:
-0.6B wave-7 arms, the untrained 0.6B/1.7B/4B controls, trained 1.7B and 4B (both generations,
-permutation JSON included), and the frozen per-rung gate files with per-rung model revisions.
+The audit trail is tiered, stated as such, and the tiers are per cohort rather than per rung.
+(a) Full per-run JSON on the primary cluster archive, committed: the 0.6B wave-7 arms, the untrained
+0.6B/1.7B/4B controls, the \emph{November} 1.7B and 4B generations with their permutation JSON, the
+November 8B curriculum-band cost rows, and the frozen per-rung gate files with per-rung model
+revisions. The \emph{October} 1.7B and 4B per-run files are not in this tier: they were never
+committed and did not survive, so every October 4B and 1.7B figure in this paper is
+document-recorded from the verdict documents and labelled as such.
 (b) Incomplete: the wave-8 0.6B R1 arm directories and their two curriculum-band files are
 \emph{no longer present} on the archive, removed by the repository's own results slim-down rather
 than by this paper's preparation. What survives is the job log holding every round read, the stop
@@ -522,12 +537,12 @@ and \texttt{DONE} markers, the record of the accidental resume, and
 \texttt{w8-band-record.json}, which makes the 0.6B wave-8 rows log-sourced and the weakest
 provenance in the paper. The 1.7B 5e-5 arm is in the same class minus the removal: its checkpoint
 directory and stop marker exist, and its final-eval files never existed because the task stopped
-before evaluation (a stop, not an archive defect). (c) For 8B, document-level provenance only
-(verdict doc with leg-by-leg timings, sbatch and Modal job IDs, lane metadata); no 8B raw JSONLs of
-either generation were recovered. Module names, commit anchors, and the per-provider library stack
-(declared versions, not runtime-verified) are inventoried in supplement S5. Raw pairs regenerate
-every number in Section~\ref{sec:results}, numbers are labelled recomputed-from-raw or
-document-recorded per row, and recovering raw 8B evals would be new evidence that would not
+before evaluation (a stop, not an archive defect). (c) 8B is split: the October legs are document-level only (verdict doc with leg-by-leg timings,
+sbatch and Modal job IDs, lane metadata) and no October 8B raw JSONL was recovered; the November
+legs have committed cost rows and summaries, no committed full traces (a transfer corrupted them),
+and no surviving adapters. Module names, commit anchors, and the per-provider library stack
+(declared versions, not runtime-verified) are inventoried in supplement S5. Raw pairs regenerate every November number in Section~\ref{sec:results}; October numbers are
+document-recorded and labelled per row, and no reader should expect them to regenerate, and recovering raw 8B evals would be new evidence that would not
 silently replace the historical rows. The repository and artifacts are available on request.
 
 \section*{Acknowledgments}

@@ -1,0 +1,25 @@
+{
+  "title": "Post-Tuning Closed-Choice LLM Agents Across Four Model Sizes: \nCost Comparisons, Training Stops, and Incomplete Evaluation \non a Simulated Bullwhip Environment",
+  "authors": [
+    "Pepijn Frenken"
+  ],
+  "affiliation_note": "Independent researcher; TU/e Umbrella L4 lane credited as compute provider",
+  "contact": "pepijn@pepijnfrenken.nl",
+  "primary_category": "cs.AI",
+  "cross_list": [
+    "cs.LG"
+  ],
+  "comments": "12 pages main text, 13 pages methods supplement. Pre-registered adaptation study of arXiv:2605.17036v4. Protocol, gates, stop-loss and run ledger are the product; artifacts committed at sha 22ca471.",
+  "license_recommendation": "CC BY 4.0 for the paper, MIT for the code, with the caveat that the reference paper's own license is not inherited",
+  "reproducibility_pointer": "https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/22ca47199ce3ea5c0bcc322e8642017bb9115643",
+  "commit": "22ca47199ce3ea5c0bcc322e8642017bb9115643",
+  "abstract": "A published claim (Long, Simchi-Levi, Zhu, Su, Calmon and Calmon, 2026) reports that a GRPO-tuned 4B agent beats its own untrained baseline on cost in a four-tier beer-game environment. We report a pre-registered, commit-dated protocol testing a claim of that type at four model scales (0.6B, 1.7B, 4B, 8B), as an adaptation study: our training procedure and readout differ from the published recipe in enumerated ways (Appendix app:deltas ). 4B passes the frozen paired cost criteria. The November rebuild, whose per-run files are committed, passes on both seeds (30/30 and 25/30 paired wins; medians 9 , 346 and 17 , 958 against a matched control of 21 , 578; p <= 1.6x10^ -4 ). The October pair recorded 8 , 315 and 7 , 612 at 30/30 per seed in a verdict document whose raw paired files did not survive, so its reductions are document-recorded rather than recomputable. 1.7B is adverse: all three evaluated seeds regress against their matched control (1.87x--6.19x, 0/30 wins each). 0.6B has negative wave-7 paired comparisons on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks were resumed past a stop, two of them by one unattended resubmission, and the completed read still fails the output-mass gate. 8B is evaluable on one of its four arms: the 10^ -5 seed-1 adapter survived, and against a matched untrained-8B control it passes every G1 gate on the pre-registered noisy-argmax generation (medians 14 , 595 vs 89 , 633; 29/30 paired wins; p = 2.9x10^ -8 ). The arm the frozen rule selected was re-trained in November on both seeds, and reads 0.108 and 0.164 of a curriculum control (10 , 097 and 15 , 355 vs 93 , 603; 30/30 and 28/30) but has no pre-registered paired generation; the 10^ -5 seed-0 leg was not completed. A November 2026 rebuild from the committed kit reproduces both verdicts and the untrained control medians (Section sec:rebuild ); its 4B seed-1 median is 17 , 958 rather than 7 , 612, at 25/30 wins. The frozen selection and pooling rules are the methodological product: the two seeds at one learning rate differ by 1.52x, so the arm-level mean is reported and neither seed is quoted alone.",
+  "files": {
+    "main": "paper.pdf",
+    "supplement": "paper-supplement.pdf",
+    "sources": [
+      "paper.tex",
+      "paper-supplement.tex"
+    ]
+  }
+}
