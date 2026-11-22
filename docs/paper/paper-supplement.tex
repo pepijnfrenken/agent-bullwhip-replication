@@ -251,10 +251,10 @@ control median.}
 JSONL lost (S5) \\
 4B lr5e-5 s1 & not C & evaluated, passing & 7{,}612; 30/30 & verdict doc; raw JSONL lost (S5) \\
 \midrule
-8B lr5e-5 s0 & n/a & trained, no final eval & band mean 35{,}289 & verdict doc \\
-8B lr5e-5 s1 & n/a & trained, no final eval & band mean 12{,}444 (pooled 23{,}867) & verdict doc \\
-8B lr1e-5 s0 & n/a & trained, no final eval & band mean 71{,}855 & verdict doc \\
-8B lr1e-5 s1 & n/a & trained, no final eval & band mean 22{,}083 (pooled 46{,}969) & verdict doc \\
+8B lr5e-5 s0 & n/a & Oct trained, no eval; Nov re-trained, paired & Oct band 35{,}289; Nov paired 89{,}633$\to$10{,}097, 29/30 & verdict doc; Nov \texttt{.costs.jsonl} \\
+8B lr5e-5 s1 & n/a & Oct trained, no eval; Nov re-trained, paired & Oct band 12{,}444; Nov paired 89{,}633$\to$15{,}355, 29/30 & verdict doc; Nov \texttt{.costs.jsonl} \\
+8B lr1e-5 s0 & n/a & Oct trained, no eval; Nov attempt lost & Oct band 71{,}855; Nov leg died in round 3 & verdict doc \\
+8B lr1e-5 s1 & n/a & Oct trained; band-only & band 22{,}083 (pooled 46{,}969), $0.21\times$ control & verdict doc; adapter on Modal volume \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -549,10 +549,54 @@ reported above. It is stated because a duplication of that kind would have silen
 evidence for a second time.
 
 
-\section{S7. The 8B arm that could be evaluated, November 2026}\label{sec:s7}
+\section{S7. The 8B rung, November 2026}\label{sec:s7}
 
-The body reports 8B as one arm evaluable and three band-only. This section carries the artifacts
-behind that sentence, including the two failed attempts, because the sequence is the evidence.
+The body reports 8B as evaluable at the selected learning rate on two seeds. This section carries
+the artifacts behind that sentence in the order they were produced: the one adapter that survived
+October, the two November re-training legs at $5\times10^{-5}$, and the losses, including a third
+November leg that died with its sandbox and the eval traces that a transfer corrupted. The sequence
+is the evidence, so the failures are kept.
+
+\subsection*{The November re-training legs at the selected learning rate}
+
+Two legs, lr $5\times10^{-5}$, seeds 0 and 1, run on 2026-11-22 on one RTX PRO 6000 Blackwell
+card with 95.6\,GiB usable, 20 CPUs, torch 2.11.0+cu130, transformers 4.55.4 and peft 0.21.1.
+Configuration identical for both: \texttt{decision\_rounds run --arm r1}, three rounds of 170
+steps, batch 32, maximum length 1024, gradient checkpointing, save every 10 steps, eight rollout
+processes, gates \texttt{results/wave8/gates\_8b.json}. Frozen inputs were checked before launch:
+\texttt{S\_nom.jsonl} at \texttt{f651fc58\ldots6aaa8} and the gate file at \texttt{b6194407\ldots1f90}.
+
+\begin{center}\small
+\begin{tabular}{lrrrrrrr}
+\hline
+seed & wall & band mean (min--max) & min mass & wins & ratio & cut & $p$ \\
+\hline
+0 & 62\,min & 10{,}892 (7{,}168--19{,}524) & 0.99997 & 29/30 & 0.1126 & 88.7\% & $2.9\times10^{-8}$ \\
+1 & 62\,min & 15{,}411 (13{,}059--19{,}586) & 0.99973 & 29/30 & 0.1713 & 82.9\% & $2.9\times10^{-8}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+Both read against the same untrained-8B control, median 89{,}633, whose readout prompt SHA
+\texttt{55bdc663\ldots c422} is byte-identical to each arm's, so the 30 paired demand paths are the
+same on both sides. Reproduce with
+\texttt{scripts/wave8\_g1\_read.py results/eval/w8-untrained-8b-argmax-noisy.jsonl
+results/wave8\_val/w8-val-r1-8b-lr5e-5-seed\{0,1\}.costs.jsonl}. The two seeds sit
+$1.52\times$ apart on the same control.
+
+\textbf{Collapse gates.} No round tripped the stop-loss on either seed; the $I$ statistic reads
+0.5017, 0.5103 and 1.0998 across seed 0's three rounds. The gate JSON files record only $I$ and
+write \texttt{medH} and \texttt{modal\_share} as null, while the console printed 0.001 and 0.895 for
+round 1 and 0.011 and 0.699 for round 3. A reader opening the files sees the nulls, so the printed
+values are quoted here rather than inferred.
+
+\textbf{What was lost, in this attempt.} A third leg, $10^{-5}$ seed 0, started after seed 1 and
+was in its third round when the sandbox was reclaimed; it wrote no validation read and is not
+evaluable. The LoRA adapters of both completed legs went down with the instance. The full-trace
+evaluation JSONLs were pulled as a 750\,KB base64 payload inside a cell print and landed corrupt,
+12 of 30 rows parseable and the file ending mid-object; they are removed rather than kept, and the
+30-row cost extracts that G1 actually consumed are committed in their place. The defect is named
+because it will recur: printed blobs above a few kilobytes do not survive that channel intact.
 
 \subsection*{What survived and where}
 

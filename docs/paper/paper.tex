@@ -35,14 +35,14 @@ seed; sign-test $p = 2^{-30}$; median-ratio and median-of-per-path reductions 61
 on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
 detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks
 were resumed past a stop (one accidentally, one under written override), and the completed read
-still fails the output-mass gate. \textbf{8B is evaluable on one of its four arms}: the $10^{-5}$ seed-1 adapter survived, and
-against a November-matched untrained-8B control it passes every G1 gate (medians 14{,}595 vs
-89{,}633; 29/30 paired wins; $p = 2.9\times10^{-8}$; 83.7\% reduction). Three arms lost their adapters; the
-passing arm is the one the frozen rule did not select. A November 2026 rebuild from the committed kit reproduces both verdicts
+still fails the output-mass gate. \textbf{8B is evaluable on the arm the frozen rule selected}: two seeds at $5\times10^{-5}$
+were re-trained in November, and both pass every G1 gate against a matched untrained-8B control
+(medians 10{,}097 and 15{,}355 vs 89{,}633; 29/30 paired wins each; $p = 2.9\times10^{-8}$;
+88.7\% and 82.9\% reductions). One October arm stays band-only and one was not completed. A November 2026 rebuild from the committed kit reproduces both verdicts
 and the untrained control medians (Section~\ref{sec:rebuild}); its 4B seed-1 median is
 17{,}958 rather than 7{,}612, at 25/30 wins. The frozen selection and pooling rules are the methodological
-product: at 8B the outcome-blind rule selects the arm whose weights are gone, and no post-hoc arm
-switch is taken.
+product: the two seeds at one learning rate differ by $1.52\times$, so the arm-level mean is
+reported and neither seed is quoted alone.
 
 \end{abstract}
 
@@ -277,7 +277,7 @@ curriculum-validation means.}
 0.6B w8 & exact-grad & stopped before final eval & collapse tripped on all 6 tasks; 5 stopped pre-eval & stopped \\
 1.7B & exact-grad, 3 seeds & final-eval medians & ctl 11{,}508; medians 21{,}468/43{,}660/71{,}270 & adverse (0/3) \\
 4B & exact-grad, 2 seeds & final-eval medians and means & ctl 21{,}578; \textbf{pass both seeds} & \textbf{pass (2/2)} \\
-8B & exact-grad, 4 legs & one arm paired 29/30; three band-only & three adapters lost with their archives & \textbf{one arm passes} \\
+8B & exact-grad, 4 legs & selected-lr arm paired 29/30 on both seeds & one arm band-only, one not completed & \textbf{pass (2/2 at $5{\times}10^{-5}$)} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -350,28 +350,27 @@ $3.2\times10^{-4}$, the readout having left the label set). Its band means are 9
 has a matched final evaluation, so the wave-8 0.6B outcome is a stopped procedure, distinct from a
 measured cost regression; the wave-7 rows carry the measured negative.
 
-\paragraph{8B, one arm evaluable, three band-only.} All four 8B planned
-legs (2 lr $\times$ 2 seeds) trained on external A100 lanes (Snellius jobs \texttt{28414248}
-and \texttt{28418615} for the seed-0 legs; two Modal legs completed the seed-1 legs after the
-budget amendment, Section~\ref{sec:prov}). Validation-band means (the declared
-selection input, $n{=}30$ argmax runs): 5e-5 arm 35{,}289 / 12{,}444 (pooled 23{,}867); 1e-5 arm
-71{,}855 / 22{,}083 (pooled 46{,}969), so the frozen rule selects 5e-5; no selection JSON was
-recovered.
-Three legs lost their adapters with the archives they ran in. The $10^{-5}$ seed-1 adapter
-survived as a 30.7\,MB checkpoint on a run volume, and a November evaluation against an
-untrained-8B control on the same demand paths makes that one arm evaluable (supplement S7):
+\paragraph{8B: the selected learning rate, re-trained and evaluated.} The four 8B planned legs
+(2 lr $\times$ 2 seeds) trained on external A100 lanes in October (Snellius \texttt{28414248} and
+\texttt{28418615} for seed 0; two Modal legs for seed 1 after the budget amendment,
+Section~\ref{sec:prov}). Validation-band means, the declared selection input
+($n{=}30$ argmax runs): 5e-5 arm 35{,}289 / 12{,}444 (pooled 23{,}867); 1e-5 arm 71{,}855 /
+22{,}083 (pooled 46{,}969), so the frozen rule selects 5e-5. No selection JSON was recovered and three
+adapters were lost with their archives, so the selected rate was re-trained rather than recovered:
+two seeds in November on one Blackwell card, same gates, labels and configuration. Both pass every G1 gate against the matched untrained-8B
+control on the same 30 demand paths, the readout's prompt SHA byte-identical to the control's (S7):
 \begin{itemize}
 
-  \item \emph{Paired read}: 29/30 paired wins, $p = 2.9\times10^{-8}$, a 0.163 median ratio and a
-  0.157 median of per-path reductions. Every frozen G1 gate passes; the tables are in S7.
-  \item \emph{Band, both arms}: the evaluated arm reads 22{,}083 on the band against an
-  untrained-8B band of 104{,}676 ($0.21\times$), and the selected 5e-5 arm's document-level band
-  means sit at $0.34\times$ (35{,}289) and $0.12\times$ (12{,}444) of the same control, pooled
-  $0.23\times$. Both arms read favourably at band level; only one has a paired generation.
-  \item \emph{Selection mismatch}: the arm that passes is the arm the frozen rule did not select.
-  No post-hoc arm switch is taken, so the rung is one arm passing and the selected arm unevaluated,
-  weaker than an 8B verdict.
-\end{itemize}
+  \item \emph{Seed 0}: 29/30 paired wins, $p = 2.9\times10^{-8}$, median ratio 0.1126 (88.7\%;
+  88.2\% per-path), band mean 10{,}892.
+  \item \emph{Seed 1}: 29/30 paired wins, $p = 2.9\times10^{-8}$, median ratio 0.1713 (82.9\%;
+  83.4\% per-path), band mean 15{,}411.
+  \item \emph{Seed spread}: 10{,}097 against 15{,}355 on one control, $1.52\times$ apart; both clear
+  the bar, so the frozen rule reports the arm mean and not a seed.
+  \item \emph{Unevaluated}: the $10^{-5}$ seed-1 arm keeps only its October band (22{,}083,
+  $0.21\times$ control) and $10^{-5}$ seed 0 was never completed; the rung is not a full $2\times2$.
+\end{itemize}Gates and labels are byte-identical to the frozen files, which is what makes the comparison
+meaningful.
 
 \paragraph{Permutation diagnostic.} The pre-registered consequence of the shared near-zero
 permutation read (0.000 on the untrained control and every wave-7 arm; 0.047 and 0.039 on the passing
@@ -460,10 +459,11 @@ with an incomplete planned second learning-rate arm. One rung (0.6B) is negative
 arm--seed rows, and its wave-8 exact-gradient procedure is a stopped run: collapse tripped on all
 six tasks at round 1, a persisted stop marker survives on five, two were later resumed past a stop
 (one by a runner accident, one under a written override), and the completed read fails the
-output-mass gate. One rung (8B) is evaluable on a single arm whose adapter survived; the arm the frozen rule
-chose lost its adapters. Closed-choice readouts eliminated invalid actions and simplified the
-comparison; exact-enumeration outcome-scored post-training paid off under the frozen rule at 4B and on
-one 8B arm, while 1.7B and 0.6B are adverse or stopped and the selected 8B arm is unevaluated.
+output-mass gate. One rung (8B) is evaluable at the learning rate the frozen rule selected, on both
+seeds, from two November legs whose evaluation rows are committed and whose adapters did not survive.
+Closed-choice readouts eliminated invalid actions and simplified the comparison; exact-enumeration
+outcome-scored post-training paid off under the frozen rule at 4B and at 8B, while 1.7B and 0.6B are
+adverse or stopped, one 8B arm stays band-only and one was not completed.
 
 \paragraph{The selection rule as a methodological point.} The 8B seed spread inside the selected
 arm (35{,}289 vs 12{,}444) is the worked example: a per-seed report can pick the flattering seed, the
@@ -487,10 +487,12 @@ claimed.
   shared, not a delta (Appendix~\ref{app:deltas}). A verbatim re-run of the reference GRPO recipe
   or of published RLCD \cite{rlcd} is future work, and this study's positive rung is conditional
   on our recipe deltas.
-  \item Hardware differs across rungs (L4 for 0.6B--4B; A100 lanes for 8B across two providers);
-  nominal effective batch was matched, optimizer-step and numerical equivalence were not.
-  \item No matched untrained-8B control evaluation and no 8B final-eval generation exist; the 8B
-  row's within-size verdict is genuinely unevaluated, not negative.
+  \item Hardware and stack differ across rungs: L4 for 0.6B--4B, A100 lanes for the October 8B legs,
+  one Blackwell card for the November 8B legs (torch 2.11 against the October 2.1.2); nominal
+  effective batch was matched, optimizer-step and numerical equivalence were not.
+  \item The 8B rung is not a full $2\times2$: two seeds at the selected $5\times10^{-5}$ carry paired
+  generations, the $10^{-5}$ seed-1 arm stays band-only and the $10^{-5}$ seed-0 arm was never
+  completed. Within-size coverage is therefore partial, and the October A100 legs are not reproduced.
   \item The 1.7B learning-rate provenance item is unresolved and further narrows what the 1.7B
   rows can claim protocol compliance for.
   \item No bullwhip-amplification statistic, order-trajectory plot, or reliability-tail analysis is
@@ -549,6 +551,12 @@ Dynamic Decision Making Experiment,'' \textit{Management Science} 35(3), 321--33
 Rows are split by component; the KL-reference row is shared (the reference's v4 objective eq.~2
 already penalizes $D_{\mathrm{KL}}(\pi_\theta \Vert \pi_{\mathrm{ref}})$ to a frozen
 $\pi_{\mathrm{ref}}$), so it is NOT a delta.
+
+\noindent The methods supplement \cite{supplement} carries S1--S5, the gates, detector readings, task
+ledger, denominators and provenance inventory, and then the two sections bearing on numbers here: S6
+the November rebuild, which repeats both verdicts and revises the 4B seed-1 median, and S7 the
+November 8B re-training, two seeds, both passing G1.
+
 \begin{table}[ht]
 \centering
 \caption{\cite{long2026} v4 vs this paper, per component.}
@@ -573,12 +581,4 @@ rung (Table~\ref{tab:ledger}) \\
 \end{tabular}
 \end{table}
 
-\section{Where the moved detail lives}\label{app:moved}
-The methods supplement \cite{supplement} carries: S1 gate definitions with every frozen threshold and
-the archived gate file per rung;
-S2 per-round detector readings with the branch verdicts recomputed; S3 the full 24-row task ledger
-with marker sequences and evidence per row; S4 the registered denominator text and both estimands at
-the learning-rate-arm unit; S5 the provenance inventory (anchors, lanes, jobs, modules, evidence per rung);
-S6 the November rebuild, which repeats both verdicts and revises the 4B seed-1 median; S7 the November
-8B read, which turns that rung's refusal into a per-arm result. S6 and S7 bear on published numbers.
 \end{document}
