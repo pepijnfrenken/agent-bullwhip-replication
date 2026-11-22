@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this protocol or these results, cite the manuscript."
+title: "Post-Tuning Closed-Choice LLM Agents Across Four Model Sizes: Cost Comparisons, Training"
+authors:
+  - family-names: Frenken
+    given-names: Pepijn
+    affiliation: "Independent researcher; TU/e Umbrella L4 lane credited as compute provider"
+year: 2026
+license: MIT
+repository-code: "https://github.com/pepijnfrenken/agent-bullwhip-replication"
+abstract: >-
+  A pre-registered, commit-dated adaptation study of the claim in arXiv:2605.17036v4 that a
+  GRPO-tuned 4B decision agent beats its own untrained baseline on cost in a four-tier beer-game
+  environment, tested at 0.6B, 1.7B, 4B and 8B with frozen gates, a collapse stop-loss and a
+  seed-pooling rule.

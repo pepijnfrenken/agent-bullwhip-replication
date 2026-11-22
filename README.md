@@ -19,8 +19,38 @@ This repo spans **7 waves**: API-LLM arms (1–3), a tool-calling arm (4), a dec
 (5), local GRPO training (6), and decision-native training — soft-target SFT + RLCD (7). The
 latest wave's verdict is **interface positive, training null-to-negative** (closed-choice readout
 kills the rogue tail; outcome-label training at 0.6B made policy worse).
-Wave 6-fix (contract micro-probe) and wave 8 (Clef-style decision-model arm) are implemented and staged for the
-cluster but **not run** — see `docs/waves/STAGING-READY.md`.
+Wave 8 (Clef-style decision-model arm) ran on the TU/e Umbrella L4 lane and then on a single 96 GB card:
+a four-size ladder at 0.6B, 1.7B, 4B and 8B testing whether a GRPO-tuned decision agent beats its own
+untrained baseline on cost. Verdicts and every gate read are in `docs/waves/`; the manuscript is in
+`docs/paper/`.
+
+---
+
+## The paper
+
+*Post-Tuning Closed-Choice LLM Agents Across Four Model Sizes: Cost Comparisons, Training.*
+A pre-registered, commit-dated adaptation study of the claim in arXiv:2605.17036v4 that a
+GRPO-tuned 4B agent beats its own untrained baseline on cost.
+
+- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 12 pages, source `docs/paper/paper.tex`
+- Methods supplement S1–S7: [`docs/paper/paper-supplement.pdf`](docs/paper/paper-supplement.pdf), 13 pages
+- Submission package (metadata, abstract, checklist, checksums): [`docs/arxiv/`](docs/arxiv/)
+- Build both with `tectonic paper.tex` and `tectonic paper-supplement.tex` from `docs/paper/`
+
+The paper's product is the protocol, not a win: frozen gates, a collapse stop-loss, a seed-pooling
+rule that refuses a favourable single-seed reading, and a full run ledger. Verdicts as published:
+4B passes the frozen paired cost criteria on both cohorts; 1.7B is adverse on all three seeds; 0.6B
+is negative with one procedure stopped by its own stop-loss; 8B is evaluable on one arm only, and
+where it is not, the paper says which artifact is missing rather than softening the claim.
+
+Numbers are labelled by provenance. `results/` artifacts regenerate the November 2026 numbers;
+October 2026 numbers are document-recorded, and the sections that say so are not small print.
+
+What is not in this repository, deliberately: LoRA adapters and model weights (large, and carrying
+their own licenses), and any credential. Everything a published sentence depends on is here, and
+`docs/waves/RESULTS-RETENTION.md` states the rule that keeps it here: an artifact counts as saved
+only when it exists in the cluster working tree, in this repository, and in a local checksummed
+snapshot.
 
 ---
 

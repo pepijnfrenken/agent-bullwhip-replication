@@ -24,7 +24,7 @@ hub; nothing committed to any repo; no existing desktop processes disturbed
 ## 2. What worked (exact patterns)
 
 - **Remote driver** (local hub shell): `ssh -o BatchMode=yes -o ConnectTimeout=10
-  pino@100.122.67.126 "wsl -d Ubuntu-24.04 -- bash -s" < /path/script.sh 2>&1 | tr -d '\0\r'`
+  pino@<desktop-tailnet-ip> "wsl -d Ubuntu-24.04 -- bash -s" < /path/script.sh 2>&1 | tr -d '\0\r'`
   Root variant: `wsl -d Ubuntu-24.04 -u root -- bash -s` (no password).
 - **Probe proof**: `FREEINFERENCE_API_KEY=<freeinference key> ~/.bun/bin/omp -p
   "Reply with exactly: DESKTOP-OMP-OK"` → printed `DESKTOP-OMP-OK`.
@@ -146,7 +146,7 @@ exec ~/.bun/bin/omp -p \
    whether the loop survives step 4. Do not modify repo files except results/GRPO outputs."
 EOF
 chmod +x /tmp/wave6_pilot.sh
-ssh -o BatchMode=yes -o ConnectTimeout=10 pino@100.122.67.126 \
+ssh -o BatchMode=yes -o ConnectTimeout=10 pino@<desktop-tailnet-ip> \
   "wsl -d Ubuntu-24.04 -- bash -s" < /tmp/wave6_pilot.sh 2>&1 | tr -d '\0\r'
 ```
 
@@ -156,10 +156,10 @@ For multi-hour runs use the §3 systemd-run pattern instead (survives ssh drops)
 
 ## 11b. Operator hardening (2026-09-21, inbound update)
 
-- Desktop firewall port 2222 is now restricted to the Tailscale range 100.64.0.0/10; SSH
+- Desktop firewall port <port> is now restricted to the Tailscale range 100.64.0.0/10; SSH
   rules exclude the Public profile. Operator verified both access paths.
 - **DO NOT** run `netsh interface portproxy set/delete/add` or modify any firewall rule —
-  doing so could undo the hardening or break remote access. Path B (2222 portproxy) work
+  doing so could undo the hardening or break remote access. Path B (portproxy) work
   is permanently OFF the table; Path A remains the default.
 - FreeInference key handling rule: read from hub `~/.omp/agent/models.yml` when a mission
   needs it; never paste it into any written file. (Desktop `~/.omp/agent/models.yml` =

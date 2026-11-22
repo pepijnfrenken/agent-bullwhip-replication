@@ -74,8 +74,7 @@ content grep for the path strings across `*.log`, `*.md`, `*.txt`, `*.json` unde
   all refs. `results/` holds 328 tracked files and every one is wave-7 or earlier.
 - Never pulled back. `hpc-umbrella/push_results.sh` is the rsync-plus-commit path used for wave-7
   ("wave-7 eval results (job 398422)"). No wave-8 submission runs it.
-- Other devices are not a fallback: `desktop-wsl` (100.122.67.126) times out, `linuxpepijn-1` and
-  `desktop-9q9u7pv` are offline on the tailnet, and the hub VM (100.69.127.85) refuses this
+- Other devices are not a fallback: `desktop-wsl` (<desktop-tailnet-ip>) times out, two other tailnet hosts are offline on the tailnet, and the hub VM (<hub-tailnet-ip>) refuses this
   machine's key.
 - Two small `wave8-diag-*.tar.gz` files exist in `$HOME` (8 Oct) and contain one Slurm log plus a
   diag text each. No evaluation JSON.
@@ -98,7 +97,7 @@ Result: the project archive is empty.
 - No tarball or zip survives anywhere under the scratch root.
 - Snellius is not a second copy: `ssh snellius` returns `Permission denied (publickey,password)` for
   the configured key, so the two 8B Snellius legs cannot be reached either.
-- The hub VM (100.69.127.85) refuses this machine's key for both `root` and `pino`, so no
+- The hub VM (<hub-tailnet-ip>) refuses this machine's key for both `root` and `pino`, so no
   hub-side mission copy can be checked.
 - Job accounting survives in `sacct` (job ids, elapsed, state), which is process evidence for what
   ran, not data evidence for what it produced. The 4B/1.7B evaluation job `456960 bw8-eval` is there,
