@@ -1,4 +1,7 @@
-# STATE — where the project stands (2026-10-07)
+# STATE — where the project stands (2026-11-22)
+
+> The wave table below covers waves 1–7 as written up at 2026-10-07. Wave 8 ran after it, is now the
+> project's headline artifact, and is summarised in its own section below the table.
 
 Authoritative per-wave detail lives in the wave docs (list below, under `waves/`). This file
 is the read-first summary: what each wave tested, the headline result as written up, where the
@@ -21,6 +24,24 @@ doc + data live, current verdicts, and the open issues that are agreed but not s
 Reading order for a newcomer: `../README.md` → root `../README.md` (surviving claim, audit
 history) → `audits/AUDIT*.md` (the mistakes, in full) → the wave doc for whatever wave you
 are working on.
+
+## Wave 8 — four-size ladder (ran October and November 2026)
+
+Wave 8 tests a claim of the reference paper's type at 0.6B, 1.7B, 4B and 8B: does a GRPO-tuned
+decision agent beat its own untrained baseline on cost under a frozen paired criterion (G1),
+with a collapse stop-loss per round and a seed-pooling rule that refuses a favourable single seed?
+
+| rung | verdict | what the artifacts support |
+|---|---|---|
+| 4B | **passes**, two cohorts | November rebuild: 9,346 and 17,958 against a matched control of 21,578, 30/30 and 25/30 paired wins. October pair (8,315 / 7,612, 30/30 per seed) is document-recorded; its per-run files did not survive and the verdict doc calls the metric a "same metric" mean, so its estimand is unresolved and the paper says so. |
+| 1.7B | **adverse**, all three seeds | Cost rises to 2.41×, 6.87× and 8.25× the matched control; 7/30, 0/30, 0/30 paired wins. Collapse and cost are separate axes: the lowest-entropy 1.7B arm is also its cheapest. |
+| 0.6B | **negative**, procedure stopped | Wave-8 0.6B stopped by its own stop-loss; the wave-7 closed-choice result stands separately. |
+| 8B | **one arm**, and only under the pre-registered pairing | The October `lr 1e-5` seed-1 survivor passes G1 (14,595 vs 89,633, 29/30, p = 2.9e-8). The November selected `5e-5` rate is favourable band-against-band and **explicitly not established under G1**, because those legs ran `--pattern curriculum` and were paired against a noisy control, so the two sides share no demand path. |
+
+Documents: `waves/W8-RERUN-RESULT.md` (November rebuild), `waves/W8-8B-MOLAB-LEG1.md` (8B lane),
+`waves/W8-R1-DRAINED.md` (0.6B stop ledger), `waves/WAVE8_SPEC.md` (frozen design and its changes
+log). Manuscript: `paper/paper.pdf` plus `paper/paper-supplement.pdf` (S1–S7). Submission package:
+`arxiv/`.
 
 ## Current verdicts
 
@@ -60,7 +81,8 @@ are working on.
      (**implemented 2026-10-07; hub pre-flights F0/F1 run, cluster kit staged, nothing trained.** The frozen
      26-letter grid `w8_g26` FAILED F0 at 1,000 states (top-letter mass/argmax above threshold) and was revised
      before any training, as WAVE8_SPEC §3.1 allows, to `w8_g26b` (tail 36..200), which passed F0 on fresh
-     seeds; F1 teacher check passed. Details: `waves/WAVE8_SPEC.md` Changes log.)
+     seeds; F1 teacher check passed. Details: `waves/WAVE8_SPEC.md` Changes log.
+     **Status 2026-11-22: trained and evaluated at all four sizes. See the Wave 8 section above.**
    - Operator handoff for both: `waves/STAGING-READY.md`.
 
 ## Pointers
