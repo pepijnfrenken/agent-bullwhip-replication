@@ -35,10 +35,12 @@ seed; sign-test $p = 2^{-30}$; median-ratio and median-of-per-path reductions 61
 on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
 detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks
 were resumed past a stop (one accidentally, one under written override), and the completed read
-still fails the output-mass gate. \textbf{8B is evaluable on the arm the frozen rule selected}: two seeds at $5\times10^{-5}$
-were re-trained in November, and both pass every G1 gate against a matched untrained-8B control
-(medians 10{,}097 and 15{,}355 vs 89{,}633; 29/30 paired wins each; $p = 2.9\times10^{-8}$;
-88.7\% and 82.9\% reductions). One October arm stays band-only and one was not completed. A November 2026 rebuild from the committed kit reproduces both verdicts
+still fails the output-mass gate. \textbf{8B is evaluable on one of its four arms}: the $10^{-5}$ seed-1 adapter survived, and
+against a matched untrained-8B control it passes every G1 gate on the pre-registered noisy-argmax
+generation (medians 14{,}595 vs 89{,}633; 29/30 paired wins; $p = 2.9\times10^{-8}$). The arm the
+frozen rule selected was re-trained in November on both seeds, and reads $0.108$ and $0.164$ of a
+curriculum control (10{,}097 and 15{,}355 vs 93{,}603; 30/30 and 28/30) but has no pre-registered
+paired generation; the $10^{-5}$ seed-0 leg was not completed. A November 2026 rebuild from the committed kit reproduces both verdicts
 and the untrained control medians (Section~\ref{sec:rebuild}); its 4B seed-1 median is
 17{,}958 rather than 7{,}612, at 25/30 wins. The frozen selection and pooling rules are the methodological
 product: the two seeds at one learning rate differ by $1.52\times$, so the arm-level mean is
@@ -277,7 +279,7 @@ curriculum-validation means.}
 0.6B w8 & exact-grad & stopped before final eval & collapse tripped on all 6 tasks; 5 stopped pre-eval & stopped \\
 1.7B & exact-grad, 3 seeds & final-eval medians & ctl 11{,}508; medians 21{,}468/43{,}660/71{,}270 & adverse (0/3) \\
 4B & exact-grad, 2 seeds & final-eval medians and means & ctl 21{,}578; \textbf{pass both seeds} & \textbf{pass (2/2)} \\
-8B & exact-grad, 4 legs & selected-lr arm paired 29/30 on both seeds & one arm band-only, one not completed & \textbf{pass (2/2 at $5{\times}10^{-5}$)} \\
+8B & exact-grad, 4 legs & one arm paired 29/30 (unselected rate); selected rate band-only & one arm band-only, one not completed & \textbf{one arm passes} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -357,20 +359,24 @@ Section~\ref{sec:prov}). Validation-band means, the declared selection input
 ($n{=}30$ argmax runs): 5e-5 arm 35{,}289 / 12{,}444 (pooled 23{,}867); 1e-5 arm 71{,}855 /
 22{,}083 (pooled 46{,}969), so the frozen rule selects 5e-5. No selection JSON was recovered and three
 adapters were lost with their archives, so the selected rate was re-trained rather than recovered:
-two seeds in November on one Blackwell card, same gates, labels and configuration. Both pass every G1 gate against the matched untrained-8B
-control on the same 30 demand paths, the readout's prompt SHA byte-identical to the control's (S7):
+two seeds in November on one Blackwell card, same gates, labels and configuration. These legs carry
+a \emph{curriculum-band} read, not the pre-registered noisy-argmax generation. Against the untrained
+curriculum control (median 93{,}603, mean 104{,}676) they read:
 \begin{itemize}
 
-  \item \emph{Seed 0}: 29/30 paired wins, $p = 2.9\times10^{-8}$, median ratio 0.1126 (88.7\%;
-  88.2\% per-path), band mean 10{,}892.
-  \item \emph{Seed 1}: 29/30 paired wins, $p = 2.9\times10^{-8}$, median ratio 0.1713 (82.9\%;
-  83.4\% per-path), band mean 15{,}411.
-  \item \emph{Seed spread}: 10{,}097 against 15{,}355 on one control, $1.52\times$ apart; both clear
-  the bar, so the frozen rule reports the arm mean and not a seed.
-  \item \emph{Unevaluated}: the $10^{-5}$ seed-1 arm keeps only its October band (22{,}083,
-  $0.21\times$ control) and $10^{-5}$ seed 0 was never completed; the rung is not a full $2\times2$.
-\end{itemize}Gates and labels are byte-identical to the frozen files, which is what makes the comparison
-meaningful.
+  \item \emph{Seed 0}: 30/30 wins, $p = 9.3\times10^{-10}$, median ratio 0.108, band mean 10{,}892.
+  \item \emph{Seed 1}: 28/30 wins, $p = 4.3\times10^{-7}$, median ratio 0.164, band mean 15{,}411.
+  \item \emph{Seed spread}: 10{,}097 against 15{,}355 on one control, $1.52\times$ apart, so the
+  frozen rule reports the arm mean and not a seed.
+  \item \emph{Not the frozen estimand}: G1 is defined on the paired noisy-argmax generation. No such
+  read exists for either November leg, so the selected rate is band-level favourable and
+  \emph{unestablished} under G1. The $10^{-5}$ seed-1 arm is the one 8B arm with a pre-registered
+  paired pass, and $10^{-5}$ seed 0 was never completed.
+\end{itemize}
+The prompt SHA is identical across arms and both controls because the rendered prompt is hashed
+independently of the demand draw; it does not establish matched demand paths. The November numbers
+are compared against the curriculum control they were actually run against, and the gates and labels
+are byte-identical to the frozen files.
 
 \paragraph{Permutation diagnostic.} The pre-registered consequence of the shared near-zero
 permutation read (0.000 on the untrained control and every wave-7 arm; 0.047 and 0.039 on the passing
@@ -459,11 +465,11 @@ with an incomplete planned second learning-rate arm. One rung (0.6B) is negative
 arm--seed rows, and its wave-8 exact-gradient procedure is a stopped run: collapse tripped on all
 six tasks at round 1, a persisted stop marker survives on five, two were later resumed past a stop
 (one by a runner accident, one under a written override), and the completed read fails the
-output-mass gate. One rung (8B) is evaluable at the learning rate the frozen rule selected, on both
-seeds, from two November legs whose evaluation rows are committed and whose adapters did not survive.
-Closed-choice readouts eliminated invalid actions and simplified the comparison; exact-enumeration
-outcome-scored post-training paid off under the frozen rule at 4B and at 8B, while 1.7B and 0.6B are
-adverse or stopped, one 8B arm stays band-only and one was not completed.
+output-mass gate. One rung (8B) is evaluable on a single arm whose adapter survived; the arm the frozen rule chose
+was re-trained in November and reads favourably on the band, but has no pre-registered paired
+generation. Closed-choice readouts eliminated invalid actions and simplified the comparison;
+exact-enumeration outcome-scored post-training paid off under the frozen rule at 4B and on one 8B arm,
+while 1.7B and 0.6B are adverse or stopped and the selected 8B rate is unestablished.
 
 \paragraph{The selection rule as a methodological point.} The 8B seed spread inside the selected
 arm (35{,}289 vs 12{,}444) is the worked example: a per-seed report can pick the flattering seed, the
@@ -490,9 +496,10 @@ claimed.
   \item Hardware and stack differ across rungs: L4 for 0.6B--4B, A100 lanes for the October 8B legs,
   one Blackwell card for the November 8B legs (torch 2.11 against the October 2.1.2); nominal
   effective batch was matched, optimizer-step and numerical equivalence were not.
-  \item The 8B rung is not a full $2\times2$: two seeds at the selected $5\times10^{-5}$ carry paired
-  generations, the $10^{-5}$ seed-1 arm stays band-only and the $10^{-5}$ seed-0 arm was never
-  completed. Within-size coverage is therefore partial, and the October A100 legs are not reproduced.
+  \item The 8B rung is not a full $2\times2$ and not uniform in evidence class: one arm carries the
+  pre-registered paired generation (the $10^{-5}$ seed-1 survivor), the selected $5\times10^{-5}$
+  rate has curriculum-band reads on two seeds with no paired generation, and the $10^{-5}$ seed-0 leg
+  was never completed. Within-size coverage is partial and the October A100 legs are not reproduced.
   \item The 1.7B learning-rate provenance item is unresolved and further narrows what the 1.7B
   rows can claim protocol compliance for.
   \item No bullwhip-amplification statistic, order-trajectory plot, or reliability-tail analysis is

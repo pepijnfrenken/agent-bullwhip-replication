@@ -251,8 +251,8 @@ control median.}
 JSONL lost (S5) \\
 4B lr5e-5 s1 & not C & evaluated, passing & 7{,}612; 30/30 & verdict doc; raw JSONL lost (S5) \\
 \midrule
-8B lr5e-5 s0 & n/a & Oct trained, no eval; Nov re-trained, paired & Oct band 35{,}289; Nov paired 89{,}633$\to$10{,}097, 29/30 & verdict doc; Nov \texttt{.costs.jsonl} \\
-8B lr5e-5 s1 & n/a & Oct trained, no eval; Nov re-trained, paired & Oct band 12{,}444; Nov paired 89{,}633$\to$15{,}355, 29/30 & verdict doc; Nov \texttt{.costs.jsonl} \\
+8B lr5e-5 s0 & n/a & Oct trained, no eval; Nov band read only & Oct band 35{,}289; Nov band 93{,}603$\to$10{,}097, 30/30 & verdict doc; Nov \texttt{.costs.jsonl} \\
+8B lr5e-5 s1 & n/a & Oct trained, no eval; Nov band read only & Oct band 12{,}444; Nov band 93{,}603$\to$15{,}355, 28/30 & verdict doc; Nov \texttt{.costs.jsonl} \\
 8B lr1e-5 s0 & n/a & Oct trained, no eval; Nov attempt lost & Oct band 71{,}855; Nov leg died in round 3 & verdict doc \\
 8B lr1e-5 s1 & n/a & Oct trained; band-only & band 22{,}083 (pooled 46{,}969), $0.21\times$ control & verdict doc; adapter on Modal volume \\
 \bottomrule
@@ -551,11 +551,13 @@ evidence for a second time.
 
 \section{S7. The 8B rung, November 2026}\label{sec:s7}
 
-The body reports 8B as evaluable at the selected learning rate on two seeds. This section carries
-the artifacts behind that sentence in the order they were produced: the one adapter that survived
-October, the two November re-training legs at $5\times10^{-5}$, and the losses, including a third
-November leg that died with its sandbox and the eval traces that a transfer corrupted. The sequence
-is the evidence, so the failures are kept.
+The body reports 8B as evaluable on one arm, the October survivor whose paired generation exists,
+and reports the selected learning rate as band-level favourable but unestablished under G1. This
+section carries the artifacts behind both sentences in the order they were produced: the one adapter
+that survived October, the two November re-training legs at $5\times10^{-5}$, and the losses,
+including a third November leg that died with its sandbox, the eval traces a transfer corrupted, and
+a mislabelled first read of the November numbers that this section now corrects. The sequence is the
+evidence, so the failures are kept.
 
 \subsection*{The November re-training legs at the selected learning rate}
 
@@ -567,22 +569,34 @@ processes, gates \texttt{results/wave8/gates\_8b.json}. Frozen inputs were check
 \texttt{S\_nom.jsonl} at \texttt{f651fc58\ldots6aaa8} and the gate file at \texttt{b6194407\ldots1f90}.
 
 \begin{center}\small
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrr}
 \hline
-seed & wall & band mean (min--max) & min mass & wins & ratio & cut & $p$ \\
+seed & wall & band mean (min--max) & min mass & wins & ratio & $p$ \\
 \hline
-0 & 62\,min & 10{,}892 (7{,}168--19{,}524) & 0.99997 & 29/30 & 0.1126 & 88.7\% & $2.9\times10^{-8}$ \\
-1 & 62\,min & 15{,}411 (13{,}059--19{,}586) & 0.99973 & 29/30 & 0.1713 & 82.9\% & $2.9\times10^{-8}$ \\
+0 & 62\,min & 10{,}892 (7{,}168--19{,}524) & 0.99997 & 30/30 & 0.108 & $9.3\times10^{-10}$ \\
+1 & 62\,min & 15{,}411 (13{,}059--19{,}586) & 0.99973 & 28/30 & 0.164 & $4.3\times10^{-7}$ \\
 \hline
 \end{tabular}
 \end{center}
 
-Both read against the same untrained-8B control, median 89{,}633, whose readout prompt SHA
-\texttt{55bdc663\ldots c422} is byte-identical to each arm's, so the 30 paired demand paths are the
-same on both sides. Reproduce with
-\texttt{scripts/wave8\_g1\_read.py results/eval/w8-untrained-8b-argmax-noisy.jsonl
+Both read against the \emph{curriculum} control they were run against,
+\texttt{results/wave8\_val/untrained-curriculum-8b.jsonl}, median 93{,}602.5 and mean 104{,}676.07;
+wins and the sign test are per paired run index. Reproduce with
+\texttt{scripts/wave8\_g1\_read.py results/wave8\_val/untrained-curriculum-8b.jsonl
 results/wave8\_val/w8-val-r1-8b-lr5e-5-seed\{0,1\}.costs.jsonl}. The two seeds sit
 $1.52\times$ apart on the same control.
+
+\textbf{This is not the G1 estimand, and a first version of this section got that wrong.} G1 is
+frozen on the paired \emph{noisy-argmax} generation. The November legs were run with
+\texttt{--pattern curriculum}, so their 30 runs share demand paths with the curriculum control and
+none with the noisy control (\texttt{incoming\_now} vectors: 12 of 12 parseable seed-0 rows match
+curriculum, 0 of 12 match noisy). An earlier draft of this section paired them against
+\texttt{results/eval/w8-untrained-8b-argmax-noisy.jsonl} and reported 29/30 wins with
+$p=2.9\times10^{-8}$; that pairing is void because the two sides never share a demand path. The
+prompt SHA is the same in all four files precisely because the rendered prompt is hashed
+independently of the demand draw, so the hash cannot certify a matched pair. The selected rate's G1
+outcome is therefore unestablished; what exists is a favourable band comparison, which is what the
+body now reports.
 
 \textbf{Collapse gates.} No round tripped the stop-loss on either seed; the $I$ statistic reads
 0.5017, 0.5103 and 1.0998 across seed 0's three rounds. The gate JSON files record only $I$ and
