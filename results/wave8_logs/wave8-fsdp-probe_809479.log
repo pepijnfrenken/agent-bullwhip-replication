@@ -1,0 +1,35 @@
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=48cc3ff3ba64616be292d86d9890feea1b3e7f67 ranks=2
+NOTE: HEAD is ahead of pin in results/docs only — running.
+=== fsdp probe at 2026-11-22T01:32:04+01:00 ranks=2 master=127.0.0.1:29479 ===
+--- variant A06-p2pon: model=Qwen/Qwen3-0.6B NCCL_P2P_DISABLE=1 ---
+[2026-11-22T02:32:19.028] error: *** JOB 809479 ON tue-gpuc001 CANCELLED AT 2026-11-22T02:32:19 DUE TO TIME LIMIT ***
+
+
+==============
+JOB STATISTICS
+==============
+
+JobID             State     AveRSS     MaxRSS 
+------------ ---------- ---------- ---------- 
+809479          TIMEOUT                       
+809479.batch  CANCELLED     16584K     16584K 
+809479.exte+  COMPLETED                       
+809479.0         FAILED   1458254K   1495852K 
+
+Job ID: 809479
+Cluster: umbrella
+User/Group: 20234428/umbrella
+State: TIMEOUT (exit code 0)
+Nodes: 1
+Cores per node: 16
+CPU Utilized: 00:59:54
+CPU Efficiency: 6.21% of 16:04:48 core-walltime
+Job Wall-clock time: 01:00:18
+Memory Utilized: 2.78 GB
+Memory Efficiency: 4.35% of 64.00 GB (64.00 GB/node)
+The task which had the largest memory consumption differs by 102.58% from the average task max memory consumption
+
+If "OOM Killed" appears in the job output, or if any job step state
+is "OUT_OF_MEMORY", you may have requested too little memory. Please
+see https://supercomputing.tue.nl/documentation/kb/slurm/6/ for more
+information.
