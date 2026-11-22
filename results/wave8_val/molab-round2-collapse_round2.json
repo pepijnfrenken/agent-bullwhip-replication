@@ -1,0 +1,12 @@
+{
+ "I": 0.5102691680441301,
+ "adapter": "results/wave8_r1-8b_lr5e-5_seed0_round2/checkpoint-169",
+ "branch": null,
+ "collapsed": false,
+ "median_entropy": 0.0005158792287878963,
+ "min_mass": 0.9997292160987854,
+ "modal_argmax_share": 0.8828125,
+ "n_checked": 256,
+ "n_states": 256,
+ "reasons": []
+}
