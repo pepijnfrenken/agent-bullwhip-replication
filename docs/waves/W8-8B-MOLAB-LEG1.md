@@ -78,9 +78,39 @@ than the hub cache. The gates, labels and eval control are byte-identical to the
 files, which is what makes the comparison meaningful. Any paper sentence citing these numbers
 states this, not just the result.
 
-## Retention
+## Retention, and a transfer failure that has to be on the record
 
-Pulled to disk and committed: the 30-run eval JSONL (749,955 bytes, full traces), the summary
-JSON, and the three collapse-gate JSONs. Still sandbox-only: the LoRA adapter at
-`results/wave8_r1-8b_lr5e-5_seed0_round3/checkpoint-169/`. The numbers the paper cites are
-secured; the weights are not yet, and the paper does not depend on them.
+Committed: the 30-row cost extracts `w8-val-r1-8b-lr5e-5-seed{0,1}.costs.jsonl`, the summary
+JSONs, and the three collapse-gate JSONs. G1 re-runs to the same verdict from those committed
+files alone, so the numbers the paper cites are reproducible from the repo.
+
+Lost, and not hidden: the full-trace eval JSONLs. They were pulled as base64 inside a cell
+print and the copies that landed on disk were corrupt — `head` opens correctly and the file
+ends mid-object, with only 12 of 30 rows parseable. I reported them as secured before checking
+that they parsed, which was wrong. The defect is named: a 750 KB base64 payload does not
+survive the cell-output channel intact, while 1 KB extracts do. Anything larger than a few KB
+needs an out-of-band route, not a printed blob.
+
+Also lost with the sandbox (`410 sandbox terminated` at about 17:00Z): the LoRA adapters for
+both completed arms, and the third arm, `lr 1e-5 seed 0`, which was in its final round and
+never wrote a validation read. Its adapter and states are gone with the instance.
+
+What survives is enough for the claim the paper makes: both seeds at the selected learning
+rate pass G1 against the frozen control, on 30 paired demand paths, from files in this repo.
+Re-running the lost arm and re-deriving the traces costs one GPU session and about an hour,
+and the weights are not needed to defend a number the eval rows already carry.
+
+## Legs 2 and 3
+
+Leg 2, the same learning rate with seed 1, ran 15:33Z to 16:35Z on the same lane with the same
+config and passed G1 as well: control median 89,633.00, arm median 15,355.00, ratio 0.1713, an
+82.87% reduction, 29/30 wins, p = 2.89e-08, band mean 15,410.70, min_mass 0.99973, zero parse
+failures. Same `prompt_sha` as the control. Two of two seeds at lr 5e-5 pass, which satisfies
+the arm rule that asks for two of three.
+
+The seed spread is real and is stated rather than averaged: two seeds at one learning rate land
+at 10,097 and 15,355 on the same control, 1.52x apart. Both clear the bar; neither is quotable
+as "the" effect size for the arm.
+
+Leg 3, lr 1e-5 seed 0, started 16:35Z and was in its third round when the sandbox was
+reclaimed. No validation read exists for it. That arm is not evaluable in this attempt.
