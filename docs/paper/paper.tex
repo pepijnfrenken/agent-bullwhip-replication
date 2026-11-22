@@ -34,7 +34,7 @@ seed; sign-test $p = 2^{-30}$; median-ratio and median-of-per-path reductions 61
 ($1.87\times$--$6.19\times$, 0/30 wins each). \textbf{0.6B} has negative wave-7 paired comparisons
 on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
 detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks
-were resumed past a stop (one accidentally, one under written override), and the completed read
+were resumed past a stop, two of them by one unattended resubmission, and the completed read
 still fails the output-mass gate. \textbf{8B is evaluable on one of its four arms}: the $10^{-5}$ seed-1 adapter survived, and
 against a matched untrained-8B control it passes every G1 gate on the pre-registered noisy-argmax
 generation (medians 14{,}595 vs 89{,}633; 29/30 paired wins; $p = 2.9\times10^{-8}$). The arm the
@@ -342,10 +342,11 @@ frozen 0.6B cutoff at $H_{\mathrm{lo}}{=}1.393$ nats, every round-1 read is belo
 share above $m_{\mathrm{hi}}{=}0.149$ ($H$ spans 0.000--0.938, share 0.508--0.996; all twelve
 values per task in supplement Table~S2b). The stop-loss then persisted a
 \texttt{STOPPED\_collapse} marker on five of the six tasks; \texttt{lr5e-5} seed 0 never met two
-consecutive collapses and completed with \texttt{DONE} only. Two tasks were resumed past a stop:
-\texttt{lr1e-5} seed 0 by an unattended bare-array resubmission (no \texttt{W8\_ARM}, stale
-\texttt{HEAD}, \texttt{EXPECTED\_COMMIT} unset) and \texttt{lr1e-5} seed 1 under the written
-completion override recorded in the same memo, which also documents the runner defect that made the
+consecutive collapses and completed with \texttt{DONE} only. Three tasks were resumed past a stop.
+\texttt{lr1e-5} seed 0 was stopped after round 2 and resumed. \texttt{lr1e-5} seeds 1 and 2 were
+both resumed by one unattended bare-array resubmission (no \texttt{W8\_ARM}, stale \texttt{HEAD},
+\texttt{EXPECTED\_COMMIT} unset), later recorded as the sanctioned completion run for those seeds.
+The memo also documents the runner defect that made the
 first resume possible (the task loop writes the marker but never reads it on entry). Per-task
 marker sequences and round reads are in supplement S3. \texttt{lr1e-5} seed 0 therefore carries
 \texttt{DONE} and \texttt{STOPPED\_collapse} both; its round-3 read is clean (median
@@ -466,7 +467,7 @@ evidence-availability inventory are in supplement S5.
 evaluated seeds. One rung (1.7B) is adverse on all three evaluated seeds against a matched control,
 with an incomplete planned second learning-rate arm. One rung (0.6B) is negative on all six wave-7
 arm--seed rows, and its wave-8 exact-gradient procedure is a stopped run: collapse tripped on all
-six tasks at round 1, a persisted stop marker survives on five, two were later resumed past a stop
+six tasks at round 1, a persisted stop marker survives on five, and three were later resumed past a stop
 (one by a runner accident, one under a written override), and the completed read fails the
 output-mass gate. One rung (8B) is evaluable on a single arm whose adapter survived; the arm the frozen rule chose
 was re-trained in November and reads favourably on the band, but has no pre-registered paired
