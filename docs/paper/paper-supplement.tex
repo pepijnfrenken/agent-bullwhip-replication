@@ -729,6 +729,13 @@ an earlier draft's 0.0781 with 40 of 512 came from the failed first job rather t
 gate. It is reported so that a reader meeting the raw file does
 not mistake a universal property for an 8B failure.
 
+The 4B figure in this table comes from the November generation and does not agree with the October
+one: \texttt{W8-MANIFEST.json} records 24/512 (0.046875) and 20/512 (0.0390625) for the same two
+seeds, because the November eval wrote files of the same name and the manifest kept the earlier
+read. Both cohorts pass the verdict that no arm reaches 0.90, and the 24-fold gap is itself the
+usable result: the permutation read is not stable across generations of one rung, so it supports a
+withheld interface claim and nothing finer.
+
 \textbf{Hardware.} The 8B readouts ran on the same L4 lane as the 0.6B--4B rungs, not on the A100 lanes
 the 8B \emph{training} used. Same code, same pinned checkpoint, same demand paths.
 
