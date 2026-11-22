@@ -26,6 +26,9 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 - **License**: CC BY 4.0 for the paper, MIT for the code. Do not describe the code license as
   covering the reference paper's material.
 - **Reproducibility pointer**: `https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/arxiv-submission-1`
+  — **currently 404 unauthenticated.** Verified 2026-11-22: `gh repo view` reports `visibility: PRIVATE`.
+  Until Pino flips visibility, do not put this URL in a public field. The paper's own sentence
+  ("available on request") is the honest pointer, and the Comments line says so.
 
 ## Decisions already made, and the cost of each
 
@@ -48,9 +51,11 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 2. No absolute local paths, tokens, or notebook URLs in `metadata.json` or either `.tex`.
 3. The abstract in `metadata.json` matches the abstract in `paper.pdf` word-for-word after LaTeX
    stripping. It was generated from the same source, so a mismatch means the source moved.
-4. The tag named in the Comments exists on the remote and is public-readable (`git ls-remote --tags`). If the repository is
-   still private at submission time, either make it public or drop the pointer rather than ship a
-   dead link.
+4. The tag exists on the remote (`git ls-remote --tags origin | grep arxiv-submission-1`) **and** the
+   repository reads without credentials (`curl -o /dev/null -w '%{http_code}'` must return 200). Today it
+   returns 404 because the repository is private. Flipping visibility is a decision with a real
+   consequence: it publishes every committed result row, Slurm log and wave memo, and leaves out only
+   the LoRA adapters. Make it public deliberately or ship the pointer as "available on request".
 5. `CONTACT-NOTE-v0.md` is a separate decision. Sending it to the reference authors is not part of the
    submission.
 
