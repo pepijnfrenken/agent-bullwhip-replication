@@ -104,7 +104,8 @@ TEXT_SUFFIXES = {
     ".toml", ".cfg", ".conf", ".sbatch", ".bib", ".csv", ".tsv", ".ini", ".env", ".cff",
 }
 
-MAX_LINE = 4000  # JSONL rows here reach 7 MB; the generic pattern over one such line buys nothing
+MAX_LINE = 4000
+MAX_HITS = 400  # cap on findings recorded per category in the history pass  # JSONL rows here reach 7 MB; the generic pattern over one such line buys nothing
 
 
 def redact(s: str) -> str:
@@ -177,15 +178,29 @@ def _history_grep(root: Path, markers: list[bytes], kind: str, table: dict, find
         cmd += ["-e", m.decode()]
     # no `--` before the revs: that would make git treat them as pathspecs and search nothing
     cmd += [*revs]
-    r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
-    for line in r.stdout.splitlines():
+
+    # Stream, do not buffer: with the revs actually searched this returns a row per matching
+    # file per commit, which for a marker like the account number is hundreds of megabytes and
+    # killed an earlier run with SIGKILL. Findings are capped per category; the cap is reported.
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, errors="replace", bufsize=1)
+    assert proc.stdout is not None
+    total = 0
+    for line in proc.stdout:
+        total += 1
+        if len(findings) > MAX_HITS:
+            continue
         sha, _, rest = line.partition(":")
         path, _, rest = rest.partition(":")
         lineno, _, content = rest.partition(":")
+        if path in ALLOW:  # the scanner's own pattern strings
+            continue
         label = f"{path} @{sha[:8]}"
         for name, pattern in table.items():
             for m in re.finditer(pattern, content):
                 findings.append((kind, name, int(lineno or 0), label, redact(m.group(0))))
+    proc.wait()
+    if total > MAX_HITS:
+        print(f"note: {kind} matches capped at {MAX_HITS} of {total} grep rows")
     return len(revs)
 
 
