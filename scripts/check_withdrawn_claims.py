@@ -77,19 +77,27 @@ SCAN_SUFFIXES = {".tex", ".md", ".json"}
 SKIP_DIRS = {"archive", ".git", "__pycache__"}
 
 
-def load_allowlist(root: Path) -> dict[tuple[str, str], str]:
+def load_allowlist(root: Path) -> dict[tuple[str, str], list[str]]:
+    """Rows are <pattern-id>\\t<path>\\t<reason>\\t<snippet>.
+
+    The snippet must appear literally on the offending line. That is deliberate: a row
+    authorises ONE reviewed sentence, not every mention of the string in that file, which
+    is how a withdrawn claim once survived four audit rounds behind a single stale row.
+    """
     f = root / ALLOWLIST
-    allowed: dict[tuple[str, str], str] = {}
+    allowed: dict[tuple[str, str], list[str]] = {}
     if not f.exists():
         return allowed
     for n, line in enumerate(f.read_text().splitlines(), 1):
-        line = line.strip()
-        if not line or line.startswith("#"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
         parts = line.split("\t")
-        if len(parts) < 3:
-            raise SystemExit(f"allowlist line {n} needs <pattern-id>\\t<path>\\t<reason>: {line!r}")
-        allowed[(parts[0], parts[1])] = parts[2]
+        if len(parts) < 4:
+            raise SystemExit(
+                f"allowlist line {n} needs <pattern-id>\\t<path>\\t<reason>\\t<snippet>: {line!r}"
+            )
+        allowed.setdefault((parts[0], parts[1].strip()), []).append(parts[3].strip())
     return allowed
 
 
@@ -117,7 +125,10 @@ def main() -> int:
             if rel not in targets:
                 continue
             for m in re.finditer(pattern, text):
-                if (pid, rel) in allowed:
+                start = text.rfind("\n", 0, m.start()) + 1
+                end = text.find("\n", m.end())
+                line_text = text[start : end if end != -1 else len(text)]
+                if any(snip in line_text for snip in allowed.get((pid, rel), [])):
                     continue
                 line = text.count("\n", 0, m.start()) + 1
                 hits.append((pid, rel, line, m.group(0)))

@@ -141,7 +141,9 @@ control.
 \centering
 \caption{Four sizes against their own untrained baseline, matched paired criterion. October and
 November cohorts are separate entries because they are separate evidence classes; see
-Section~\ref{sec:solid}.}
+Section~\ref{sec:solid}. A dash in the wins column means no paired read exists: the October evaluation
+rows are one path per seed (\texttt{n\_runs: 1}), so a 30-path win count cannot be computed from them,
+and the counts printed here in earlier drafts are withdrawn.}
 \label{tab:rungs}
 \small
 \begin{tabular}{@{}llrrr@{}}
@@ -153,10 +155,14 @@ Size & Cohort & Untrained median & Trained median & Paired wins \\
 4B & November & 21{,}578 & 9{,}346 / 17{,}958 & 30/30, 25/30 \\
 8B & October survivor & 89{,}633 & 14{,}594 & 29/30 \\
 \midrule
-1.7B & October (recorded) & 11{,}508 & 21{,}468 / 43{,}660 / 71{,}270 & reported 0/30 \\
-4B & October (recorded) & 21{,}578 & 8{,}315 / 7{,}612 & reported 30/30 \\
+1.7B & October (recorded) & 11{,}508 & 21{,}468 / 43{,}660 / 71{,}270 & ---\footnotemark[1] \\
+4B & October (recorded) & 21{,}578 & 8{,}315 / 7{,}612 & ---\footnotemark[1] \\
 \bottomrule
 \end{tabular}
+\footnotetext[1]{The October numbers are reported as recorded in the October verdict document, which
+holds costs and a control value but no per-path rows. Win counts for these two rows appeared in earlier
+drafts without an artifact behind them; they are removed rather than annotated, because
+Section~\ref{sec:solid} is exactly the list of things we could not recompute.}
 \end{table}
 
 \begin{table}[ht]
@@ -188,7 +194,7 @@ Arm & Ratio of medians (95\% CI) & Median of path ratios (95\% CI) & Wins & Verd
 (25/30, $p \approx 1.6\times10^{-4}$, a 16.8\% reduction of medians and 24.8\% on the median path
 ratio). Both are reproducible from committed per-run rows, but seed 1 is the weak half of the pass: its
 ratio-of-medians interval reaches 0.891, above the 0.85 bar, so it passes on point estimates rather
-than robustly. The 4B verdict is a 2/2 pass of the seeds that exist, and one of those two is marginal. It is also seed-dependent, and by more than one statistic hides: on the paired evaluation the
+than robustly. The 4B verdict is a 2/2 pass of the seeds that exist, and one of those two is marginal. It is also seed-dependent on every statistic we have: on the paired evaluation the
 medians are 9{,}346 and 17{,}958 ($1.92\times$, mean 13{,}652); on the curriculum validation band of
 the same adapters the medians are 9{,}854 and 18{,}335 ($1.86\times$) and the means 9{,}355 and
 19{,}385 ($2.07\times$, pooled 14{,}370). We quote both seeds wherever a number appears, and no single

@@ -1,12 +1,14 @@
 # Withdrawn-claim allowlist for scripts/check_withdrawn_claims.py
 #
-# Format:  <pattern-id>\t<path>\t<reason>
-# A row here means: this document mentions the withdrawn string on purpose, and the surrounding
-# sentence explains that it is withdrawn or belongs to a different cohort. Do not add a row
-# because the build is red. Add a row only when the sentence is correct as written.
+# Format:  <pattern-id>\t<path>\t<reason>\t<snippet>
+#
+# A row authorises exactly one reviewed sentence, identified by a snippet that must appear on the
+# offending line. It does NOT authorise every mention of the string in that file. The reason must
+# say why the sentence is correct as written, not why the build is red.
+#
+# Add a row only after reading the line.
 
-oct4b-3030	docs/paper/paper-supplement.tex	ledger cell states the October cost and the November win count side by side, each labelled with its cohort
-oct4b-3030	docs/paper/paper-supplement.tex	band cell states that 30/30 is against the curriculum control and is not G1
-oct4b-3030	docs/paper/paper-supplement.tex	sentence records the revision: November reads 25/30 where the earlier draft claimed 30/30
-oct4b-3030	docs/paper/paper.tex	bullet lists what earlier drafts attributed to October and states none of it is in a surviving artifact
-perm-40781	docs/paper/paper-supplement.tex	sentence records that the earlier draft's 0.0781 with 40 of 512 came from the failed first job, and the final artifact is 38/512
+oct4b-3030	docs/paper/paper-supplement.tex	ledger cell states the October cost and the November win count side by side, each labelled with its cohort	Oct cost 8{,}315 vs ctl 21{,}578; Nov 9{,}346, 30/30
+oct4b-3030	docs/paper/paper-supplement.tex	band cell states that 30/30 is against the curriculum control and is not G1	30/30 on the curriculum control
+oct4b-3030	docs/paper/paper-supplement.tex	sentence records the revision: November reads 25/30 where the earlier draft claimed 30/30	its win count 25/30 rather than 30/30
+perm-40781	docs/paper/paper-supplement.tex	sentence records that the earlier draft's 0.0781 with 40 of 512 came from the failed first job, and the final artifact is 38/512	an earlier draft's 0.0781 with 40 of 512 came from the failed first job
