@@ -106,3 +106,19 @@ Produced by `hpc-umbrella/gpu-w6fix.sbatch` (WAVE6-FIX_SPEC §8.1); come back th
 # compare any recovered file against the manifest in the cleanup mission dir
 sha256sum -c <(grep <path> /home/pino/missions/bullwhip-cleanup/captures/untracked-shas.txt)
 ```
+
+## 6. Wave 8 sampled-state shards and policy-label arrays
+
+The local archive at `/home/pino/projects/agent-bullwhip-replication-archive/wave8-training-intermediates-9e8ded0.tgz`
+holds 24 `states_sampled.jsonl` shards and nine `policy_labels.npz` sidecars (78,294,748 bytes before compression).
+The combined `states.jsonl` files retain every sampled row byte for byte. The tracked `policy_labels.jsonl`
+files reproduce the NPZ arrays at their original dtypes. All archive members match the adjacent `MANIFEST.tsv`,
+and ten sample restores matched the original bytes. `SHA256SUMS` records the archive and manifest digests.
+
+Archive SHA-256 `9b5f7188d1cd4fdab18c98c75ada23a69a92983f2f31ad3b474bdd313b88f6e4`.
+
+To restore a file to the working tree from Git, set `path` to its repository-relative path and run
+
+```bash
+git restore --source=9e8ded04a4303708b1a604bc4c5d1729a18214de --worktree -- "$path"
+```
