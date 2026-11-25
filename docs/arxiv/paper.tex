@@ -26,7 +26,7 @@ A published claim reports that RL post-training turns a 4B language model into a
 agent than the same model untrained \cite{long2026}. We test a claim of that type at four sizes
 (0.6B, 1.7B, 4B, 8B) under a pre-registered paired cost criterion, with matched untrained controls.
 Post-training does help at 4B: 9{,}346 against 21{,}578 at seed 0 (30/30 paired wins) and 17{,}958
-at seed 1 (25/30). It does not help at 0.6B, where six trained rows lose; it makes 1.7B worse on
+at seed 1 (25/30, marginal at the criterion's bar). It does not help at 0.6B, where six trained rows lose; it makes 1.7B worse on
 every seed (27{,}706 to 94{,}887 against 11{,}508); and at 8B one arm of four passes (14{,}594
 against 89{,}633). The result that survives all of it is simpler: no arm at any size beats the
 reference we actually care about. A self-tuning order-up-to rule costs 5{,}346 in the same
@@ -79,15 +79,16 @@ Two baselines are in play, and keeping them apart is the point of this paper.
 \textbf{The untrained self.} The same checkpoint, same prompt, same grid, no training. This is the
 baseline the published claim uses, and it is a fair test of whether training did anything.
 
-\textbf{The tuned rule.} An order-up-to policy with an exponentially smoothed forecast, the
-order-up-to policy with exponentially smoothed demand \cite{chen2000}:
+\textbf{The tuned rule.} An order-up-to policy with exponentially smoothed demand \cite{chen2000}:
 $q_t=\max\{0,\ \theta\hat q_t-\mathrm{IP}_t\}$ and
 $\hat q_t=\lambda\,d_{t-1}+(1-\lambda)\hat q_{t-1}$, where $d_{t-1}$ is the order arriving from the
 tier below in the previous week and $\mathrm{IP}$ is the inventory position. Note what is smoothed:
 incoming demand, not the tier's own order, which would be circular. Its two parameters, $\theta$
 (target multiple of forecast demand) and $\lambda$ (smoothing), are chosen per demand path on a grid of
-81 points, $\theta\in\{1.5,2.0,\dots,5.0,6.0\}$ in steps of $0.5$ with $5.5$ omitted and
-$\lambda\in\{0.1,\dots,0.9\}$ in steps of $0.1$, fitted on weeks 1--18 and played frozen to week 36.
+81 points, $\theta\in\{1.5,2.0,\dots,5.0,6.0\}$ and $\lambda\in\{0.1,\dots,0.9\}$ in steps of $0.1$, fitted on
+weeks 1--18 and played frozen to week 36. The grid is the wave-5 set carried unchanged, which is why
+$5.5$ is absent: extending a frozen grid after seeing arm results would move the floor the arms are
+scored against.
 This is the reference paper's own rule form (its eqs.~3--5), not a strawman we built to lose. The reported
 cost is the cost of the \emph{full} 36-week game, in the same simulator and cost function as the
 models, so it is not a truncated-horizon figure. It appears in three versions on the same 30-path
@@ -161,9 +162,11 @@ Size & Cohort & Untrained median & Trained median & Paired wins \\
 \begin{table}[ht]
 \centering
 \caption{The two statistics G1 requires, with bootstrap intervals over the 30 demand paths. The
-criterion needs at most 0.85 on both (a 15\% reduction) and at least 20/30 wins. Seed 0 and the 8B
-survivor clear both intervals easily; 4B seed 1 passes on its point estimates, but its
-ratio-of-medians interval reaches 0.891, so it is not robust at the 15\% threshold.}
+criterion needs at most 0.85 on both (a 15\% reduction) and at least 20/30 wins. Intervals are
+percentile intervals from $B=4{,}000$ bootstrap resamples of the 30 demand paths, resampling the arm and
+its control jointly so the pairing is preserved. Seed 0 and the 8B survivor clear both intervals easily;
+4B seed 1 passes on its point estimates but is not robust: its ratio-of-medians interval reaches 0.891
+and its median-path-ratio interval reaches 0.870, both above the 0.85 bar.}
 \label{tab:g1}
 \small
 \begin{tabular}{@{}lrrrr@{}}
@@ -256,8 +259,8 @@ still far from the algorithm. Scaling from 0.6B to 8B did not close the gap; at 
 Two features of this table matter for how far it can be pushed. First, the rule's parameters are
 fitted on weeks 1--18 of the same demand path and then played over the full 36 weeks, so its early
 weeks are in-sample; nothing similar is granted to the models. That biases the comparison in the
-rule's favour, and the gap survives it. Second, the untrained 8B reads 89{,}633 against a baseline that does not commit to the label set: its
-minimum label mass over the 30 paths is 0.789, against 0.99986 for the trained arm. An 8B ``pass''
+rule's favour, and the gap survives it. Second, the untrained 8B baseline (89{,}633) does not commit to the label set: its minimum label mass
+over the 30 paths is 0.789, against a minimum of 0.99986 for the trained arm. An 8B ``pass''
 against that baseline is therefore a pass against a poorly conditioned opponent, which is the weakest
 evidence in the paper and is reported as such. We do not claim that a fixed share of its cost is
 readout: decoding is an argmax over the 26 labels, so off-label mass cannot change the chosen order,
@@ -266,12 +269,13 @@ it can only make the ranking among the 26 less trustworthy.
 \section{What this does and does not establish}\label{sec:solid}
 
 \textbf{Established.} The published comparison type reappears at 4B under our adaptation: post-training
-cuts cost against the same model untrained on matched demand paths, by 60\% at seed 0 on the median
-path ratio and 16.8\% at seed 1 on the ratio of medians, with sign tests that would occur by chance
-about once in $10^{9}$ and once in $6{,}000$. Seed 1 is marginal at the 15\% threshold (Table~\ref{tab:g1}). It does not
+cuts cost against the same model untrained on matched demand paths, by 57\% at seed 0 and 16.8\% at
+seed 1 on the ratio of medians (60\% and 24.8\% on the median path ratio), with sign tests that would
+occur by chance about once in $10^{9}$ and once in $6{,}000$. Seed 1 is marginal at the 15\% threshold
+(Table~\ref{tab:g1}). It does not
 reappear as a general property of scale: one size improves, 0.6B is adverse on all six trained rows,
 1.7B is sharply adverse on all three seeds, and 8B passes on one unselected arm against a baseline
-whose readout is partly broken. And no arm approaches the tuned rule.
+whose readout is poorly conditioned. And no arm approaches the tuned rule.
 
 \textbf{Not established, and stated as such.} The October 4B and 1.7B numbers are reported because
 earlier drafts published them, not because we can recompute them. The October verdict document records
@@ -301,7 +305,7 @@ evidence that it cannot.
 selection rule did not choose, read in November on a Blackwell card with a newer stack than the
 October legs. Its pass is real; it is not a rung verdict, and its baseline is the weakest in the paper: untrained
 8B holds only 0.789 of its mass on the 26 labels (Section~\ref{sec:env}), against 0.99986 for the
-trained arm, so its rankings among the 26 are poorly conditioned. That inflates its cost without
+trained arm, so its rankings among the 26 are poorly conditioned. That may inflate its cost without
 proving how much, and we do not put a share on it. The same caveat, smaller, applies
 to the 1.7B control at 0.823; the 4B control at 0.998 does not have it.
 
