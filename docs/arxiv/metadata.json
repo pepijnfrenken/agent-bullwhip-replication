@@ -13,7 +13,7 @@
   "license_recommendation": "MIT for the code and result data (see LICENSE). The paper text itself is offered under CC BY 4.0 at submission; if the arXiv license chosen is different, change both the submission form and docs/arxiv/CHECKLIST.md, because the LICENSE file grants MIT for software and documentation and does not grant CC BY separately.",
   "reproducibility_pointer": {
     "url": "https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/arxiv-submission-1",
-    "state": "repository is PRIVATE as of 2026-11-22; unauthenticated fetch returns 404. Do not put this URL in a public abstract until the repository is public, or the paper's 'available on request' sentence is the only honest pointer.",
+    "state": "repository is PUBLIC as of 2026-11-25; unauthenticated fetch returns 200 for the repo, the tag tree and the raw PDF.",
     "tag": "arxiv-submission-1"
   },
   "commit": "arxiv-submission-1 (tag on the build commit; resolves to the tree this package was cut from)",

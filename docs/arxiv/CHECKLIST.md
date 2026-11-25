@@ -26,9 +26,11 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 - **License**: CC BY 4.0 for the paper, MIT for the code. Do not describe the code license as
   covering the reference paper's material.
 - **Reproducibility pointer**: `https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/arxiv-submission-1`
-  — **currently 404 unauthenticated.** Verified 2026-11-22: `gh repo view` reports `visibility: PRIVATE`.
-  Until Pino flips visibility, do not put this URL in a public field. The paper's own sentence
-  ("available on request") is the honest pointer, and the Comments line says so.
+  — **public, verified 2026-11-25.** `gh repo view` reports `visibility: PUBLIC`, and an
+  unauthenticated fetch returns 200 for the repo, the tag tree and the raw PDF. The pointer is
+  safe to paste into a public field. The repository now carries `SECURITY.md` with the scan result
+  and the one residual disclosure: the cluster account number is redacted from the tree but remains
+  recoverable from historical commits, which were not rewritten because the paper cites their shas.
 
 ## Decisions already made, and the cost of each
 
@@ -52,8 +54,8 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 3. The abstract in `metadata.json` matches the abstract in `paper.pdf` word-for-word after LaTeX
    stripping. It was generated from the same source, so a mismatch means the source moved.
 4. The tag exists on the remote (`git ls-remote --tags origin | grep arxiv-submission-1`) **and** the
-   repository reads without credentials (`curl -o /dev/null -w '%{http_code}'` must return 200). Today it
-   returns 404 because the repository is private. Flipping visibility is a decision with a real
+   repository reads without credentials (`curl -o /dev/null -w '%{http_code}'` must return 200). It
+   returned 404 while private and returns 200 since the flip on 2026-11-25. Publishing had a real
    consequence: it publishes every committed result row, Slurm log and wave memo, and leaves out only
    the LoRA adapters. Make it public deliberately or ship the pointer as "available on request".
 5. `CONTACT-NOTE-v0.md` is a separate decision. Sending it to the reference authors is not part of the
