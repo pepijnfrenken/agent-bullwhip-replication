@@ -32,16 +32,19 @@ untrained baseline on cost. Verdicts and every gate read are in `docs/waves/`; t
 A pre-registered, commit-dated adaptation study of the claim in arXiv:2605.17036v4 that a
 GRPO-tuned 4B agent beats its own untrained baseline on cost.
 
-- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 12 pages, source `docs/paper/paper.tex`
+- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 13 pages, source `docs/paper/paper.tex`
 - Methods supplement S1–S7: [`docs/paper/paper-supplement.pdf`](docs/paper/paper-supplement.pdf), 13 pages
 - Submission package (metadata, abstract, checklist, checksums): [`docs/arxiv/`](docs/arxiv/)
 - Build both with `tectonic paper.tex` and `tectonic paper-supplement.tex` from `docs/paper/`
 
 The paper's product is the protocol, not a win: frozen gates, a collapse stop-loss, a seed-pooling
 rule that refuses a favourable single-seed reading, and a full run ledger. Verdicts as published:
-4B passes the frozen paired cost criteria on both cohorts; 1.7B is adverse on all three seeds; 0.6B
-is negative with one procedure stopped by its own stop-loss; 8B is evaluable on one arm only, and
-where it is not, the paper says which artifact is missing rather than softening the claim.
+4B passes the frozen paired cost criteria on the November rebuild, which is the cohort whose files
+exist; the October pair reported lower costs and claimed a 30/30 win count the surviving document
+does not contain, so the paper reports those figures as recorded and rests the verdict on November.
+1.7B is adverse on all three seeds in both cohorts; 0.6B is negative with one procedure stopped by
+its own stop-loss; 8B is evaluable on one arm only, and where it is not, the paper says which
+artifact is missing rather than softening the claim.
 
 Numbers are labelled by provenance. `results/` artifacts regenerate the November 2026 numbers;
 October 2026 numbers are document-recorded, and the sections that say so are not small print.

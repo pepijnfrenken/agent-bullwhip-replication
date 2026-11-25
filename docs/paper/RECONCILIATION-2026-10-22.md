@@ -147,3 +147,44 @@ label can carry probability near 1. What is bounded by 1/26 is the *smallest of 
 individual probabilities, and G7 does not bound that either: G7 bounds the *sum* of the 26
 label probabilities, which ranges from near 0 to near 1. The parenthesis was deleted and the
 correct statement substituted.
+
+## Round 6, 2026-11-22: external audit of commit 156738a
+
+A second-model audit (GPT-6.2-Astra, running against the committed tree) reproduced every
+headline recomputation and then found six claims the artifacts do not support. Each was verified
+against the file before it was changed. What moved, and the field it was re-derived from:
+
+1. **October 4B paired statistic, withdrawn.** The abstract and Results said the October verdict
+   recorded "30/30 wins per seed". `docs/waves/WAVE8_WORD8B_RESULT.md` contains the two costs and
+   21,578 and no win count, no per-path reduction and no sign test. The 4B verdict is now carried
+   by the November rebuild (9,346 and 17,958 against 21,578; 30/30 and 25/30; p 9.3e-10 and
+   1.6e-4), and the October figures are reported as recorded with no paired claim attached.
+   Source of the error: this assistant, in the previous round.
+2. **1.7B cohort labels.** Medians 21,468 / 43,660 / 71,270 and "0/30 on every seed" carried no
+   October qualifier, and supplement S3 tagged those rows "per-run JSON" for files that were never
+   committed. They now read as recorded figures from the rebuild memo's published-figures column,
+   with no per-run file and no manifest entry, and the recomputable November row (7/30, 0/30,
+   0/30 at 2.41x, 6.87x, 8.25x) sits beside them.
+3. **Appendix 8B sentence.** The provenance paragraph still read "two seeds, both passing G1"
+   against the corrected Results. It now states the band-level reading and that those legs are not
+   a G1 pass, with the reason (curriculum pattern against a noisy control).
+4. **Evaluation policy, corrected.** The readout paragraph said the noisy-argmax arm samples the
+   action from the policy. `results/eval/w8-r1-4b-seed0-argmax-noisy.jsonl` carries
+   `readout.composition: argmax`, and `decision_eval.py` puts the noise in the demand draw. The
+   paragraph now says 30 noisy demand paths with a deterministic modal-letter policy, and names the
+   sampled-step arm as the separate stochastic generation.
+5. **Ledger counts, recounted.** "11 with a matched paired final evaluation, 13 without" predates
+   the November read of the October 8B checkpoint. With that row moved to evaluated, the 24 rows
+   split 12 and 12, and the table's caption dates the count. Wave-8 R2 work (SFT and RL, job
+   `418889`, evaluated but never committed) is named as outside the R2 ledger rather than left for
+   a reader to find in a log.
+6. **Freeze chronology, dated.** The 2026-10-07 spec blob contains no 8B rung. The 8B extension is
+   the A2 amendment, commit `6152424` at 2026-10-21T08:17:07Z. The paper now says the freeze covers
+   three rungs, that the 8B rung joins by dated amendment, and that the marker semantics are a
+   ruling recorded after the first stops rather than a pre-registration.
+
+Also changed in this round: "162 batches per round" is 162 per epoch and 170 optimizer steps per
+round (`train_log.jsonl` `n_batches`); S7 names the real gate fields `median_entropy` and
+`modal_argmax_share` instead of claiming nulls and quoting the console; the seed-spread sentence
+prints the November pooled mean 13,151.53; the arXiv metadata abstract has resolved references and
+the license recommendation no longer claims CC BY while `LICENSE` grants MIT.

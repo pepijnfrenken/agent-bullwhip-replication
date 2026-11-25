@@ -33,8 +33,8 @@ with a collapse stop-loss per round and a seed-pooling rule that refuses a favou
 
 | rung | verdict | what the artifacts support |
 |---|---|---|
-| 4B | **passes**, two cohorts | November rebuild: 9,346 and 17,958 against a matched control of 21,578, 30/30 and 25/30 paired wins. October pair (8,315 / 7,612, 30/30 per seed) is document-recorded; its per-run files did not survive and the verdict doc calls the metric a "same metric" mean, so its estimand is unresolved and the paper says so. |
-| 1.7B | **adverse**, all three seeds | Cost rises to 2.41×, 6.87× and 8.25× the matched control; 7/30, 0/30, 0/30 paired wins. Collapse and cost are separate axes: the lowest-entropy 1.7B arm is also its cheapest. |
+| 4B | **passes**, on the November rebuild | 9,346 and 17,958 against a matched control of 21,578, 30/30 and 25/30 paired wins, all recomputable from committed rows. October reported 8,315 and 7,612; that document has costs only, no win count, no per-path reduction, and calls the metric a "same metric" mean, so the paper treats the October statistic as unknown and the verdict as carried by November. |
+| 1.7B | **adverse**, all three seeds, both cohorts | November: 2.41×, 6.87× and 8.25× the matched control, 7/30, 0/30, 0/30. October: medians 21,468 / 43,660 / 71,270 at 1.87× to 6.19×, recorded but with no surviving per-run file. The seed ordering inverts between cohorts, which says more about training variance than about the rung. Collapse and cost stay separate axes. |
 | 0.6B | **negative**, procedure stopped | Wave-8 0.6B stopped by its own stop-loss; the wave-7 closed-choice result stands separately. |
 | 8B | **one arm**, and only under the pre-registered pairing | The October `lr 1e-5` seed-1 survivor passes G1 (14,595 vs 89,633, 29/30, p = 2.9e-8). The November selected `5e-5` rate is favourable band-against-band and **explicitly not established under G1**, because those legs ran `--pattern curriculum` and were paired against a noisy control, so the two sides share no demand path. |
 

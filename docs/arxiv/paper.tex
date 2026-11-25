@@ -27,15 +27,17 @@ A published claim \cite{long2026} reports that a GRPO-tuned 4B agent beats its o
 baseline on cost in a four-tier beer-game environment. We report a pre-registered, commit-dated
 protocol testing a claim of that type at four model scales (0.6B, 1.7B, 4B, 8B), as an adaptation
 study: our training procedure and readout differ from the published recipe in enumerated ways
-(Appendix~\ref{app:deltas}). \textbf{4B passes} the frozen paired cost criteria. The November rebuild, whose per-run files are
-committed, passes on both seeds (30/30 and 25/30 paired wins; medians 9{,}346 and 17{,}958 against
-a matched control of 21{,}578; $p \le 1.6\times10^{-4}$). The October pair recorded 8{,}315 and
-7{,}612 at 30/30 per seed in a verdict document whose raw paired files did not survive, so its
-reductions are document-recorded rather than recomputable.
-\textbf{1.7B is adverse}: all three evaluated seeds regress against their matched control
-($1.87\times$--$6.19\times$, 0/30 wins each). \textbf{0.6B} has negative wave-7 paired comparisons
+(Appendix~\ref{app:deltas}). \textbf{4B passes} the frozen paired cost criteria on the November rebuild, whose per-run files are
+committed: 30/30 and 25/30 paired wins, medians 9{,}346 and 17{,}958 against a matched control of
+21{,}578, $p \le 1.6\times10^{-4}$. The October cohort reported lower medians (8{,}315 and 7{,}612)
+in a verdict document that records costs but neither win counts nor per-path reductions, and whose
+raw paired files did not survive; those figures are reported as recorded, with no paired claim
+attached to them.
+\textbf{1.7B is adverse} on all three evaluated seeds in both cohorts: October medians 21{,}468,
+43{,}660 and 71{,}270 against a matched control of 11{,}508, and a November rebuild reading 7/30,
+0/30 and 0/30 paired wins at $2.41\times$, $6.87\times$ and $8.25\times$. \textbf{0.6B} has negative wave-7 paired comparisons
 on all six arm--seed rows, and a wave-8 procedure stopped by its own stop-loss: the collapse
-detector tripped on all six arm tasks at round 1, five persisted stop markers survive, two tasks
+detector tripped on all six arm tasks at round 1, five persisted stop markers survive, three tasks
 were resumed past a stop, two of them by one unattended resubmission, and the completed read
 still fails the output-mass gate. \textbf{8B is evaluable on one of its four arms}: the $10^{-5}$ seed-1 adapter survived, and
 against a matched untrained-8B control it passes every G1 gate on the pre-registered noisy-argmax
@@ -45,8 +47,9 @@ curriculum control (10{,}097 and 15{,}355 vs 93{,}603; 30/30 and 28/30) but has 
 paired generation; the $10^{-5}$ seed-0 leg was not completed. A November 2026 rebuild from the committed kit reproduces both verdicts
 and the untrained control medians (Section~\ref{sec:rebuild}); its 4B seed-1 median is
 17{,}958 rather than 7{,}612, at 25/30 wins. The frozen selection and pooling rules are the methodological
-product: the two seeds at one learning rate differ by $1.52\times$, so the arm-level mean is
-reported and neither seed is quoted alone.
+product: the two November seeds at one learning rate have medians 10{,}097 and 15{,}355
+($1.52\times$) and means 10{,}892.37 and 15{,}410.70, so the arm-level mean, 13{,}151.53, is reported
+and neither seed is quoted alone.
 
 \end{abstract}
 
@@ -106,16 +109,18 @@ pre-authorizes).
 Evaluation readout is the \textbf{noisy-argmax} interface: for each decision the model produces
 logits over the 26 label tokens at the answer position, $\pi(a \mid s) = \mathrm{softmax}$ over
 those 26 positions, the \emph{argmax} arm reads the modal letter deterministically, and the
-\emph{noisy-argmax} arm samples the letter from $\pi(\cdot \mid s)$ with 30 distinct
-evaluation-path seeds (1000--1029) at the per-decision sampling level, one simulated game per seed
-path. Training uses the same enumeration without the sampling, a deliberate delta from the reference
-recipe's sampled-$K$ (Appendix~\ref{app:deltas}).
+\emph{noisy-argmax} arm keeps that deterministic modal-letter policy and draws 30 distinct
+\emph{demand} paths (seeds 1000--1029), one simulated game per path, so the arm isolates exogeneous
+demand noise rather than acting noise. Stochastically acting is a separate generation: the
+\emph{sampled-step} arm draws each decision from $\pi(\cdot \mid s)$, and it is reported where it
+exists but is not the binding interface. Training uses the same enumeration without either kind of
+sampling, a deliberate delta from the reference recipe's sampled-$K$ (Appendix~\ref{app:deltas}).
 
 \section{Protocol and Gates}\label{sec:gates}
-The protocol is commit-then-run: every gate and the selection rule are frozen in
-version-derived spec files committed 2026-10-07 (spec commit \texttt{7d3260b},
-13:01:04Z, with the cluster kit following at \texttt{4b8bffb}, 14:55:36Z) before any GPU job for
-this wave. The spec blob is not byte-identical between those commits: the later ones add a
+The protocol is commit-then-run: the gates and the selection rule are frozen in version-derived
+spec files committed 2026-10-07 (spec commit \texttt{7d3260b}, 13:01:04Z, with the cluster kit
+following at \texttt{4b8bffb}, 14:55:36Z) before any GPU job for this wave, for the three rungs
+that freeze names. The 8B rung joins later by dated amendment (Section~\ref{sec:prov}). The spec blob is not byte-identical between those commits: the later ones add a
 status header and a changes-log entry. What is invariant is the decision-rule text; the file-level
 hashes are \texttt{ad28b747} at \texttt{7d3260b}, \texttt{02273e4a} at \texttt{4b8bffb} and
 \texttt{cc1f5cef} at \texttt{b61cea6} and \texttt{d720701}. The first wave-8 training log is job \texttt{405143} at 2026-10-08T00:24:06+02:00
@@ -211,7 +216,7 @@ per-state statistics over the full choice set; $\pi_{\mathrm{ref}}$ is a frozen
 policy-independent anchor. The KL term is averaged inside the state sum, $\beta = 0.02$ in all
 wave-8 runs. Per round: fresh collection over the curriculum band (argmax and sampled passes
 re-labelled each round, 5{,}168 training / 272 validation states at 4B), 162 batches per
-round, batch size 32, optimizer AdamW, learning rate per arm (0.6B: 1e-5 and 5e-5; 1.7B: 5e-5
+epoch and 170 optimizer steps per completed round, batch size 32, optimizer AdamW, learning rate per arm (0.6B: 1e-5 and 5e-5; 1.7B: 5e-5
 planned, 1e-5 executed; 4B: 5e-5; 8B: 5e-5 and 1e-5), LoRA $r{=}8$, $\alpha{=}16$, dropout
 0.05, attention-only targets (\texttt{q\_proj, k\_proj, v\_proj, o\_proj}), checkpoint at step
 169 selected by the frozen validate stage. Three rounds per arm. The gradient is \emph{exact}
@@ -232,13 +237,19 @@ full ledger in the supplement (S3), 24 rows, nothing aggregated; every status th
 from the task's own marker files, round reads, or generation summaries on the primary cluster
 archive, with the machine-readable extract in \texttt{docs/verify/W8-MANIFEST.json}.
 Table~\ref{tab:ledger} states the terminal dispositions, which are the counts used throughout
-this paper.
+this paper. The 24 rows are the R1 ladder. Wave-8 R2 was also built and run: job \texttt{418889}
+trained and evaluated \texttt{w8-r2sft} seeds 0--2 under the same interface (step-argmax,
+sampled-step, noisy-argmax against a 30-run curriculum control), and the R2-RL arms have round
+directories in \texttt{results/}. Their per-run evaluation files were never committed and are not in
+this archive. They sit outside the 24-task ledger because the selection rule and the G1 verdicts
+here are defined on R1.
 
 \begin{table}[ht]
 \centering
 \caption{Terminal dispositions of the 24 planned tasks, with the precedence of
 Section~\ref{sec:gates} so the classes are disjoint. Stopped tasks are counted as stopped even
-where a later resume exists.}
+where a later resume exists. Counts are as of 2026-11-22: the 8B survivor's November read is why
+that row sits under evaluated rather than trained.}
 \label{tab:ledger}
 \small
 \begin{tabular}{@{}p{4.6cm}p{1.5cm}p{6.2cm}@{}}
@@ -247,11 +258,11 @@ where a later resume exists.}
 \midrule
 Unattempted & 2 & 1.7B \texttt{lr5e-5} seeds 1--2 (never submitted) \\
 Stopped by the collapse stop-loss & 6 & 0.6B wave-8 \texttt{lr1e-5} seeds 0--2, \texttt{lr5e-5} seeds 1--2; 1.7B \texttt{lr5e-5} seed 0 \\
-Trained, no final evaluation & 5 & 8B four legs; 0.6B wave-8 \texttt{lr5e-5} seed 0 (\texttt{DONE} only) \\
+Trained, no matched final evaluation & 4 & 8B selected rate seeds 0--1 (band reads only); 8B \texttt{lr1e-5} seed 0 (leg not completed); 0.6B wave-8 \texttt{lr5e-5} seed 0 (\texttt{DONE} only) \\
 Evaluated, failing & 9 & 0.6B wave-7 six arm--seed rows; 1.7B \texttt{lr1e-5} seeds 0--2 \\
-Evaluated, passing & 2 & 4B seeds 0--1 \\
+Evaluated, passing & 3 & 4B seeds 0--1; 8B \texttt{lr1e-5} seed-1 survivor (November read of an October checkpoint) \\
 \midrule
-Planned total & 24 & 22 attempted with a trained checkpoint; 11 with a matched paired final evaluation; 13 without \\
+Planned total & 24 & 22 attempted with a trained checkpoint; 12 with a matched paired final evaluation; 12 without \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -292,24 +303,22 @@ curriculum-validation means.}
 \end{tabular}
 \end{table}
 
-\paragraph{4B, the passing rung, in two cohorts.} Two generations pass the frozen G1 on the
-final-eval generation against a matched untrained-4B control, and they are not the same evidence.
-The October cohort is document-recorded: the verdict document gives 8{,}315 and 7{,}612 at 30/30
-wins per seed, its per-run files did not survive, and the document calls the metric the ``same
-metric'' as an 8B validation mean rather than naming it a median, so the estimand of those two
-figures is unresolved (supplement S5, and the audit record). The November rebuild is
-artifact-backed and is what the committed rows regenerate: 9{,}346 (seed 0) and 17{,}958 (seed 1)
-against the same control, at 30/30 and 25/30 wins. The October rows below carry both statistics
-because the paper reports them; the November rows carry only what a file holds:
+\paragraph{4B, the passing rung, in two cohorts that are not the same evidence.} The November
+rebuild passes the frozen G1 on both seeds against a matched untrained-4B control, and it is what
+the committed rows regenerate: 9{,}346 (seed 0) and 17{,}958 (seed 1) against 21{,}578, at 30/30
+and 25/30 paired wins. The October cohort reported lower medians, 8{,}315 and 7{,}612, and that is
+everything the surviving document establishes. It records two costs and a control value; it gives
+no win count, no per-path reduction and no sign test, and it calls the metric the ``same metric'' as
+an 8B validation mean rather than naming it a median, so even the estimand of those two figures is
+unresolved. The numbers below are therefore split by what a file can support:
 \begin{itemize}
-  \item median cost 8{,}315 (seed 0) and 7{,}612 (seed 1) vs matched untrained control 21{,}578;
-  median-ratio reductions 61.5\% and 64.7\%, against a 15\% criterion (the mean costs, the median of
-  the 30 per-path proportional reductions and the control's dispersions were computed from the
-  October paired files, which did not survive; supplement S5 records their absence and S6 supplies
-  the equivalent figures from the rebuild);
-  \item paired wins 30/30 per seed, one-sided exact sign test $p = 2^{-30} = 9.3\times10^{-10}$ per
-  seed, against a criterion that effectively requires $\geq 22/30$ wins;
-  \item G7 output-mass gate: \texttt{min\_mass} 0.99999 on both seeds (PASS).
+  \item \emph{November, recomputable}: medians 9{,}346 and 17{,}958 against 21{,}578; median ratios
+  0.433 and 0.832; 30/30 and 25/30 paired wins; one-sided $p = 9.3\times10^{-10}$ and
+  $1.6\times10^{-4}$; \texttt{min\_mass} 0.999996 and 0.999981;
+  \item \emph{October, as recorded}: medians 8{,}315 and 7{,}612 against 21{,}578, and nothing else.
+  The 30/30 wins per seed, the $p = 2^{-30}$, the 61.5\% and 64.7\% reductions and the 0.99999 mass
+  gate that earlier drafts attributed to this cohort are \emph{not} in any surviving artifact, and
+  this paper does not rest on them.
 \end{itemize}
 Inference scope of the sign test: 30 paired evaluations of a trained checkpoint against the frozen
 control on fixed demand paths, not 30 training seeds and not a test of a scaling claim; the two
@@ -324,12 +333,19 @@ $I_{\mathrm{hi0}}{=}0.677$, so neither the low-entropy nor the diffuse branch fi
 modal shares (0.746, 0.840) are therefore not collapse evidence: the registered rule requires the
 entropy condition too.
 
-\paragraph{1.7B, a within-size regression with a matched control.} Final-eval medians
-21{,}468 / 43{,}660 / 71{,}270 (seeds 0/1/2 of the executed 1e-5 arm) against the matched
-untrained-1.7B control of 11{,}508 (mean 11{,}405): 0/30 paired wins on every seed, median
-regressions $1.87\times$, $3.79\times$, $6.19\times$. The curriculum-validation generation (means
-47{,}125 / 36{,}734 / 61{,}073; pooled 48{,}311) is the frozen selection input, and both
-generations agree. Training made this rung worse than its own starting readout. The planned 5e-5
+\paragraph{1.7B, a within-size regression in both cohorts.} The adverse direction is established
+twice and only one of the two cohorts has files. \emph{November, recomputable}: against the matched
+untrained-1.7B control (median 11{,}508, mean 11{,}405) the rebuild reads 27{,}706, 79{,}094 and
+94{,}887, with 7/30, 0/30 and 0/30 paired wins, ratios $2.41\times$, $6.87\times$, $8.25\times$.
+\emph{October, as recorded}: medians 21{,}468 / 43{,}660 / 71{,}270 with 0/30 wins on every seed,
+ratios $1.87\times$, $3.79\times$, $6.19\times$, as carried in the rebuild memo's
+published-figures column. No per-run file and no manifest entry holds those figures, so no sentence
+here treats the win counts as recomputable. Both cohorts agree on direction, and the magnitude is larger in the cohort
+that has files. The reported ordering of the three seeds also inverts between cohorts, which is a
+comment on training variance rather than on the rung. The curriculum-validation generation (means
+47{,}125 / 36{,}734 / 61{,}073; pooled 48{,}311) is the frozen selection input and comes from the
+October documents; pooled 1.7B selection at 48{,}311 is independently in the manifest. Training made
+this rung worse than its own starting readout in both cohorts. The planned 5e-5
 arm trained seed 0 only and tripped the gate on \emph{both} branches at consecutive reads, an
 unusually clean demonstration that the branches catch different failure modes: round 1 on the
 low-entropy branch (median $H = 6.28\times10^{-5} < 9.65\times10^{-5}$ with modal share
@@ -429,20 +445,28 @@ We separate planned contingencies (handling pre-written before results), actual 
 (documented at the time), and open items. Per-rung artifact paths, the deviations table, and the
 evidence-availability inventory are in supplement S5.
 \begin{itemize}
-  \item \textbf{Frozen before wave-8 training.} Spec and wave-8 pre-registration committed
-  2026-10-07 (spec \texttt{7d3260b}, 13:01:04Z; byte-equal cluster kit \texttt{4b8bffb},
+  \item \textbf{Frozen before wave-8 training, at three rungs.} Spec and wave-8 pre-registration
+  committed 2026-10-07 (spec \texttt{7d3260b}, 13:01:04Z; cluster kit \texttt{4b8bffb},
   14:55:36Z), containing the failing grid record, the revised grid \texttt{w8\_g26b}, the
-  F0/F1/F2/F3 and G1/G2/G7 definitions, and the seed-pooling rule. The spec file was edited once
-  afterwards, at \texttt{b61cea6} (14:57:38Z), in two places only: the status header and an
-  appended changes log; the rule text is byte-identical at \texttt{7d3260b} and at the commits the
-  training arrays actually checked out (\texttt{b61cea6}, then \texttt{d720701} from 2026-10-08
-  08:05:31Z). The first wave-8 GPU job is \texttt{405143} at 22:24:06Z, 7.5 hours after the kit
+  F0/F1/F2/F3 and G1/G2/G7 definitions, and the seed-pooling rule. That freeze covers 0.6B, 1.7B
+  and 4B. \emph{It does not cover 8B}: the blob at \texttt{7d3260b} contains no 8B rung, and the 8B
+  extension arrives two weeks later as a dated, committed amendment, \texttt{6152424} at
+  2026-10-21T08:17:07Z, which adds the ladder row, the pinned checkpoint
+  (\texttt{Qwen/Qwen3-8B@b968826d}) and the Snellius \texttt{gpu\_a100} lane. The same G1 rule is applied to 8B prospectively, on the text that already
+  existed, but it was not frozen in the same act, and this paper does not claim it was. The spec
+  file was edited afterwards, at \texttt{b61cea6} (14:57:38Z) and again by that amendment, so the
+  file-level hash differs between commits (\texttt{ad28b747}, \texttt{02273e4a},
+  \texttt{cc1f5cef}, \texttt{d720701}); the decision-rule text is what is invariant, not the
+  bytes. The first wave-8 GPU job is \texttt{405143} at 22:24:06Z, 7.5 hours after the kit
   commit, and the wave-8 logs carry that checkout SHA and the pre-flight \texttt{F0/F1 ok} line.
   Wave-7 observations predate all of it and informed the permutation consequence clause, whose text
   was frozen in the wave-8 spec: a planned contingency of that spec, not an amendment.
-  \item \textbf{Planned contingencies, not amendments.} The collapse stop-loss and the marker
-  semantics (terminal; a resume needs a written override), the G1 pass rule, the seed-pooling
-  selection rule, and every threshold in Section~\ref{sec:gates} were frozen before training.
+  \item \textbf{Planned contingencies, not amendments.} The collapse stop-loss, the G1 pass rule,
+  the seed-pooling selection rule and every threshold in Section~\ref{sec:gates} were frozen before
+  training. The marker semantics are the exception and are recorded as a ruling rather than a
+  pre-registration: ``terminal, and a resume needs a written override'' was written into
+  \texttt{W8-R1-DRAINED.md} on 2026-10-08, after the first stops, and it governs how the later
+  resume is judged rather than predicting it.
   \item \textbf{Amendments actually made.} (a) 8B budget: two seed-1 legs were re-run on a second
   lane (Modal A100) after the first lane's GPU budget ended; per-rung thresholds stayed the frozen
   \texttt{gates\_8b.json} and nominal effective batch 32 was matched via a grad-accum split
@@ -501,8 +525,8 @@ claimed.
   \item Simulated environment; external validity is a shared problem of this study and the
   reference claim.
   \item \textbf{Bookkeeping, exact.} From the ledger rows: 24 planned tasks, 22 attempted with a
-  trained checkpoint, 11 with a matched paired final evaluation, 13 without one (6 stopped, 5
-  trained without evaluation, 2 unattempted). Every within-size verdict is conditional on its
+  trained checkpoint, 12 with a matched paired final evaluation, 12 without one (6 stopped, 4
+  trained without a matched evaluation, 2 unattempted). Every within-size verdict is conditional on its
   pre-registered seed count and on the declared denominator reading; with this many experimental
   units there is no statistical test of any scaling claim, and none is offered. Cross-size
   comparisons are descriptive.
@@ -584,12 +608,15 @@ $\pi_{\mathrm{ref}}$), so it is NOT a delta.
 \noindent The methods supplement \cite{supplement} carries S1--S5, the gates, detector readings, task
 ledger, denominators and provenance inventory, and then the two sections bearing on numbers here: S6
 the November rebuild, which repeats both verdicts and revises the 4B seed-1 median, and S7 the
-November 8B re-training, two seeds, both passing G1.
+November 8B re-training, whose two selected-rate legs read favourably band against band and are
+\emph{not} a G1 pass, because those legs ran the curriculum pattern and were paired against a noisy
+control.
 
 \begin{table}[ht]
 \centering
 \caption{\cite{long2026} v4 vs this paper, per component.}
-\begin{tabular}{@{}p{3.4cm}p{4.6cm}p{4.6cm}@{}}
+\small
+\begin{tabular}{@{}p{3.2cm}p{4.7cm}p{4.7cm}@{}}
 \toprule
 \textbf{Component} & \textbf{Reference (2605.17036 v4)} & \textbf{This paper} \\
 \midrule

@@ -240,10 +240,12 @@ control median.}
 0.6B w8 lr5e-5 s1 & C,C & stopped at R2 & no final eval & log + marker \\
 0.6B w8 lr5e-5 s2 & C,C & stopped at R2 & no final eval & log + marker \\
 \midrule
-1.7B lr1e-5 s0 & not C & evaluated, failing & 21{,}468 vs ctl 11{,}508; 0/30 & per-run JSON \\
-1.7B lr1e-5 s1 & one trip & evaluated, failing & 43{,}660; 0/30; G7 fail & per-run JSON \\
-1.7B lr1e-5 s2 & not C & evaluated, failing & 71{,}270; 0/30 & per-run JSON \\
+1.7B lr1e-5 s0 & not C & evaluated, failing & 21{,}468 vs ctl 11{,}508; 0/30 (as recorded) & rebuild memo, published-figures column; no per-run file, no manifest entry \\
+1.7B lr1e-5 s1 & one trip & evaluated, failing & 43{,}660; 0/30; G7 fail (as recorded) & rebuild memo, published-figures column; no per-run file, no manifest entry \\
+1.7B lr1e-5 s2 & not C & evaluated, failing & 71{,}270; 0/30 (as recorded) & rebuild memo, published-figures column; no per-run file, no manifest entry \\
 1.7B lr5e-5 s0 & C,C & stopped at R2 & both branches (Table~\ref{tab:s2c}) & manifest \\
+\multicolumn{5}{l}{\emph{Outside the 24 rows: wave-8 R2 (SFT and RL). Trained and evaluated (job \texttt{418889});}} \\
+\multicolumn{5}{l}{\emph{per-run evaluation files were never committed and are absent from this archive.}} \\
 1.7B lr5e-5 s1 & --- & unattempted & never submitted & submit ledger \\
 1.7B lr5e-5 s2 & --- & unattempted & never submitted & submit ledger \\
 \midrule
@@ -599,10 +601,12 @@ outcome is therefore unestablished; what exists is a favourable band comparison,
 body now reports.
 
 \textbf{Collapse gates.} No round tripped the stop-loss on either seed; the $I$ statistic reads
-0.5017, 0.5103 and 1.0998 across seed 0's three rounds. The gate JSON files record only $I$ and
-write \texttt{medH} and \texttt{modal\_share} as null, while the console printed 0.001 and 0.895 for
-round 1 and 0.011 and 0.699 for round 3. A reader opening the files sees the nulls, so the printed
-values are quoted here rather than inferred.
+0.5017, 0.5103 and 1.0998 across seed 0's three rounds. The round files carry the components under
+their own names, \texttt{median\_entropy} and \texttt{modal\_argmax\_share}: 0.001424 / 0.89453 in
+round 1, 0.000516 / 0.88281 in round 2 and 0.011175 / 0.69922 in round 3
+(\texttt{results/wave8\_val/molab-round\{1,2,3\}-collapse\_round\{1,2,3\}.json}). Earlier drafts of
+this paper said those fields were null and quoted the console; that was wrong, and the numbers above
+are read from the files.
 
 \textbf{What was lost, in this attempt.} A third leg, $10^{-5}$ seed 0, started after seed 1 and
 was in its third round when the sandbox was reclaimed; it wrote no validation read and is not

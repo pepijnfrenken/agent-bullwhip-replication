@@ -6,7 +6,7 @@ Built against tag `arxiv-submission-1` (cut from `6993227`). Nothing here is sub
 
 | file | role |
 |---|---|
-| `paper.pdf` | main text, 12 pages |
+| `paper.pdf` | main text, 13 pages |
 | `paper-supplement.pdf` | methods supplement S1–S7, 13 pages |
 | `paper.tex`, `paper-supplement.tex` | sources, so the package is rebuildable |
 | `metadata.json` | title, abstract, authors, categories, license, reproducibility pointer |
@@ -20,7 +20,7 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 - **Title**: Post-Tuning Closed-Choice LLM Agents Across Four Model Sizes: Cost Comparisons, Training
 - **Authors**: Pepijn Frenken
 - **Primary category**: `cs.AI`; cross-list `cs.LG`
-- **Comments**: `12 pages main text, 13 pages methods supplement. Pre-registered adaptation study of
+- **Comments**: `13 pages main text, 13 pages methods supplement. Pre-registered adaptation study of
   arXiv:2605.17036v4. The protocol, gates, stop-loss and run ledger are the product; artifacts are
   committed at tag arxiv-submission-1.`
 - **License**: CC BY 4.0 for the paper, MIT for the code. Do not describe the code license as
@@ -40,7 +40,7 @@ no separate bib file to ship. Do not add one to satisfy a habit.
    `1e-5` seed-1 survivor. The selected `5e-5` rate is band-level favourable and explicitly
    unestablished under G1. Cost: the rung reads weaker than the earlier draft, which is the point.
 3. **Supplement ships as a second PDF, not appended.** Cost: the reviewer has to open a second file;
-   benefit: the main text stays at 12 pages and the supplement's 13 pages do not count against it.
+   benefit: the main text stays a self-contained 13 pages and the supplement's 13 pages do not count against it.
 4. **Supplementaries carry the losses.** S7 names the corrupt transfer, the adapters that did not
    survive, and the third November leg that died with its sandbox. Cost: it is uncomfortable to
    publish. Benefit: nobody can claim the paper hid a ninetieth-percent result.
