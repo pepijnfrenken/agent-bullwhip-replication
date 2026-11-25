@@ -25,14 +25,13 @@ Independent researcher\\
 A published claim reports that RL post-training turns a 4B language model into a cheaper supply-chain
 agent than the same model untrained \cite{long2026}. We test a claim of that type at four sizes
 (0.6B, 1.7B, 4B, 8B) under a pre-registered paired cost criterion, with matched untrained controls.
-Post-training does help at 4B: 9{,}346 against 21{,}578, 30/30 paired wins. It does not help at
-0.6B, where six trained rows lose and a seventh procedure stops itself; it makes 1.7B worse on every
-seed (27{,}706 to 94{,}887 against 11{,}508); and at 8B one arm of four passes (14{,}594 against
-89{,}633). The result that survives all of it is simpler: no arm at any size
-beats the reference we actually care about. A self-tuning order-up-to rule costs 5{,}346 on the same
-30 demand paths. The best arm is 1.75$\times$ that, the worst 17.8$\times$, and the ladder never
-crosses it. Post-training moves the model within a band far above a 1970s inventory rule; scale did
-not close the gap.
+Post-training does help at 4B: 9{,}346 against 21{,}578 at seed 0 (30/30 paired wins) and 17{,}958
+at seed 1 (25/30). It does not help at 0.6B, where six trained rows lose; it makes 1.7B worse on
+every seed (27{,}706 to 94{,}887 against 11{,}508); and at 8B one arm of four passes (14{,}594
+against 89{,}633). The result that survives all of it is simpler: no arm at any size beats the
+reference we actually care about. A self-tuning order-up-to rule costs 5{,}346 over the same 36-week
+games. The closest arm is 1.75$\times$ that at its best seed and 3.36$\times$ at its other seed; the
+worst is 17.7$\times$. Scale did not close the gap.
 \end{abstract}
 
 \section{What was tested}
@@ -57,24 +56,32 @@ Section~\ref{sec:solid} states exactly what they do and do not establish.
 
 \section{Environment and the two baselines}\label{sec:env}
 
-The simulator is the four-echelon beer game used throughout this project: four roles (retailer,
-wholesaler, distributor, factory), a two-week shipping delay, holding and backlog costs of 1 and 2 per
-unit per week, a 36-week horizon, zero initial inventories, and stochastic demand. The agent sees the
-local state and returns one order quantity per decision. The action set is a fixed grid of 26 values
-(0--30, then 36--200), read as 26 label tokens, so a decision is a single-letter choice rather than
-free text.
+The simulator is the four-echelon beer game \cite{sterman1989,lee1997} used throughout this project:
+four roles (retailer, wholesaler, distributor, factory), a two-week shipping delay, holding and backlog
+costs of 1 and 2 per unit per week, a 36-week horizon, zero initial inventories, and stochastic
+demand. Each of the four echelons is managed by its own decision, and in these experiments the
+language model plays all four roles, exactly as the rule does. The agent sees the local state and
+returns one order quantity per decision. The action set is a fixed grid of 26 values (0--30, then
+36--200), read as 26 label tokens, so a decision is a single-letter choice rather than free text.
+
+The models are the Qwen3 family at 0.6B, 1.7B, 4B and 8B parameters, at the revisions recorded with
+the frozen gates. Nothing in the protocol depends on that family; the sizes are the variable.
 
 Two baselines are in play, and keeping them apart is the point of this paper.
 
 \textbf{The untrained self.} The same checkpoint, same prompt, same grid, no training. This is the
 baseline the published claim uses, and it is a fair test of whether training did anything.
 
-\textbf{The tuned rule.} A walk-forward order-up-to policy that re-estimates its parameters from the
-first 18 weeks of each demand path and then plays the remaining horizon. It is computed inside the same
-simulator with the same cost function, and it appears in three versions on the same 30 noisy demand
-paths: tuned ($\theta,\lambda$ fitted), untuned (fixed parameters), and an oracle that knows the
-demand. Medians: tuned 5{,}346, untuned 5{,}423, oracle 4{,}594. Tuning therefore buys almost nothing
-on noisy demand; the rule's value is in the rule, not in the fitting.
+\textbf{The tuned rule.} A walk-forward order-up-to (base-stock) policy \cite{scarf1960}, the
+classical inventory rule rather than a recent construction. Its slopes $(\theta,\lambda)$ are chosen
+per demand path by a grid search over $\theta\in\{1.5,\dots,6.0\}$ and
+$\lambda\in\{0.1,\dots,0.9\}$ fitted on weeks 1--18 only, then played frozen to week 36. The reported
+cost is the cost of the \emph{full} 36-week game, in the same simulator and cost function as the
+models, so it is not a truncated-horizon figure. It appears in three versions on the same 30-path
+noisy band: tuned, untuned (fixed $\theta{=}3.0,\lambda{=}0.5$), and an oracle fitted on the whole
+path. Medians: tuned 5{,}346, untuned 5{,}423, oracle 4{,}594. Tuning therefore buys almost nothing on
+noisy demand; the value is in the rule, not the fitting. The rule's first 18 weeks are in-sample for
+it, which is an advantage the models do not get and which the gap survives.
 
 Comparing a model to this rule is the comparison a practitioner would make, and it is the one the
 published claim does not make.
@@ -89,7 +96,9 @@ thresholds per size and per-round read schedule are in the methods supplement \c
   \item \textbf{The criterion (G1).} On 30 shared noisy demand paths (seeds 1000--1029), the trained
   arm must reduce cost by at least 15\% against its matched untrained control on two statistics (ratio
   of medians, and median of per-path proportional reductions), win at least 20 of the 30 paired paths,
-  and clear a one-sided sign test at $p<0.02$. A size passes if at least two of its three seeds pass.
+  and clear a one-sided sign test at $p<0.02$. A size passes if at least two of its three seeds pass;
+4B is the one size that ran two seeds, not three, so its pass uses the whole seed complement it has
+(Section~\ref{sec:deviations}).
   \item \textbf{The stop-loss.} After each training round the policy's output distribution is
   re-measured. A collapse branch (median entropy below the frozen low bound with modal mass above
   threshold, or entropy above the high bound with an information statistic below threshold) fires on
@@ -103,8 +112,9 @@ thresholds per size and per-round read schedule are in the methods supplement \c
   evaluation; 12 do not (6 stopped, 4 trained without one, 2 unattempted).
 \end{itemize}
 
-Training is LoRA ($r{=}8$, $\alpha{=}16$, attention projections), batch 32, 170 optimizer steps per
-round, three rounds, exact-enumeration policy gradient against a frozen reference KL. Section~A lists
+Training is LoRA \cite{hu2021lora} ($r{=}8$, $\alpha{=}16$, attention projections), batch 32, 170
+optimizer steps per round, three rounds, exact-enumeration policy gradient against a frozen reference
+KL. Section~A lists
 the deltas from the published recipe.
 
 \section{Results}\label{sec:results}
@@ -136,10 +146,12 @@ Size & Cohort & Untrained median & Trained median & Paired wins \\
 \end{table}
 
 \textbf{4B, the size where training works.} The November rebuild passes G1 on both seeds: 9{,}346
-(30/30 wins, $p = 9.3\times10^{-10}$) and 17{,}958 (25/30, $p \approx 1.6\times10^{-4}$). The
-reduction is real and reproducible from committed per-run rows. It is also seed-dependent: the two
-seeds differ by $1.52\times$ in median and 1.42$\times$ in mean, so the arm-level mean
-(13{,}152) is what we report, not the flattering seed.
+(30/30 wins, $p = 9.3\times10^{-10}$, a 57\% reduction against the untrained control) and 17{,}958
+(25/30, $p \approx 1.6\times10^{-4}$, a 17\% reduction). The reduction is real and reproducible from
+committed per-run rows. It is also seed-dependent, and by more than one statistic can hide: the
+paired-evaluation medians differ by $1.92\times$ (mean 13{,}652), the curriculum-band medians by
+$1.52\times$ (10{,}097 and 15{,}355) and the band means by $1.42\times$ (10{,}892 and 15{,}411). We
+report both seeds wherever the paper quotes a number, and no single seed stands in for the arm.
 
 \textbf{1.7B, where training is worse than doing nothing.} All three November seeds lose to their
 untrained control: 27{,}706 (7/30 wins), 79{,}094 and 94{,}887 (0/30). The effect is not merely absent;
@@ -162,73 +174,125 @@ statement is that the selected rate's paired outcome is unestablished, not that 
 
 \subsection{The comparison that matters}
 
-Table~\ref{tab:formula} puts every arm beside the tuned rule on the same 30 demand paths.
+Table~\ref{tab:formula} puts every arm beside the tuned rule on the same 30-path noisy band.
 
 \begin{table}[ht]
 \centering
-\caption{Every model arm against the tuned walk-forward rule, medians of total cost over the same 30
-noisy demand paths. Ratio is arm median divided by rule median. The comparison is distributional, not
-paired: see Section~\ref{sec:solid}.}
+\caption{Every arm in the ladder against the tuned walk-forward rule, medians of total cost over the
+same 30-path noisy band. Ratio is arm median divided by rule median. The comparison is distributional,
+not paired: the two files do not share a verifiable path identifier, see Section~\ref{sec:solid}.}
 \label{tab:formula}
 \small
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Arm & Median cost & Ratio to tuned rule (5{,}346) \\
 \midrule
-Tuned order-up-to rule & 5{,}346 & 1.00 \\
-Oracle rule (knows demand) & 4{,}594 & 0.86 \\
+Tuned order-up-to rule (fitted on weeks 1--18, played over 36) & 5{,}346 & 1.00 \\
+Oracle rule (fitted on the full path) & 4{,}594 & 0.86 \\
 \midrule
 4B post-trained, seed 0 & 9{,}346 & 1.75 \\
-8B post-trained, October survivor & 14{,}594 & 2.73 \\
+Untrained 1.7B & 11{,}508 & 2.15 \\
+Untrained 0.6B & 11{,}569 & 2.16 \\
+4B post-trained, seed 1 & 17{,}958 & 3.36 \\
 4B untrained & 21{,}578 & 4.04 \\
 1.7B post-trained, seed 0 & 27{,}706 & 5.18 \\
 1.7B post-trained, seed 1 & 79{,}094 & 14.80 \\
-1.7B post-trained, seed 2 & 94{,}887 & 17.75 \\
 8B untrained & 89{,}633 & 16.77 \\
+1.7B post-trained, seed 2 & 94{,}887 & 17.75 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Not one trained arm, at any size, comes within 75\% of the rule. The best is the 4B arm that passes
-G1, and it is 1.75$\times$ the rule while beating its own untrained self by 2.3$\times$. Both
-statements are true and they point in opposite directions: post-training is a real intervention on the
-model, and the model is still nowhere near the algorithm. Scaling from 0.6B to 8B did not close the
-gap; at 1.7B it widened it.
+No trained arm at any size is closer than 1.75$\times$ the rule, and that best case is the 4B arm's
+favourable seed; its other seed is 3.36$\times$. The arm-level mean, 13{,}652, is 2.55$\times$. Both
+statements stay true at once: post-training is a real intervention on the model, and the model is
+still far from the algorithm. Scaling from 0.6B to 8B did not close the gap; at 1.7B it widened it.
+
+Two features of this table matter for how far it can be pushed. First, the rule's parameters are
+fitted on weeks 1--18 of the same demand path and then played over the full 36 weeks, so its early
+weeks are in-sample; nothing similar is granted to the models. That biases the comparison in the
+rule's favour, and the gap survives it. Second, the untrained 8B reads 89{,}633 partly because it does
+not commit to the label set: its mass on the 26 labels is 0.840, against 0.99986 for the trained arm.
+An 8B ``pass'' against that baseline is therefore a pass against a broken readout, which is the
+weakest evidence in the paper and is reported as such.
 
 \section{What this does and does not establish}\label{sec:solid}
 
-\textbf{Established.} The published comparison type reproduces at 4B: post-training roughly halves cost
-against the same model untrained, on matched demand paths, with a sign test. It does not reproduce as a
-general property of scale: one size of four improves, one is neutral, one is sharply adverse, and one
-passes on a single unselected arm. And no arm approaches the tuned rule.
+\textbf{Established.} The published comparison type reappears at 4B under our adaptation: post-training
+cuts cost against the same model untrained on matched demand paths, by 57\% at seed 0 and 17\% at seed
+1, with sign tests that would occur by chance about once in $10^{9}$ and once in $6{,}000$. It does not
+reappear as a general property of scale: one size improves, 0.6B is adverse on all six trained rows,
+1.7B is sharply adverse on all three seeds, and 8B passes on one unselected arm against a baseline
+whose readout is partly broken. And no arm approaches the tuned rule.
 
 \textbf{Not established, and stated as such.} The October 4B and 1.7B numbers are reported because
 earlier drafts published them, not because we can recompute them. The October verdict document records
 two 4B costs (8{,}315 and 7{,}612) and a control value, with no win count and no per-path reduction; the
-per-run files behind both October cohorts were never committed and did not survive. The November
-rebuild supersedes them as evidence, and every verdict in this paper rests on November rows or on the
-8B October adapter, which does.
+per-run files behind both October cohorts were never committed and did not survive. Every verdict here
+rests on November rows, with one exception: the 8B arm's checkpoint is from October and its adapter
+survived on a storage volume, which is how a November read of an October checkpoint was possible at
+all. The three 8B adapters from the November legs did not survive their sandbox.
 
 \textbf{The formula comparison is distributional.} \texttt{results/wave7\_floors.json} gives the rule's
 cost per demand path, and the arm files give cost per run, but we could not verify a common path
 identifier between the two. As a check, we correlated arm cost with rule cost across indices and got
 $-0.07$ to $+0.16$, which is noise; a real paired join should show positive correlation, since harder
 demand should cost both more. We therefore compare medians over the same 30-path band and claim no
-per-path dominance.
+per-path dominance. Table~\ref{tab:formula} and the abstract say ``band'', not ``paths we matched''.
 
-\textbf{One arm is not a size.} 8B is represented by a single checkpoint that the frozen selection rule
-did not choose, whose adapters no longer exist, evaluated in November on a Blackwell card with a newer
-stack than the October legs. Its pass is real; it is not a rung verdict.
+\textbf{An earlier arm in this project came close, under a protocol we do not use.} A wave-2 API-agent
+arm reached a noisy-band mean of 5{,}421, which is at the level of the rule's own band. That prompt handed the model
+the same-week incoming order of the tier below, a one-week lookahead the rule does not have, and a
+later internal audit found this contamination systematic and pro-LLM \cite{audit}. The protocol in
+this paper removes it. The number is therefore not evidence that a model can match the rule, and not
+evidence that it cannot.
+
+\textbf{One arm is not a size.} 8B is represented by a single checkpoint, from the rate the frozen
+selection rule did not choose, read in November on a Blackwell card with a newer stack than the
+October legs. Its pass is real; it is not a rung verdict, and its baseline is weak: untrained 8B puts
+0.840 of its mass on the 26 labels, against 0.99986 for the trained arm, so much of the 89{,}633 it
+scores is a readout failure rather than a decision failure.
 
 \textbf{Variance is training-side, not evaluation-side.} Two independent 4B evaluation jobs on different
 days produced byte-identical outputs, and the untrained band control returned the same value to five
-decimals twice. The 14--39\% differences between October and November therefore live in training, which
-we can point at but cannot yet explain.
+decimals twice. The October-to-November differences on the trained arms are therefore in training, and
+they are large and not uniform: $+12\%$ at 4B seed 0, $+136\%$ at 4B seed 1, $+81\%$ at 1.7B seed 1.
+We can point at the training stage; we cannot yet explain the variation.
 
-\textbf{Other limits.} Simulated environment; one demand family for the headline comparisons; LoRA and
-an exact-enumeration objective rather than the published GRPO recipe; effective batch matched across
-hardware but optimizer-step and numerical equivalence not tested; 24 planned tasks is too few for any
-scaling claim, and none is made.
+\textbf{Other limits.} Simulated environment and one demand family for the headline comparisons; LoRA and
+an exact-enumeration objective rather than the published GRPO recipe \cite{grpo}; effective batch
+matched across hardware but optimizer-step and numerical equivalence not tested; 24 planned tasks is
+too few for a scaling claim, and none is made; no confidence intervals are reported because the
+experimental unit is a seed, and there are two to three per arm.
+
+\section{Protocol deviations}\label{sec:deviations}
+
+The rules in Section~\ref{sec:protocol} were frozen first, and this paper did not always follow them.
+Each departure is listed with what it cost.
+
+\begin{itemize}
+  \item \textbf{4B ran two seeds, not three.} The criterion asks for two of three. Two were run, both
+  passed, and no third was attempted, so the 4B verdict is a 2/2 pass of the seeds that exist. This is
+  the weakest form of pass the rule allows.
+  \item \textbf{Three 0.6B tasks were resumed past a stop, two of them unattended.} The marker rule says
+  a stop is terminal and a resume needs a written override. One resume had an override; two came from a
+  bare array resubmission that carried no arm variable and no commit pin. That is a breach of the
+  pre-registered rule and is recorded as one, not as a procedural detail.
+  \item \textbf{The collapse detector fired without stopping the 1.7B arms.} The stop requires two
+  consecutive tripping reads. Several 1.7B arms tripped once and then recovered, so they finished and
+  were evaluated. That is the rule working as written, not an override, but it means a single tripping
+  read cannot be read as a stop anywhere in this paper.
+  \item \textbf{0.6B is a different method.} Wave-7 trained with soft-target SFT and RLCD, not the
+  exact-enumeration objective used at 1.7B, 4B and 8B. It shares the readout and the criterion, not the
+  trainer. It is therefore a comparator at 0.6B, not the bottom rung of one homogeneous ladder, and the
+  ``four sizes'' in the title means four sizes tested, not four runs of one procedure.
+  \item \textbf{The 8B legs changed hardware and stack.} October legs ran on A100 lanes, the November
+  read on a Blackwell card with torch 2.11 against the October 2.1.2. Nominal effective batch was
+  matched; optimizer-step and numerical equivalence were not tested.
+  \item \textbf{Wave-8 R2 is outside the ledger.} The R2 arms were trained and evaluated (job
+  \texttt{418889}) and their per-run files were never committed. They are not part of the 24 planned
+  R1 tasks and no verdict here uses them.
+\end{itemize}
 
 \section{Provenance and what is missing}\label{sec:prov}
 
@@ -258,6 +322,18 @@ against an untrained copy of the same model.
 \bibitem{long2026} C.~X. Long, D.~Simchi-Levi, F.~Zhu, H.~Su, A.~P.~Calmon,
 F.~P.~Calmon, ``Reliability and Effectiveness of Autonomous AI Agents in Supply Chain
 Management,'' \texttt{arXiv:2605.17036}, version 4 (21 September 2026); accessed 25 November 2026.
+\bibitem{sterman1989} J.~D. Sterman, ``Modeling managerial behavior: Misperceptions of feedback in a
+dynamic decision making experiment,'' \emph{Management Science} 35(3), 321--339, 1989.
+\bibitem{lee1997} H.~L. Lee, V.~Padmanabhan, S.~Whang, ``Information distortion in a supply chain: The
+bullwhip effect,'' \emph{Management Science} 43(4), 546--558, 1997.
+\bibitem{scarf1960} H.~Scarf, ``The optimality of $(S,s)$ policies in the dynamic inventory problem,''
+in \emph{Mathematical Methods in the Social Sciences}, Stanford University Press, 1960.
+\bibitem{hu2021lora} E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, W.~Chen,
+``LoRA: Low-rank adaptation of large language models,'' \texttt{arXiv:2106.09685}, 2021.
+\bibitem{grpo} Z.~Shao \emph{et al.}, ``DeepSeekMath: Pushing the limits of mathematical reasoning in
+open language models,'' \texttt{arXiv:2402.03300}, 2024 (GRPO, \S4.1).
+\bibitem{audit} P.~Frenken, ``Audit 3: same-week incoming-order leak, tuned floor and paired tests,''
+\texttt{docs/audits/AUDIT3.md}, 2026, in this paper's repository.
 \bibitem{supplement} P.~Frenken, ``Methods supplement: gates, per-round readings, task ledger and
 provenance inventory for the four-scale closed-choice bullwhip study,'' 2026. Committed with this
 paper at tag \texttt{arxiv-submission-1}.

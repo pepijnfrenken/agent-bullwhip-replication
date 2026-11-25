@@ -6,7 +6,7 @@ Built against tag `arxiv-submission-1` (cut from `6993227`). Nothing here is sub
 
 | file | role |
 |---|---|
-| `paper.pdf` | main text, 5 pages |
+| `paper.pdf` | main text, 6 pages |
 | `paper-supplement.pdf` | methods supplement S1–S7, 13 pages |
 | `paper.tex`, `paper-supplement.tex` | sources, so the package is rebuildable |
 | `metadata.json` | title, abstract, authors, categories, license, reproducibility pointer |
@@ -20,7 +20,7 @@ no separate bib file to ship. Do not add one to satisfy a habit.
 - **Title**: Post-Tuning Beats Its Own Baseline and Still Loses to a Tuned Rule: LLM Agents from 0.6B to 8B on a Simulated Beer Game
 - **Authors**: Pepijn Frenken
 - **Primary category**: `cs.AI`; cross-list `cs.LG`
-- **Comments**: `5 pages main text, 13 pages methods supplement. Pre-registered adaptation study of
+- **Comments**: `6 pages main text, 13 pages methods supplement. Pre-registered adaptation study of
   arXiv:2605.17036v4. The protocol, gates, stop-loss and run ledger are the product; artifacts are
   committed at tag arxiv-submission-1.`
 - **License**: CC BY 4.0 for the paper, MIT for the code. Do not describe the code license as
