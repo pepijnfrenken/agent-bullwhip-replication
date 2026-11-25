@@ -29,8 +29,8 @@ Post-training does help at 4B: 9{,}346 against 21{,}578 at seed 0 (30/30 paired 
 at seed 1 (25/30). It does not help at 0.6B, where six trained rows lose; it makes 1.7B worse on
 every seed (27{,}706 to 94{,}887 against 11{,}508); and at 8B one arm of four passes (14{,}594
 against 89{,}633). The result that survives all of it is simpler: no arm at any size beats the
-reference we actually care about. A self-tuning order-up-to rule costs 5{,}346 over the same 36-week
-games. The closest arm is 1.75$\times$ that at its best seed and 3.36$\times$ at its other seed; the
+reference we actually care about. A self-tuning order-up-to rule costs 5{,}346 in the same
+simulator and horizon. The closest arm is 1.75$\times$ that at its best seed and 3.36$\times$ at its other seed; the
 worst is 17.7$\times$. Scale did not close the gap.
 \end{abstract}
 
@@ -67,15 +67,26 @@ returns one order quantity per decision. The action set is a fixed grid of 26 va
 The models are the Qwen3 family at 0.6B, 1.7B, 4B and 8B parameters, at the revisions recorded with
 the frozen gates. Nothing in the protocol depends on that family; the sizes are the variable.
 
+The readout matters as much as the policy. Each decision is the argmax over the 26 label tokens, so
+probability sitting outside the label set does not change which letter is chosen, but a model that
+places a large share of its mass elsewhere is not reliably ranking the 26. The untrained controls
+differ sharply on this: their minimum label mass over 30 paths is 0.998 at 4B, 0.998 at 0.6B, 0.823 at
+1.7B and 0.789 at 8B. The 4B comparison, which is the paper's one clean pass, is therefore also the one
+whose baseline commits to the action set.
+
 Two baselines are in play, and keeping them apart is the point of this paper.
 
 \textbf{The untrained self.} The same checkpoint, same prompt, same grid, no training. This is the
 baseline the published claim uses, and it is a fair test of whether training did anything.
 
-\textbf{The tuned rule.} A walk-forward order-up-to (base-stock) policy \cite{scarf1960}, the
-classical inventory rule rather than a recent construction. Its slopes $(\theta,\lambda)$ are chosen
-per demand path by a grid search over $\theta\in\{1.5,\dots,6.0\}$ and
-$\lambda\in\{0.1,\dots,0.9\}$ fitted on weeks 1--18 only, then played frozen to week 36. The reported
+\textbf{The tuned rule.} An order-up-to policy with an exponentially smoothed forecast, the
+anchor-and-adjust heuristic of the behavioural literature \cite{sterman1989}:
+$q_t=\max\{0,\ \theta\hat q_t-\mathrm{IP}_t\}$ and
+$\hat q_t=\lambda q_{t-1}+(1-\lambda)\hat q_{t-1}$, where $\mathrm{IP}$ is the inventory position.
+Two parameters, $\theta$ (target multiple of forecast demand) and $\lambda$ (smoothing), are chosen per
+demand path by a grid search over $\theta\in\{1.5,\dots,6.0\}$ and $\lambda\in\{0.1,\dots,0.9\}$ fitted
+on weeks 1--18 only, then played frozen to week 36. This is the reference paper's own rule form
+(its eqs.~3--5), not a strawman we built to lose. The reported
 cost is the cost of the \emph{full} 36-week game, in the same simulator and cost function as the
 models, so it is not a truncated-horizon figure. It appears in three versions on the same 30-path
 noisy band: tuned, untuned (fixed $\theta{=}3.0,\lambda{=}0.5$), and an oracle fitted on the whole
@@ -145,13 +156,35 @@ Size & Cohort & Untrained median & Trained median & Paired wins \\
 \end{tabular}
 \end{table}
 
+\begin{table}[ht]
+\centering
+\caption{Both statistics G1 requires, and a bootstrap interval over the 30 demand paths for each. The
+criterion needs $\geq 15\%$ on both and $\geq 20/30$ wins; the winning arm clears both intervals by a
+wide margin, and the 1.7B intervals sit entirely on the wrong side of 1.}
+\label{tab:g1}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Arm & Median ratio (95\% CI) & Median reduction (95\% CI) & Wins & Verdict \\
+\midrule
+4B seed 0 & 0.403 [0.317, 0.460] & 0.597 [0.540, 0.683] & 30/30 & pass \\
+4B seed 1 & 0.752 [0.592, 0.870] & 0.248 [0.140, 0.408] & 25/30 & pass \\
+8B October survivor & 0.157 [0.102, 0.231] & 0.843 [0.769, 0.898] & 29/30 & pass \\
+1.7B seed 0 & 2.275 [1.985, 2.791] & $-1.275$ [$-1.791$, $-0.985$] & 7/30 & fail \\
+1.7B seed 1 & 7.879 [7.444, 8.808] & $-6.879$ [$-7.808$, $-6.444$] & 0/30 & fail \\
+1.7B seed 2 & 8.231 [7.798, 8.866] & $-7.231$ [$-7.866$, $-6.796$] & 0/30 & fail \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \textbf{4B, the size where training works.} The November rebuild passes G1 on both seeds: 9{,}346
 (30/30 wins, $p = 9.3\times10^{-10}$, a 57\% reduction against the untrained control) and 17{,}958
 (25/30, $p \approx 1.6\times10^{-4}$, a 17\% reduction). The reduction is real and reproducible from
-committed per-run rows. It is also seed-dependent, and by more than one statistic can hide: the
-paired-evaluation medians differ by $1.92\times$ (mean 13{,}652), the curriculum-band medians by
-$1.52\times$ (10{,}097 and 15{,}355) and the band means by $1.42\times$ (10{,}892 and 15{,}411). We
-report both seeds wherever the paper quotes a number, and no single seed stands in for the arm.
+committed per-run rows. It is also seed-dependent, and by more than one statistic hides: on the paired evaluation the
+medians are 9{,}346 and 17{,}958 ($1.92\times$, mean 13{,}652); on the curriculum validation band of
+the same adapters the medians are 9{,}854 and 18{,}335 ($1.86\times$) and the means 9{,}355 and
+19{,}385 ($2.07\times$, pooled 14{,}370). We quote both seeds wherever a number appears, and no single
+seed stands in for the arm.
 
 \textbf{1.7B, where training is worse than doing nothing.} All three November seeds lose to their
 untrained control: 27{,}706 (7/30 wins), 79{,}094 and 94{,}887 (0/30). The effect is not merely absent;
@@ -163,14 +196,18 @@ the whole study measurable, and six trained arm--seed rows that all lose (0/30 w
 arms tripped the collapse branch on all six tasks; five carry persisted stop markers and three tasks
 were resumed past a stop, two of them through one unattended resubmission.
 
-\textbf{8B, where one arm passes and three do not.} The $10^{-5}$ seed-1 checkpoint survives and passes
-G1 against a matched untrained-8B control: 14{,}594 against 89{,}633, 29/30, $p = 2.9\times10^{-8}$.
+\textbf{8B, where one arm passes and the others have no verdict.} The $10^{-5}$ seed-1 checkpoint
+survives and passes G1 against a matched untrained-8B control: 14{,}594 against 89{,}633, 29/30,
+$p = 2.9\times10^{-8}$.
 It is not the arm the frozen selection rule chose. The selected $5\times10^{-5}$ rate was retrained in
 November and reads $0.108$ and $0.164$ of a \emph{curriculum} control (10{,}097 and 15{,}355 against
 93{,}603, 30/30 and 28/30), which is favourable but is not the registered comparison: those legs ran
 the curriculum demand pattern and were paired against a noisy control, so the two sides share no demand
 path. An earlier draft of this paper claimed a G1 pass for them. That claim was withdrawn; the correct
-statement is that the selected rate's paired outcome is unestablished, not that it failed.
+statement is that the selected rate's paired outcome is unestablished, not that it failed. The fourth
+8B leg, $10^{-5}$ seed 0, reached its third round and was cut off when its sandbox was reclaimed; it
+produced no validation read, which is why two curriculum readings appear and not three. All three
+November adapters are gone with that sandbox.
 
 \subsection{The comparison that matters}
 
@@ -193,7 +230,9 @@ Oracle rule (fitted on the full path) & 4{,}594 & 0.86 \\
 4B post-trained, seed 0 & 9{,}346 & 1.75 \\
 Untrained 1.7B & 11{,}508 & 2.15 \\
 Untrained 0.6B & 11{,}569 & 2.16 \\
+8B post-trained (October survivor) & 14{,}594 & 2.73 \\
 4B post-trained, seed 1 & 17{,}958 & 3.36 \\
+0.6B post-trained, six rows (SFT, RLCD) & 20{,}594--37{,}384 & 3.85--6.99 \\
 4B untrained & 21{,}578 & 4.04 \\
 1.7B post-trained, seed 0 & 27{,}706 & 5.18 \\
 1.7B post-trained, seed 1 & 79{,}094 & 14.80 \\
@@ -238,10 +277,12 @@ cost per demand path, and the arm files give cost per run, but we could not veri
 identifier between the two. As a check, we correlated arm cost with rule cost across indices and got
 $-0.07$ to $+0.16$, which is noise; a real paired join should show positive correlation, since harder
 demand should cost both more. We therefore compare medians over the same 30-path band and claim no
-per-path dominance. Table~\ref{tab:formula} and the abstract say ``band'', not ``paths we matched''.
+per-path dominance. Table~\ref{tab:formula}'s caption says band; the abstract's ``same 36-week games''
+means the same simulator and horizon, not verified path identity, and this paragraph is the caveat on
+that phrase.
 
 \textbf{An earlier arm in this project came close, under a protocol we do not use.} A wave-2 API-agent
-arm reached a noisy-band mean of 5{,}421, which is at the level of the rule's own band. That prompt handed the model
+arm reached a noisy-band mean of 5{,}421 against the rule's mean of 5{,}323 on its band. That prompt handed the model
 the same-week incoming order of the tier below, a one-week lookahead the rule does not have, and a
 later internal audit found this contamination systematic and pro-LLM \cite{audit}. The protocol in
 this paper removes it. The number is therefore not evidence that a model can match the rule, and not
@@ -249,9 +290,10 @@ evidence that it cannot.
 
 \textbf{One arm is not a size.} 8B is represented by a single checkpoint, from the rate the frozen
 selection rule did not choose, read in November on a Blackwell card with a newer stack than the
-October legs. Its pass is real; it is not a rung verdict, and its baseline is weak: untrained 8B puts
-0.840 of its mass on the 26 labels, against 0.99986 for the trained arm, so much of the 89{,}633 it
-scores is a readout failure rather than a decision failure.
+October legs. Its pass is real; it is not a rung verdict, and its baseline is the weakest in the paper: untrained
+8B holds only 0.789 of its mass on the 26 labels, against 0.99986 for the trained arm, so much of the
+89{,}633 it scores is readout failure rather than decision failure. The same caveat, smaller, applies
+to the 1.7B control at 0.823; the 4B control at 0.998 does not have it.
 
 \textbf{Variance is training-side, not evaluation-side.} Two independent 4B evaluation jobs on different
 days produced byte-identical outputs, and the untrained band control returned the same value to five
@@ -262,8 +304,9 @@ We can point at the training stage; we cannot yet explain the variation.
 \textbf{Other limits.} Simulated environment and one demand family for the headline comparisons; LoRA and
 an exact-enumeration objective rather than the published GRPO recipe \cite{grpo}; effective batch
 matched across hardware but optimizer-step and numerical equivalence not tested; 24 planned tasks is
-too few for a scaling claim, and none is made; no confidence intervals are reported because the
-experimental unit is a seed, and there are two to three per arm.
+too few for a scaling claim, and none is made. Uncertainty on the paired statistic is bootstrapped
+over the 30 demand paths, which is the unit the sign test uses (Table~\ref{tab:g1}); seed-to-seed
+spread is reported as two numbers rather than as an interval, because two seeds do not identify one.
 
 \section{Protocol deviations}\label{sec:deviations}
 
@@ -326,8 +369,6 @@ Management,'' \texttt{arXiv:2605.17036}, version 4 (21 September 2026); accessed
 dynamic decision making experiment,'' \emph{Management Science} 35(3), 321--339, 1989.
 \bibitem{lee1997} H.~L. Lee, V.~Padmanabhan, S.~Whang, ``Information distortion in a supply chain: The
 bullwhip effect,'' \emph{Management Science} 43(4), 546--558, 1997.
-\bibitem{scarf1960} H.~Scarf, ``The optimality of $(S,s)$ policies in the dynamic inventory problem,''
-in \emph{Mathematical Methods in the Social Sciences}, Stanford University Press, 1960.
 \bibitem{hu2021lora} E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, W.~Chen,
 ``LoRA: Low-rank adaptation of large language models,'' \texttt{arXiv:2106.09685}, 2021.
 \bibitem{grpo} Z.~Shao \emph{et al.}, ``DeepSeekMath: Pushing the limits of mathematical reasoning in

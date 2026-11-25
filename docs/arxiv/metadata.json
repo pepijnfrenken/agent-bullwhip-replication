@@ -9,7 +9,7 @@
   "cross_list": [
     "cs.LG"
   ],
-  "comments": "6 pages main text, 13 pages methods supplement. Pre-registered adaptation study of arXiv:2605.17036v4 at four sizes, with the tuned order-up-to rule as the reference and a deviations section listing where the protocol was not followed. Artifacts committed at tag arxiv-submission-1; repository private, available on request.",
+  "comments": "7 pages main text, 13 pages methods supplement. Pre-registered adaptation study of arXiv:2605.17036v4 at four sizes, with the tuned order-up-to rule as the reference and a deviations section listing where the protocol was not followed. Artifacts committed at tag arxiv-submission-1; repository private, available on request.",
   "license_recommendation": "MIT for the code and result data (see LICENSE). The paper text itself is offered under CC BY 4.0 at submission; if the arXiv license chosen is different, change both the submission form and docs/arxiv/CHECKLIST.md, because the LICENSE file grants MIT for software and documentation and does not grant CC BY separately.",
   "reproducibility_pointer": {
     "url": "https://github.com/pepijnfrenken/agent-bullwhip-replication/tree/arxiv-submission-1",
@@ -17,7 +17,7 @@
     "tag": "arxiv-submission-1"
   },
   "commit": "arxiv-submission-1 (tag on the build commit; resolves to the tree this package was cut from)",
-  "abstract": "A published claim reports that RL post-training turns a 4B language model into a cheaper supply-chain agent than the same model untrained. We test a claim of that type at four sizes (0.6B, 1.7B, 4B, 8B) under a pre-registered paired cost criterion, with matched untrained controls. Post-training does help at 4B: 9, 346 against 21, 578 at seed 0 (30/30 paired wins) and 17, 958 at seed 1 (25/30). It does not help at 0.6B, where six trained rows lose; it makes 1.7B worse on every seed (27, 706 to 94, 887 against 11, 508); and at 8B one arm of four passes (14, 594 against 89, 633). The result that survives all of it is simpler: no arm at any size beats the reference we actually care about. A self-tuning order-up-to rule costs 5, 346 over the same 36-week games. The closest arm is 1.75x that at its best seed and 3.36x at its other seed; the worst is 17.7x. Scale did not close the gap.",
+  "abstract": "A published claim reports that RL post-training turns a 4B language model into a cheaper supply-chain agent than the same model untrained. We test a claim of that type at four sizes (0.6B, 1.7B, 4B, 8B) under a pre-registered paired cost criterion, with matched untrained controls. Post-training does help at 4B: 9,346 against 21,578 at seed 0 (30/30 paired wins) and 17,958 at seed 1 (25/30). It does not help at 0.6B, where six trained rows lose; it makes 1.7B worse on every seed (27,706 to 94,887 against 11,508); and at 8B one arm of four passes (14,594 against 89,633). The result that survives all of it is simpler: no arm at any size beats the reference we actually care about. A self-tuning order-up-to rule costs 5,346 in the same simulator and horizon. The closest arm is 1.75x that at its best seed and 3.36x at its other seed; the worst is 17.7x. Scale did not close the gap.",
   "files": {
     "main": "paper.pdf",
     "supplement": "paper-supplement.pdf",

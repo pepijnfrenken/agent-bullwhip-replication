@@ -32,7 +32,7 @@ untrained baseline on cost. Verdicts and every gate read are in `docs/waves/`; t
 A pre-registered, commit-dated adaptation study of the claim in arXiv:2605.17036v4 that a
 GRPO-tuned 4B agent beats its own untrained baseline on cost.
 
-- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 6 pages, source `docs/paper/paper.tex`
+- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 7 pages, source `docs/paper/paper.tex`
 - Methods supplement S1–S7: [`docs/paper/paper-supplement.pdf`](docs/paper/paper-supplement.pdf), 13 pages of gates, ledger and provenance
 - Submission package (metadata, abstract, checklist, checksums): [`docs/arxiv/`](docs/arxiv/)
 - Build both with `tectonic paper.tex` and `tectonic paper-supplement.tex` from `docs/paper/`
