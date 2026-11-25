@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa rung=0.6b
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa rung=0.6b
 --- eval w8-untrained-argmax-step (step/argmax) at 2026-10-08T09:35:13+02:00
 w8-untrained-argmax-step: runs=1 mean=13,048 min=13,048 max=13,048 parse_fail=0 min_mass=0.99720 wall=3.1s -> results/eval/w8-untrained-argmax-step.jsonl
 --- ok w8-untrained-argmax-step

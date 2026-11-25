@@ -1,7 +1,7 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b dirty_files=3
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
 === wave8 r2 seed=1 lr=2e-4: SFT 2827 steps at 2026-10-08T15:45:11+02:00 ===
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 === r2 sft exit=0 at 2026-10-08T19:56:07+02:00 ===
 collapse-check results/wave8_r2sft_seed1/checkpoint-249: collapsed=True medH=3.247 modal_share=0.918 I=0.0145 ['diffuse and state-blind']

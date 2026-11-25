@@ -25,6 +25,12 @@ WITHDRAWN = {
         "October 4B paired win count, withdrawn: the verdict document has costs only",
         ["docs/paper/paper.tex", "docs/paper/paper-supplement.tex", "README.md", "docs/STATE.md"],
     ),
+    "old-headline": (
+        r"1970s|orders of magnitude less compute",
+        "the withdrawn wave-3 headline: the rule is Chen et al. (2000) form, and no compute "
+        "multiple was ever measured",
+        ["README.md", "docs/STATE.md", "docs/paper/paper.tex", "docs/paper/paper-supplement.tex"],
+    ),
     "ledger-1113": (
         r"11 with|13 without",
         "8B survivor counted as unevaluated; the ledger is 12/12 after the November read",

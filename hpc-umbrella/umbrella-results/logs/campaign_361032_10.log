@@ -1,5 +1,5 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=17eb83b0f4cbf35d86c45eee453d89f53366c727 dirty_files=0
-=== task 10 -> a9_lr_low | group=8 horizon=36 curricula=poisson,truncnorm lr=5e-6 beta_kl=0.02 steps=300 rollout_batch=16 save_every=10 seed=<default 12345> (/vast.mnt/scratch/shared/20234428/bullwhip/kit/campaign.tsv) ===
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=17eb83b0f4cbf35d86c45eee453d89f53366c727 dirty_files=0
+=== task 10 -> a9_lr_low | group=8 horizon=36 curricula=poisson,truncnorm lr=5e-6 beta_kl=0.02 steps=300 rollout_batch=16 save_every=10 seed=<default 12345> (/vast.mnt/scratch/shared/<cluster-account>/bullwhip/kit/campaign.tsv) ===
 name, memory.total [MiB]
 NVIDIA L4, 23034 MiB
 compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}

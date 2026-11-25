@@ -25,10 +25,10 @@ set -u
 
 KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER="${USER:-$(id -un)}"
-# Your TU/e (SCC) username (login-node probe 2026-09-30: 20234428). The emergency
+# Your TU/e (SCC) username (login-node probe 2026-09-30: <cluster-account>). The emergency
 # pull_results.sh mirror runs from the laptop and needs it explicitly. Set once here,
 # never edit the scripts.
-TUE_USER="${TUE_USER:-20234428}"
+TUE_USER="${TUE_USER:-<cluster-account>}"
 SSH_HOST="${SSH_HOST:-hpc.tue.nl}"
 
 # --- filesystem --------------------------------------------------------------
@@ -144,7 +144,7 @@ bw_pin_table() {
     "WALLTIME_PILOT"    "$WALLTIME_PILOT"    "probe 09-30 ok (DefaultTime 2h)" \
     "WALLTIME_CAMPAIGN" "$WALLTIME_CAMPAIGN" "probe 09-30 ok (MaxTime 5d)" \
     "ENV_MODE"          "$ENV_MODE"          "recommended default" \
-    "TUE_USER"          "$TUE_USER"          "probe 09-30: 20234428 (laptop-side pulls)" \
+    "TUE_USER"          "$TUE_USER"          "probe 09-30: <cluster-account> (laptop-side pulls)" \
     "ROLLOUT_BATCH"     "$ROLLOUT_BATCH"     "repo default; the pilot measures 1 vs N" \
     "SAVE_EVERY"        "$SAVE_EVERY"        "checkpoint cadence for the campaign" \
     "MODEL_REVISION_17B" "$MODEL_REVISION_17B" "HF api sha 2026-10-07 (W8 ladder rung 2)" \

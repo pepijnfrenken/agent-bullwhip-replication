@@ -7,14 +7,14 @@
 # first stage that fails its gate instead of continuing into the GPU budget.
 #
 # Run from the login node (no exports needed — the user is hardcoded):
-#   bash /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/hpc-umbrella/wave8-next.sh
+#   bash /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/hpc-umbrella/wave8-next.sh
 #
 # The hub pull for the results side is documented in that same block (§4).
 # =============================================================================
 
 set -euo pipefail
 
-B="${BULLWHIP_ROOT:-/scratch-shared/20234428/bullwhip}"   # 20234428 = the cluster user; plain $TUE_USER is not set in a login shell
+B="${BULLWHIP_ROOT:-/scratch-shared/<cluster-account>/bullwhip}"   # <cluster-account> = the cluster user; plain $TUE_USER is not set in a login shell
 R="$B/agent-bullwhip-replication"
 K="$B/kit"
 CAP_GH=60          # stop submitting when the wave has spent more than this of the 70 GPU-h cap
@@ -55,8 +55,8 @@ stale="$(git -C "$R" rev-list --count "master..origin/master" 2>/dev/null || ech
 
 note "stage 0b: stage the kit (from OUTSIDE the kit dir — stage.sh replaces it)"
 # $TUE_USER is not set in a plain login shell; config.sh builds SCRATCH_ROOT=/scratch-shared/$TUE_USER
-# from it. Export the same user wave8-next pins (20234428) so stage.sh and this script agree on root.
-export TUE_USER=20234428
+# from it. Export the same user wave8-next pins (<cluster-account>) so stage.sh and this script agree on root.
+export TUE_USER=<cluster-account>
 bash "$R/hpc-umbrella/stage.sh"
 bash "$K/config.sh" --check | tail -1
 diff -q "$K/gpu-wave8-train.sbatch" "$R/hpc-umbrella/gpu-wave8-train.sbatch" \

@@ -86,11 +86,11 @@ the paper says regenerates every number is on the cluster archive or nowhere.
 ## Archive verification, done with the tunnel up (2026-11-19)
 
 Fresh TU/e profile installed in `~/portal/tue-wireproxy.conf`, wireproxy running, `ssh tue-cluster`
-returns `tue-login001.cluster` as `20234428`. Home is writable.
+returns `tue-login001.cluster` as `<cluster-account>`. Home is writable.
 
 Result: the project archive is empty.
 
-- `find /scratch-shared/20234428 -type f` returns exactly one file: `/scratch-shared/20234428/.keep`.
+- `find /scratch-shared/<cluster-account> -type f` returns exactly one file: `/scratch-shared/<cluster-account>/.keep`.
   The directories `agent-bullwhip-replication`, `kit`, `logs`, `hf`, `pipcache` and `venv` exist as
   empty shells. `du -sh .../agent-bullwhip-replication` is 0, and `git log` there says "not a git
   repository". The 40 Slurm logs that were pulled to this machine in October are now the only logs.

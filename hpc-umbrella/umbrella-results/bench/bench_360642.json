@@ -170,5 +170,5 @@
   "tool": "bench_rollout.py",
   "torch": "2.1.2",
   "transformers": "4.55.4",
-  "user": "20234428"
+  "user": "<cluster-account>"
 }

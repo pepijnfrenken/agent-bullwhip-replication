@@ -1,7 +1,7 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=16ad726b81da1046cc57fab5c2e19f5e9e0ef649 dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=16ad726b81da1046cc57fab5c2e19f5e9e0ef649 dirty_files=3
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
 === wave8 r2sweep lr=1e-4: 500 SFT steps, val every 100 at 2026-10-08T13:45:11+02:00 ===
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 === r2sweep exit=0 at 2026-10-08T14:45:35+02:00 ===
 results/wave8_labels

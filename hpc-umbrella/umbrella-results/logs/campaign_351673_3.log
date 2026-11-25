@@ -1,4 +1,4 @@
-=== task 3 -> a2_group16 | group=16 horizon=36 curricula=poisson,truncnorm lr=1e-5 beta_kl=0.02 steps=300 rollout_batch=16 save_every=10 (/vast.mnt/scratch/shared/20234428/bullwhip/kit/campaign.tsv) ===
+=== task 3 -> a2_group16 | group=16 horizon=36 curricula=poisson,truncnorm lr=1e-5 beta_kl=0.02 steps=300 rollout_batch=16 save_every=10 (/vast.mnt/scratch/shared/<cluster-account>/bullwhip/kit/campaign.tsv) ===
 name, memory.total [MiB]
 NVIDIA L4, 23034 MiB
 compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
@@ -4764,46 +4764,46 @@ A decoder-only architecture is being used, but right-padding was detected! For c
 Traceback (most recent call last):
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 553, in <module>
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 553, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 547, in main
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 547, in main
     run_loop(policy, args, log_path, ckpt_path, start_step=start_step, rng=rng, stop=stop)
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 481, in run_loop
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 481, in run_loop
     prompts, completions, advs = collect_step(
                                  ^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 322, in collect_step
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 322, in collect_step
     episodes = run_episodes_batched(batch_policy, demands,
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_env.py", line 248, in run_episodes_batched
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_env.py", line 248, in run_episodes_batched
     texts.extend(batch_policy([p for _, _, p in pending[i:i + max_chunk]]))
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 319, in batch_policy
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 319, in batch_policy
     _, texts = policy.rollout(prompts, temperature=temperature)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 156, in rollout
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/grpo_train.py", line 156, in rollout
     out = model.generate(
           ^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/peft_model.py", line 1012, in generate
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/peft_model.py", line 1012, in generate
     return self.get_base_model().generate(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
     return func(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 2617, in generate
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 2617, in generate
     result = self._sample(
              ^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 3643, in _sample
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 3643, in _sample
     next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 RuntimeError: probability tensor contains either `inf`, `nan` or element < 0
 === a2_group16 exit=1 at 2026-09-30T23:14:35+02:00 ===
 total 18
-drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 23:06 .
-drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 23:02 ..
-drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 23:06 checkpoint
--rw-r--r--. 1 20234428 umbrella 11391 Sep 30 23:06 state.json
--rw-r--r--. 1 20234428 umbrella  6153 Sep 30 23:14 train_log.jsonl
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Sep 30 23:06 .
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Sep 30 23:02 ..
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Sep 30 23:06 checkpoint
+-rw-r--r--. 1 <cluster-account> umbrella 11391 Sep 30 23:06 state.json
+-rw-r--r--. 1 <cluster-account> umbrella  6153 Sep 30 23:14 train_log.jsonl
 
 
 ==============

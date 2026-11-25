@@ -8,12 +8,13 @@ question: does cheap inference-time structure work instead? Our answer took thre
 arrive at — because the first three answers we produced were wrong. The mistakes are ours,
 documented in full; the surviving numbers are the ones that survived.
 
-**The surviving claim, in one line:** a 1970s inventory formula that tunes itself from 18 weeks of
-history beats a state-of-the-art LLM agent in every environment — mild, chaotic, wild demand —
-at 3–4 orders of magnitude less compute. The LLM's apparent edge was information leakage and an
-untuned baseline. The intelligence in the "AI agent" was the formula all along. Every contested
-word of that sentence is grounded; the walk-forward number is half in-sample and we do not paper
-over that.
+**The surviving claim, in one line:** a self-tuning order-up-to rule (exponentially smoothed
+incoming demand, two parameters fitted on weeks 1–18 of a 36-week game) costs less than every
+post-trained arm at every size we ran. The closest arm is 1.75× the rule at its best seed; the
+worst is 17.7×. What post-training does buy is real and smaller: at 4B it beats its own untrained
+baseline, 30/30 paired paths at seed 0 and 25/30 at seed 1. That claim is in the paper with both
+G1 statistics and bootstrap intervals, and seed 1 is marked marginal because its interval crosses
+the 15% bar.
 
 This repo spans **7 waves**: API-LLM arms (1–3), a tool-calling arm (4), a decision-native model
 (5), local GRPO training (6), and decision-native training — soft-target SFT + RLCD (7). The
@@ -104,6 +105,39 @@ uv run python scripts/walkforward_floor.py  # walk-forward + oracle floor column
 
 ---
 
+## Data availability
+
+Everything a published sentence depends on is tracked: run ledgers, gate reads, per-run cost
+files, logs, the label set and its frozen sha, and the manuscript sources and PDFs. LoRA adapters
+and model weights are not here (large, and their licences are the upstream ones); `docs/ARTIFACTS.md`
+says what was kept off-repo and where it lived.
+
+The exact tree the manuscript cites is the tag `arxiv-submission-1`:
+
+```bash
+git clone https://github.com/pepijnfrenken/agent-bullwhip-replication
+cd agent-bullwhip-replication
+git checkout arxiv-submission-1
+```
+
+Two scripts guard the manuscript's integrity and are meant to be run by a reader, not just by the
+author: `scripts/check_withdrawn_claims.py` fails if a claim this project withdrew reappears in a
+live document, and `scripts/secret_scan.py` scans the tree (and, with `--history`, every blob in
+history) for credential formats and for account identifiers.
+
+## Licence
+
+Code is MIT (`LICENSE`). The manuscript, its supplement and the figures are CC BY 4.0. `NOTICE`
+records the split and states that no upstream code is vendored.
+
+## Citing
+
+`CITATION.cff` has the metadata. Cite the manuscript, and if you use the protocol, cite the tag you
+used.
+
+---
+
 *Older full-length READMEs (v1–v3, iteration log, and the v4 pre-cleanup text with the complete
-surviving tables) are archived under [`docs/archive/`](docs/archive/) — kept, not deleted. The
+surviving tables) are archived under [`docs/archive/`](docs/archive/) — kept, not deleted. Their
+headline sentences were superseded by the manuscript; `docs/STATE.md` says which ones and why. The
 surviving tables also remain the on-disk ground truth in `results/` and `CHANGES.md`.*

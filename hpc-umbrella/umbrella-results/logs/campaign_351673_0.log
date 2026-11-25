@@ -1,4 +1,4 @@
-=== task 0 -> pilot | group=8 horizon=36 curricula=poisson,truncnorm lr=1e-5 beta_kl=0.02 steps=4 rollout_batch=16 save_every=10 (/vast.mnt/scratch/shared/20234428/bullwhip/kit/campaign.tsv) ===
+=== task 0 -> pilot | group=8 horizon=36 curricula=poisson,truncnorm lr=1e-5 beta_kl=0.02 steps=4 rollout_batch=16 save_every=10 (/vast.mnt/scratch/shared/<cluster-account>/bullwhip/kit/campaign.tsv) ===
 name, memory.total [MiB]
 NVIDIA L4, 23034 MiB
 compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
@@ -297,11 +297,11 @@ A decoder-only architecture is being used, but right-padding was detected! For c
 done: results/grpo_pilot
 === pilot exit=0 at 2026-09-30T21:17:21+02:00 ===
 total 13
-drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 21:17 .
-drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 21:10 ..
-drwxr-xr-x. 2 20234428 umbrella  4096 Sep 30 21:17 checkpoint
--rw-r--r--. 1 20234428 umbrella 11388 Sep 30 21:17 state.json
--rw-r--r--. 1 20234428 umbrella   734 Sep 30 21:17 train_log.jsonl
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Sep 30 21:17 .
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Sep 30 21:10 ..
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Sep 30 21:17 checkpoint
+-rw-r--r--. 1 <cluster-account> umbrella 11388 Sep 30 21:17 state.json
+-rw-r--r--. 1 <cluster-account> umbrella   734 Sep 30 21:17 train_log.jsonl
 
 
 ==============

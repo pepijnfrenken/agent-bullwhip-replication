@@ -5,7 +5,7 @@ Written 2026-11-19, during the wave-8 rebuild.
 ## What broke
 
 The wave-8 1.7B and 4B legs were trained and evaluated in October. Their per-run JSONL was written
-to `/scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/`, which per
+to `/scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/results/`, which per
 `hpc-umbrella/config.sh` line 35 is deleted 14 days after the last write and is never backed up. No
 `push_results.sh` run carried those files into git. The local machine, the local git history, the
 cluster home directory, Snellius and the hub were all checked on 2026-11-19 and none of them held a
@@ -57,7 +57,7 @@ changing anything.
 
 ## Second copy on the cluster, deliberately
 
-`/vast.mnt/home/20234428/agent-bullwhip-replication` survived the scratch purge because home is not
+`/vast.mnt/home/<cluster-account>/agent-bullwhip-replication` survived the scratch purge because home is not
 scratch and is not auto-deleted. It is a checkout at `21ad077` with 356 MB of results from the
 wave-6/7 era. It is not a substitute for git and it is not a source for anything the paper claims,
 but it is a fourth copy for the rebuild and it is why this failure was recoverable at all for the

@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=c23773f39137c9395079c2605b6a97cd98d4bff3 dirty_files=0
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=c23773f39137c9395079c2605b6a97cd98d4bff3 dirty_files=0
 NOTE: HEAD c23773f39137c9395079c2605b6a97cd98d4bff3 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates_1.7b.json
 === wave8 r1 task 0: lr=1e-5 seed=0 rung=1.7b rounds=3x170 at 2026-11-19T18:17:18+01:00 ===
@@ -9,7 +9,7 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed0/round1/states
 states=4080 flat=0.0000 edge=0.5929 entropy=1.754 wall=94.7s
 states=1360 flat=0.0007 edge=0.4199 entropy=2.632 wall=66.4s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 103.82it/s]
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 58.00it/s]
 collapse-check results/wave8_r1-1.7b_lr1e-5_seed0_round1/checkpoint-169: collapsed=False medH=0.022 modal_share=0.992 I=0.0405 []
@@ -20,7 +20,7 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed0/round2/states
 states=4080 flat=0.0000 edge=0.8083 entropy=2.007 wall=95.9s
 states=1360 flat=0.0000 edge=0.3654 entropy=2.801 wall=66.1s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.04it/s]
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 101.86it/s]
 collapse-check results/wave8_r1-1.7b_lr1e-5_seed0_round2/checkpoint-169: collapsed=False medH=0.003 modal_share=0.223 I=2.2207 []
@@ -31,7 +31,7 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed0/round3/states
 states=4080 flat=0.0000 edge=0.6490 entropy=2.390 wall=95.4s
 states=1360 flat=0.0000 edge=0.3441 entropy=2.839 wall=66.9s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 102.18it/s]
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 101.94it/s]
 collapse-check results/wave8_r1-1.7b_lr1e-5_seed0_round3/checkpoint-169: collapsed=False medH=0.000 modal_share=0.145 I=2.5195 []
@@ -70,7 +70,7 @@ JobID             State     AveRSS     MaxRSS
 Job ID: 766808
 Array Job ID: 766028_0
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8

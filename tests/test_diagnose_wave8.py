@@ -55,7 +55,7 @@ def _run(root: Path, selector: str = "eval"):
 
 def test_reports_lr_tag_mismatch_with_the_dirs_that_actually_exist(tmp_path):
     log = (
-        "repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=deadbeef rung=0.6b\n"
+        "repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=deadbeef rung=0.6b\n"
         "--- eval w8-untrained-argmax-step (argmax/step) at 2026-10-08T09:12:03+00:00\n"
         "--- ok w8-untrained-argmax-step\n"
         "r1 winner lr tag: lr1e-5\n"

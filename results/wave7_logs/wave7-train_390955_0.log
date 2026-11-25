@@ -1,18 +1,18 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=2a8ff87aa27ad171adfb364ce8c574decce71f3e dirty_files=1
-labels: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl hash(first 2000 rows)=59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
-labels: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl sha256(full file)=d35e8d9b30fe91ef581741689c590485e036c6e3f1a7c28ad970c85f060a7dd9
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=2a8ff87aa27ad171adfb364ce8c574decce71f3e dirty_files=1
+labels: /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl hash(first 2000 rows)=59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
+labels: /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl sha256(full file)=d35e8d9b30fe91ef581741689c590485e036c6e3f1a7c28ad970c85f060a7dd9
 === wave7-train seed=0 | sft_steps=120 rlcd_steps=40 lr=1e-5 at 2026-10-06T11:21:46+02:00 ===
-python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+python: /scratch-shared/<cluster-account>/bullwhip/venv/bin/python3 Python 3.11.3
 torch 2.1.2 cuda True
 name, memory.total [MiB]
 NVIDIA L4, 23034 MiB
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 === sft seed=0 exit=0 at 2026-10-06T11:31:27+02:00 ===
 sft final adapter: results/wave7_sft_seed0/checkpoint-119
-collected 5760 policy states -> /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/policy_states_seed0.jsonl (label mass recorded, not asserted; see .notes.json)
+collected 5760 policy states -> /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/results/wave7_labels/policy_states_seed0.jsonl (label mass recorded, not asserted; see .notes.json)
 states=5440 flat=0.0000 edge=0.7928 entropy=2.223 wall=101.3s
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 === rlcd seed=0 exit=0 at 2026-10-06T11:42:18+02:00 ===
 === wave7-train seed=0 done at 2026-10-06T11:42:18+02:00 ===

@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=1342b2c56afe5940a51c11140f45a861b375f251 dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=1342b2c56afe5940a51c11140f45a861b375f251 dirty_files=3
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
 === wave8 r2 seed=0 lr=2e-4: SFT 2827 steps at 2026-10-15T19:07:31+02:00 ===
 === r2 sft exit=0 at 2026-10-15T19:08:06+02:00 ===

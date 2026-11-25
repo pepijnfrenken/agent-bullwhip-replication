@@ -11,4 +11,5 @@
 oct4b-3030	docs/paper/paper-supplement.tex	ledger cell states the October cost and the November win count side by side, each labelled with its cohort	Oct cost 8{,}315 vs ctl 21{,}578; Nov 9{,}346, 30/30
 oct4b-3030	docs/paper/paper-supplement.tex	band cell states that 30/30 is against the curriculum control and is not G1	30/30 on the curriculum control
 oct4b-3030	docs/paper/paper-supplement.tex	sentence records the revision: November reads 25/30 where the earlier draft claimed 30/30	its win count 25/30 rather than 30/30
+old-headline	docs/STATE.md	sentence quotes the withdrawn headline in order to retire it and names what replaces it	is superseded
 perm-40781	docs/paper/paper-supplement.tex	sentence records that the earlier draft's 0.0781 with 40 of 512 came from the failed first job, and the final artifact is 38/512	an earlier draft's 0.0781 with 40 of 512 came from the failed first job

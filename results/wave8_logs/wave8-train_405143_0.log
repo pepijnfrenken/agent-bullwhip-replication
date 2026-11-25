@@ -1,18 +1,18 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa dirty_files=3
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
 === wave8 r1 task 0: lr=1e-5 seed=0 rung=0.6b rounds=3x170 at 2026-10-08T00:24:06+02:00 ===
 collected 2160 policy states -> results/wave8_r1_lr1e-5_seed0/round1/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
 collected 2160 policy states -> results/wave8_r1_lr1e-5_seed0/round1/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
 states=4080 flat=0.0000 edge=0.4270 entropy=2.077 wall=95.2s
 states=1360 flat=0.0007 edge=0.4199 entropy=2.632 wall=66.2s
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 collapse-check results/wave8_r1_lr1e-5_seed0_round1/checkpoint-169: collapsed=True medH=0.401 modal_share=0.980 I=0.0991 ['low-entropy: modal argmax share > m_hi']
 collected 2160 policy states -> results/wave8_r1_lr1e-5_seed0/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
 collected 2160 policy states -> results/wave8_r1_lr1e-5_seed0/round2/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
 states=4080 flat=0.0000 edge=0.7885 entropy=2.202 wall=96.3s
 states=1360 flat=0.0000 edge=0.3654 entropy=2.801 wall=65.9s
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 collapse-check results/wave8_r1_lr1e-5_seed0_round2/checkpoint-169: collapsed=True medH=2.224 modal_share=0.758 I=0.0196 ['diffuse and state-blind']
 STOPPED: collapse gate tripped at two consecutive reads (round 2)

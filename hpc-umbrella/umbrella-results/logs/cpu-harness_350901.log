@@ -1,6 +1,6 @@
 === bw-cpu 350901 on tue-computed001.cluster | 2026-09-30T19:17:20+02:00 ===
 python: /sw/rl8/zen/app/Python/3.11.3-GCCcore-12.3.0/bin/python3 Python 3.11.3
-/var/spool/slurmd/job350901/slurm_script: line 49: cd: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication: No such file or directory
+/var/spool/slurmd/job350901/slurm_script: line 49: cd: /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication: No such file or directory
 
 
 ==============
@@ -15,7 +15,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 350901
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: FAILED (exit code 1)
 Nodes: 1
 Cores per node: 8

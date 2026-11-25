@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=a81f51110c5f3a1dc6516555a10dd1c4fb44e543 ranks=2
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=a81f51110c5f3a1dc6516555a10dd1c4fb44e543 ranks=2
 === fsdp probe at 2026-11-21T20:06:28+01:00 ranks=2 master=127.0.0.1:28124 ===
 --- variant A: sync_states=0 ---
 [fsdp] rank1 dtype census {'torch.bfloat16': 399, 'torch.float32': 288}, cast 288 to bf16
@@ -58,7 +58,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 808124
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: FAILED (exit code 1)
 Nodes: 1
 Cores per node: 16

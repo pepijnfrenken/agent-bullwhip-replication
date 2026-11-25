@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=af1d6d0d6ec7fac1ad54dda8ad2d7982dd5b49b1 dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=af1d6d0d6ec7fac1ad54dda8ad2d7982dd5b49b1 dirty_files=3
 FATAL: EXPECTED_COMMIT=af1d6d0 but repo HEAD=af1d6d0d6ec7fac1ad54dda8ad2d7982dd5b49b1 — refusing to run stale code
 
 

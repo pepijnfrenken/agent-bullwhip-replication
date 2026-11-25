@@ -1,11 +1,11 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=b61cea61adc97a41d7bbe5dc809f1ac90fe78daa dirty_files=3
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
 === wave8 r1 task 0: lr=1e-5 seed=0 rung=0.6b rounds=3x170 at 2026-10-08T09:35:11+02:00 ===
 collected 2160 policy states -> results/wave8_r1_lr1e-5_seed0/round3/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
 collected 2160 policy states -> results/wave8_r1_lr1e-5_seed0/round3/states_sampled.jsonl (label mass recorded, not asserted; see .notes.json)
 states=4080 flat=0.0000 edge=0.4309 entropy=2.300 wall=57.8s
 states=1360 flat=0.0000 edge=0.3441 entropy=2.839 wall=41.4s
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 collapse-check results/wave8_r1_lr1e-5_seed0_round3/checkpoint-169: collapsed=False medH=1.760 modal_share=0.391 I=0.5641 []
 w8-val-r1-lr1e-5-seed0: runs=30 mean=90,448 min=85,597 max=95,689 parse_fail=0 min_mass=0.00032 wall=184.4s -> results/wave8_val/w8-val-r1-lr1e-5-seed0.jsonl

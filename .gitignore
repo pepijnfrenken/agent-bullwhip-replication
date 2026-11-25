@@ -17,7 +17,9 @@ adapter_model.safetensors
 *.gguf
 results/wave8_gguf/**/merged/
 
-.env.local
+.env
+.env.*
+!.env.example
 # post drafts stay local — never in the repo
 POSTS.md
 POST_*.md

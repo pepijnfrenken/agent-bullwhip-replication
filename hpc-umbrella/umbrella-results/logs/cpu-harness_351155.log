@@ -1,5 +1,5 @@
 === bw-cpu 351155 on tue-computed001.cluster | 2026-09-30T19:47:15+02:00 ===
-python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+python: /scratch-shared/<cluster-account>/bullwhip/venv/bin/python3 Python 3.11.3
 numpy        1.25.1
 pandas       2.0.3
 torch        2.1.2
@@ -87,7 +87,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 351155
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8

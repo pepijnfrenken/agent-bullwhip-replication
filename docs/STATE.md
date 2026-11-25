@@ -15,7 +15,7 @@ doc + data live, current verdicts, and the open issues that are agreed but not s
 |---|---|---|---|
 | 1 | Naive API-LLM arms (configs `voting5`, `budget`, `prompt_weighted`, `anchor`, `combined`) under the pre-audit sequential protocol | **Tombstoned.** Ran only under the sequential protocol that Audit #1 deleted; not part of the surviving table | README §wave-1 configs; no dedicated wave doc |
 | 2 | Interleaved round-robin LLM arms (fix for endpoint window drift); noisy arm | Confs: interleaving fixed the 16× window drift; the "LLM beats formula under noise" claim died in AUDIT2 (same-week leak + untuned baseline); the twin-gap confound (byte-identical configs differ 10–20× with a 0.2% gate) remains open | `audits/AUDIT.md` `audits/AUDIT2.md` → `../results/noisy_leakfree/` |
-| 3 | Seeded chaotic/wild arms + walk-forward floor; Audit #3 (unseeded runs) | **The surviving headline:** a self-tuning 1970s order-up-to formula beats the LLM agent in every environment (mild/chaotic/wild) at 3–4 orders of magnitude less compute. Leak-free, seeded, 40/40 runs. See the README surviving tables | `audits/AUDIT3.md` → `../results/noisy_leakfree/` `../results/chaotic_seeded/` `../results/wild_seeded/` |
+| 3 | Seeded chaotic/wild arms + walk-forward floor; Audit #3 (unseeded runs) | **What survived, in the manuscript's wording:** a self-tuning order-up-to rule with exponentially smoothed incoming demand costs less than the LLM agent on band medians in every pattern we ran (noisy/chaotic/wild), leak-free and seeded. The "1970s formula … 3–4 orders of magnitude less compute … in every environment" sentence in the older READMEs is superseded: the rule is Chen et al. (2000) form, the compute multiple was never measured, and the headline comparison is distributional, not per-path | `audits/AUDIT3.md` → `../results/noisy_leakfree/` `../results/chaotic_seeded/` `../results/wild_seeded/` |
 | 4 | Tool-calling arm (`ToolAgent` + `run_python`), one full game on fixed demand | **PRELIMINARY / TBC.** Game cost 6,948 vs 3,681 floor (+89%); match-to-floor 42.4%. The finding is the failure taxonomy (mirror-after-error 13.9%, broken code 22.9%, error ⇒ match drop 51.4%→12.1%). Needs a better model + harness + n≥3 games | README §tool-calling arm → `../results/toolagent_traces/run0.jsonl`; `archive/TOOLCALLING_COMPARISON.md` |
 | 5 | Decision-native model (Jev, TypeSafe): typed questions, typed answers + calibrated probabilities, no generation | Bounded, state-conditioned model judgment beats the walk-forward floor **only on noisy demand** — n=10 read −18.2% (10/10, t=−3.89), n=20 read −7.1% (15/20 paths, t=−2.15); loses on step (+22%) and chaotic/wild. Wins where tuning is weak; gate closes (85.2% deferral) where the model is valuable | `waves/WAVE5.md`, `audits/AUDIT4.md` `audits/AUDIT5.md` → `../results/jev_protocol/` `../results/jev_controls_*/` `../results/jev_noisy20/` |
 | 6 | GRPO RL post-training on our harness — Qwen3-0.6B free-form lane (`a0_base` + variants) on Umbrella | **NOT READABLE as a GRPO test yet** — see OPEN ISSUES 1. Eval report: step arm trained vs untrained mean +14.7% (paired), both arms rogue-order-dominated (188 / 58 rogue orders); training-time parse-fail 0.847 | WAVE6_SPEC (design); `../hpc-umbrella/umbrella-results/eval-a0-report.md` → `../results/local-eval/` `../results/wave7_logs/` |
@@ -45,9 +45,11 @@ log). Manuscript: `paper/paper.pdf` plus `paper/paper-supplement.pdf` (S1–S7).
 
 ## Current verdicts
 
-- **The surviving claim (waves 1–5):** a 1970s order-up-to formula that tunes itself from the
-  first 18 weeks of history beats the LLM agent in every environment at 3–4 orders of magnitude
-  less compute. Every contested word is grounded in `../results/` — see root README.
+- **The surviving claim (waves 1–5, restated to match the manuscript):** a self-tuning order-up-to
+  rule (`q_t = max(0, θ·q̂_t − IP_t)` on exponentially smoothed incoming demand, θ and λ fitted on
+  weeks 1–18 of a 36-week game) costs less than the LLM agent on band medians in every pattern we
+  ran. The weeks 1–18 window is in-sample for the rule, and the paper says so; the comparison is
+  distributional because per-path identity could not be verified. See root README and the paper.
 - **Wave 5's positive:** state-conditioned bounded judgment beats the tuned floor on noisy
   demand (paired, −7.1% at n=20), but not on step/chaotic/wild, and it wins only where tuning is
   weak.

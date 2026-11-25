@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=d7207017033787cb6a0ed70fdabd13405380699e dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=d7207017033787cb6a0ed70fdabd13405380699e dirty_files=3
 === wave8-label | seed=6000 episodes=700 M=16 procs=96 at 2026-10-08T12:11:39+02:00 ===
 states=95200 flat=0.0001 edge=0.3753 entropy=2.774 wall=234.6s
 === labeler exit=0 at 2026-10-08T12:15:37+02:00 ===
@@ -26,7 +26,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 406725
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 96

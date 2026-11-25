@@ -1,49 +1,49 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=1342b2c56afe5940a51c11140f45a861b375f251 rung=1.7b model=Qwen/Qwen3-1.7B@70d244cc86ccca08cf5af4e1e306ecf908b1ad5e
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=1342b2c56afe5940a51c11140f45a861b375f251 rung=1.7b model=Qwen/Qwen3-1.7B@70d244cc86ccca08cf5af4e1e306ecf908b1ad5e
 F0, F1 passing: {'F0': True, 'F1': True}
 === F2: tokenizer check (Qwen/Qwen3-1.7B) ===
 Traceback (most recent call last):
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 479, in cached_files
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 479, in cached_files
     hf_hub_download(
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
     return fn(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1014, in hf_hub_download
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1014, in hf_hub_download
     return _hf_hub_download_to_cache_dir(
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1121, in _hf_hub_download_to_cache_dir
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1121, in _hf_hub_download_to_cache_dir
     _raise_on_head_call_error(head_call_error, force_download, local_files_only)
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1653, in _raise_on_head_call_error
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1653, in _raise_on_head_call_error
     raise LocalEntryNotFoundError(
 huggingface_hub.errors.LocalEntryNotFoundError: Cannot find the requested files in the disk cache and outgoing traffic has been disabled. To enable hf.co look-ups and downloads online, set 'local_files_only' to False.
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_grid.py", line 90, in <module>
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/wave8_grid.py", line 90, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_grid.py", line 75, in main
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/wave8_grid.py", line 75, in main
     res = build(a.grid, a.tokenizer_check, a.model, a.revision or None)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_grid.py", line 42, in build
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/wave8_grid.py", line 42, in build
     tok = AutoTokenizer.from_pretrained(model, revision=revision,
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 1069, in from_pretrained
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 1069, in from_pretrained
     config = AutoConfig.from_pretrained(
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/auto/configuration_auto.py", line 1250, in from_pretrained
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/auto/configuration_auto.py", line 1250, in from_pretrained
     config_dict, unused_kwargs = PretrainedConfig.get_config_dict(pretrained_model_name_or_path, **kwargs)
                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/configuration_utils.py", line 649, in get_config_dict
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/configuration_utils.py", line 649, in get_config_dict
     config_dict, kwargs = cls._get_config_dict(pretrained_model_name_or_path, **kwargs)
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/configuration_utils.py", line 708, in _get_config_dict
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/configuration_utils.py", line 708, in _get_config_dict
     resolved_config_file = cached_file(
                            ^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 321, in cached_file
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 321, in cached_file
     file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 553, in cached_files
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 553, in cached_files
     raise OSError(
 OSError: We couldn't connect to 'https://huggingface.co' to load the files, and couldn't find them in the cached files.
 Check your internet connection or see how to run the library in offline mode at 'https://huggingface.co/docs/transformers/installation#offline-mode'.

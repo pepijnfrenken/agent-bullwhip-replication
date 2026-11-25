@@ -65,7 +65,7 @@ read this revision.
 - provenance warning: the six `results/wave8_r1_lr*` arm directories and their two band files
   were removed from the archive by the repository's own results slim-down. Every wave-8 0.6B
   number in the paper is therefore log-sourced, and the paper says so in the reproducibility
-  section. Band record survives at `/scratch-shared/20234428/bullwhip/w8-band-record.json`
+  section. Band record survives at `/scratch-shared/<cluster-account>/bullwhip/w8-band-record.json`
   (lr5e-5 16,035, lr1e-5 90,448, seed 0 each).
 
 ## 6. 1.7B seed-1 output mass

@@ -1,7 +1,7 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=c2e61219c42de18f0ebe95432447667a28fffcd4 at 2026-11-19T16:27:53+01:00
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=c2e61219c42de18f0ebe95432447667a28fffcd4 at 2026-11-19T16:27:53+01:00
 === gate files under test ===
--rw-r--r--. 1 20234428 umbrella 1495 Nov 19 16:17 results/wave8/gates_1.7b.json
--rw-r--r--. 1 20234428 umbrella 1492 Nov 19 16:27 results/wave8/gates_4b.json
+-rw-r--r--. 1 <cluster-account> umbrella 1495 Nov 19 16:17 results/wave8/gates_1.7b.json
+-rw-r--r--. 1 <cluster-account> umbrella 1492 Nov 19 16:27 results/wave8/gates_4b.json
 ok   1.7b  H_lo   expected   9.6527e-05 found 9.65265603466344e-05 rel 4.55e-06
 ok   1.7b  H_hi   expected       1.6313 found 1.6312969325077367 rel 1.88e-06
 ok   1.7b  I_hi0  expected       1.4858 found 1.4857733402975195 rel 1.79e-05
@@ -27,7 +27,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 766027
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: COMPLETED (exit code 0)
 Cores: 1
 CPU Utilized: 00:00:01

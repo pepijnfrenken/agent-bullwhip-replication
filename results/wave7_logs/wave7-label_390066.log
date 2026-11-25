@@ -1,6 +1,6 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=2a8ff87aa27ad171adfb364ce8c574decce71f3e dirty_files=1
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=2a8ff87aa27ad171adfb364ce8c574decce71f3e dirty_files=1
 === wave7-label | seed=6000 episodes=700 M=16 procs=96 at 2026-10-06T09:52:28+02:00 ===
-python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+python: /scratch-shared/<cluster-account>/bullwhip/venv/bin/python3 Python 3.11.3
 states=95200 flat=0.0022 edge=0.7118 entropy=2.213 wall=186.7s
 === labeler exit=0 at 2026-10-06T09:55:38+02:00 ===
 manifest:
@@ -26,7 +26,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 390066
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 96

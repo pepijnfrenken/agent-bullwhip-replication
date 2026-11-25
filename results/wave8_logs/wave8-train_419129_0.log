@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b dirty_files=3
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b dirty_files=3
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates.json
 === wave8 r2 seed=0 lr=2e-4: SFT 2827 steps at 2026-10-12T18:17:49+02:00 ===
 === r2 sft exit=0 at 2026-10-12T18:18:05+02:00 ===
@@ -8,7 +8,7 @@ collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed0/round1/states_
 states=4080 flat=0.0000 edge=0.4240 entropy=2.682 wall=94.5s
 states=1360 flat=0.0007 edge=0.4199 entropy=2.632 wall=66.6s
 {'n': 5440, 'labels_sha': '5e1c6b4340c0fa87b3d29b27ebecd2c65f567fc1b223a13dad5ba3e1992524e3'}
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 collapse-check results/wave8_r2rl_lr0.0002_seed0_round1/checkpoint-169: collapsed=False medH=2.725 modal_share=0.348 I=0.3559 []
 collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed0/round2/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
@@ -16,7 +16,7 @@ collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed0/round2/states_
 states=4080 flat=0.0000 edge=0.3444 entropy=2.938 wall=93.3s
 states=1360 flat=0.0000 edge=0.3654 entropy=2.801 wall=66.7s
 {'n': 5440, 'labels_sha': '31b97d94f286ae3f829eabd7700611fbaad11dd4fc8e5f2fc3e60f0374cea826'}
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 collapse-check results/wave8_r2rl_lr0.0002_seed0_round2/checkpoint-169: collapsed=False medH=2.715 modal_share=0.367 I=0.3980 []
 collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed0/round3/states_argmax.jsonl (label mass recorded, not asserted; see .notes.json)
@@ -24,7 +24,7 @@ collected 2160 policy states -> results/wave8_r2rl_lr0.0002_seed0/round3/states_
 states=4080 flat=0.0000 edge=0.2770 entropy=2.964 wall=94.0s
 states=1360 flat=0.0000 edge=0.3441 entropy=2.839 wall=66.8s
 {'n': 5440, 'labels_sha': 'f7d0a27489ec16b26b0f7f24b95568502dbf08f9d94811d393b3f00a70e18b12'}
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-0.6B - will assume that the vocabulary was not modified.
   warnings.warn(
 collapse-check results/wave8_r2rl_lr0.0002_seed0_round3/checkpoint-169: collapsed=False medH=2.513 modal_share=0.508 I=0.1188 []
 w8-val-r2rl-lr0.0002-seed0: runs=30 mean=11,412 min=9,015 max=14,686 parse_fail=0 min_mass=0.91133 wall=183.6s -> results/wave8_val/w8-val-r2rl-lr0.0002-seed0.jsonl

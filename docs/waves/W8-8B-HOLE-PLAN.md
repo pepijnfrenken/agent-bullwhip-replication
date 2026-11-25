@@ -111,7 +111,7 @@ Pino approved Parts 1 and 2 only. Nothing from Part 3 was submitted and no Modal
 | export | `EXPECTED_COMMIT=0bcd9df`, `W8_RUNG=8b`, `W8_EVAL_SEEDS=1`, `W8_LR=1e-5`, `W8_EVAL_RUNS=30` |
 | base model | `Qwen/Qwen3-8B@b968826d9c46dd6066d109eabc6255188de91218`, 16 GB fetched to the scratch HF cache |
 | adapter | `results/wave8_r1-8b_lr1e-5_seed1_round3/checkpoint-169/adapter_model.safetensors`, 30,709,192 bytes, staged from the Modal volume; `state.json` records lr 1e-5, seed 1, step 169, saved 2026-10-22T14:06:37Z |
-| log | `/scratch-shared/20234428/bullwhip/logs/wave8-eval_780799.log` |
+| log | `/scratch-shared/<cluster-account>/bullwhip/logs/wave8-eval_780799.log` |
 
 The job runs the untrained 8B control first (three generations plus the 30-path curriculum band), then
 the trained arm for seed 1. Part 1 and Part 2 therefore land in one job and share the same demand

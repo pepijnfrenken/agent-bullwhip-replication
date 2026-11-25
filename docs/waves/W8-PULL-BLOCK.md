@@ -15,8 +15,8 @@
 ## What to run on the login node now (one block, ships everything back)
 
 ```bash
-R=/scratch-shared/20234428/bullwhip/agent-bullwhip-replication
-B=/scratch-shared/20234428/bullwhip
+R=/scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication
+B=/scratch-shared/<cluster-account>/bullwhip
 cd "$R" && git pull --ff-only
 
 bash hpc-umbrella/push_results.sh -m "wave8: r2rl arms + val bands (job 419129) + preflight 432656" \

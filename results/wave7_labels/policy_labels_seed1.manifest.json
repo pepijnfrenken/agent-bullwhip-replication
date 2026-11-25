@@ -60,7 +60,7 @@
   "n_states": 5440,
   "processes": 8,
   "seed": 6001,
-  "source": "/scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/policy_states_seed1.jsonl",
+  "source": "/scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/results/wave7_labels/policy_states_seed1.jsonl",
   "tau_rule": "tau_s = tau_scale * max(std_a(E[J]), 1e-3); tau_scale=0.5",
   "wall_sec": 103.0524070262909
 }

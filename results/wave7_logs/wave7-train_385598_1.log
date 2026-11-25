@@ -1,23 +1,23 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=5ade1c0ab891eb4cef82810d04165f1cd78ac401 dirty_files=1
-labels: /scratch-shared/20234428/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl hash=59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=5ade1c0ab891eb4cef82810d04165f1cd78ac401 dirty_files=1
+labels: /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication/results/wave7_labels/labels.jsonl hash=59a6b39d93c62a933568f73c7202ef0c034addd77a24b5edd6eb8d87412e9aaa
 === wave7-train seed=1 | sft_steps=120 rlcd_steps=40 lr=1e-5 at 2026-10-05T23:16:45+02:00 ===
 name, memory.total [MiB]
 NVIDIA L4, 23034 MiB
 Traceback (most recent call last):
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 645, in <module>
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 645, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 383, in main
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 383, in main
     run_loop(policy, args, log_path, ckpt_path, start_step=start_step,
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 260, in run_loop
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 260, in run_loop
     out = policy.sft_step(batch_rows, targets, lr=args.lr,
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 534, in sft_step
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 534, in sft_step
     logits = self._label_logits(inputs)
              ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 473, in _label_logits
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 473, in _label_logits
     logits = self.model(**inputs, **fwd).logits
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -26,7 +26,7 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/peft_model.py", line 2120, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/peft_model.py", line 2120, in forward
     return self.base_model(
            ^^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -35,7 +35,7 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/tuners/tuners_utils.py", line 359, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/tuners/tuners_utils.py", line 359, in forward
     return self.model(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -44,10 +44,10 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 959, in wrapper
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 959, in wrapper
     output = func(self, *args, **kwargs)
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 481, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 481, in forward
     outputs: BaseModelOutputWithPast = self.model(
                                        ^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -56,13 +56,13 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 1083, in wrapper
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/utils/generic.py", line 1083, in wrapper
     outputs = func(self, *args, **kwargs)
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 405, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 405, in forward
     hidden_states = decoder_layer(
                     ^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/modeling_layers.py", line 93, in __call__
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/modeling_layers.py", line 93, in __call__
     return super().__call__(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -71,7 +71,7 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 257, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 257, in forward
     hidden_states, _ = self.self_attn(
                        ^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -80,7 +80,7 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 198, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 198, in forward
     query_states = self.q_norm(self.q_proj(hidden_states).view(hidden_shape)).transpose(1, 2)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
@@ -89,7 +89,7 @@ Traceback (most recent call last):
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
     return forward_call(*args, **kwargs)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 62, in forward
+  File "/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 62, in forward
     hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
                     ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 112.00 MiB. GPU 0 has a total capacty of 22.06 GiB of which 97.88 MiB is free. Including non-PyTorch memory, this process has 21.96 GiB memory in use. Of the allocated memory 21.55 GiB is allocated by PyTorch, and 189.23 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF

@@ -5,7 +5,7 @@
 > `gpu-pilot.sbatch` / `gpu-campaign.sbatch` / `cpu-harness.sbatch` source those pins.
 > Read `OPERATOR.md` for the run order; this file stays as the verified-facts reference.
 
-## Login-node probe results (run 2026-09-30, tue-login002, user 20234428)
+## Login-node probe results (run 2026-09-30, tue-login002, user <cluster-account>)
 
 - **Partitions**: `tue.gpu3.q` = tue-gpuc001, **8x L4** (gres `gpu:nvidia_l4:8`); `tue.gpu2.q` =
   tue-gpub001, 4x L4; `tue.gpu1.q` = gpuA, A30 MIG `1g.6gb` (avoid). GPU **MaxTime 5 days**,
@@ -21,7 +21,7 @@
   "most up-to-date modules"). Switching stacks later is a one-pin change.
 - **Egress: YES** - github.com and huggingface.co both reachable from the login node, so the git
   clone + HF-download flow works there; the rsync fallback is not needed.
-- **Filesystems**: `/scratch-shared/20234428` exists (8 TiB quota, 0 used); home 200 GiB fine.
+- **Filesystems**: `/scratch-shared/<cluster-account>` exists (8 TiB quota, 0 used); home 200 GiB fine.
 - **Login node**: python3 = 3.9.25 (`/usr/bin/python3` fresh login), git 2.52.0, rsync/curl/wget
   present, `squeue --me` empty, no GPU on the node itself.
 - **Module pins settled** (same day, load-tested): `PyTorch/2.1.2-foss-2023a-CUDA-12.1.1` loads

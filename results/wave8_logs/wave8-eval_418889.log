@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b rung=0.6b
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b rung=0.6b
 --- eval w8-untrained-argmax-step (step/argmax) at 2026-10-12T15:28:36+02:00
 w8-untrained-argmax-step: runs=1 mean=13,048 min=13,048 max=13,048 parse_fail=0 min_mass=0.99720 wall=3.1s -> results/eval/w8-untrained-argmax-step.jsonl
 --- ok w8-untrained-argmax-step
@@ -87,36 +87,36 @@ wrote results/eval/w8-r2sft-seed2-perm.json
 --- collapse-final r2sft-seed2 at 2026-10-12T16:12:39+02:00
 collapse-final r2sft-seed2: collapsed=True argmax-histogram top3=[(13, 135), (1, 115), (19, 113)] -> results/wave8/r2sft-seed2-S_nom.json
 --- artifacts ---
--rw-r--r--. 1 20234428 umbrella   15478 Oct  8 11:18 w8-r1-lr5e-5-seed1-perm.json
--rw-r--r--. 1 20234428 umbrella   15406 Oct  8 11:20 w8-r1-lr5e-5-seed2-perm.json
--rw-r--r--. 1 20234428 umbrella 2456430 Oct 12 15:46 w8-r2sft-seed0-argmax-noisy.jsonl
--rw-r--r--. 1 20234428 umbrella     553 Oct 12 15:46 w8-r2sft-seed0-argmax-noisy.summary.json
--rw-r--r--. 1 20234428 umbrella   81849 Oct 12 15:40 w8-r2sft-seed0-argmax-step.jsonl
--rw-r--r--. 1 20234428 umbrella     547 Oct 12 15:40 w8-r2sft-seed0-argmax-step.summary.json
--rw-r--r--. 1 20234428 umbrella   15252 Oct 12 15:47 w8-r2sft-seed0-perm.json
--rw-r--r--. 1 20234428 umbrella 2478835 Oct 12 15:43 w8-r2sft-seed0-sampled-step.jsonl
--rw-r--r--. 1 20234428 umbrella     564 Oct 12 15:43 w8-r2sft-seed0-sampled-step.summary.json
--rw-r--r--. 1 20234428 umbrella 2460562 Oct 12 15:58 w8-r2sft-seed1-argmax-noisy.jsonl
--rw-r--r--. 1 20234428 umbrella     562 Oct 12 15:58 w8-r2sft-seed1-argmax-noisy.summary.json
--rw-r--r--. 1 20234428 umbrella   81953 Oct 12 15:52 w8-r2sft-seed1-argmax-step.jsonl
--rw-r--r--. 1 20234428 umbrella     546 Oct 12 15:52 w8-r2sft-seed1-argmax-step.summary.json
--rw-r--r--. 1 20234428 umbrella   15209 Oct 12 16:00 w8-r2sft-seed1-perm.json
--rw-r--r--. 1 20234428 umbrella 2482964 Oct 12 15:55 w8-r2sft-seed1-sampled-step.jsonl
--rw-r--r--. 1 20234428 umbrella     553 Oct 12 15:55 w8-r2sft-seed1-sampled-step.summary.json
--rw-r--r--. 1 20234428 umbrella 2459407 Oct 12 16:11 w8-r2sft-seed2-argmax-noisy.jsonl
--rw-r--r--. 1 20234428 umbrella     561 Oct 12 16:11 w8-r2sft-seed2-argmax-noisy.summary.json
--rw-r--r--. 1 20234428 umbrella   81954 Oct 12 16:04 w8-r2sft-seed2-argmax-step.jsonl
--rw-r--r--. 1 20234428 umbrella     545 Oct 12 16:04 w8-r2sft-seed2-argmax-step.summary.json
--rw-r--r--. 1 20234428 umbrella   15412 Oct 12 16:12 w8-r2sft-seed2-perm.json
--rw-r--r--. 1 20234428 umbrella 2480830 Oct 12 16:07 w8-r2sft-seed2-sampled-step.jsonl
--rw-r--r--. 1 20234428 umbrella     553 Oct 12 16:07 w8-r2sft-seed2-sampled-step.summary.json
--rw-r--r--. 1 20234428 umbrella 2409560 Oct 12 15:33 w8-untrained-argmax-noisy.jsonl
--rw-r--r--. 1 20234428 umbrella     521 Oct 12 15:33 w8-untrained-argmax-noisy.summary.json
--rw-r--r--. 1 20234428 umbrella   80250 Oct 12 15:28 w8-untrained-argmax-step.jsonl
--rw-r--r--. 1 20234428 umbrella     517 Oct 12 15:28 w8-untrained-argmax-step.summary.json
--rw-r--r--. 1 20234428 umbrella   15079 Oct 12 15:34 w8-untrained-perm.json
--rw-r--r--. 1 20234428 umbrella 2423756 Oct 12 15:31 w8-untrained-sampled-step.jsonl
--rw-r--r--. 1 20234428 umbrella     537 Oct 12 15:31 w8-untrained-sampled-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   15478 Oct  8 11:18 w8-r1-lr5e-5-seed1-perm.json
+-rw-r--r--. 1 <cluster-account> umbrella   15406 Oct  8 11:20 w8-r1-lr5e-5-seed2-perm.json
+-rw-r--r--. 1 <cluster-account> umbrella 2456430 Oct 12 15:46 w8-r2sft-seed0-argmax-noisy.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     553 Oct 12 15:46 w8-r2sft-seed0-argmax-noisy.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   81849 Oct 12 15:40 w8-r2sft-seed0-argmax-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     547 Oct 12 15:40 w8-r2sft-seed0-argmax-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   15252 Oct 12 15:47 w8-r2sft-seed0-perm.json
+-rw-r--r--. 1 <cluster-account> umbrella 2478835 Oct 12 15:43 w8-r2sft-seed0-sampled-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     564 Oct 12 15:43 w8-r2sft-seed0-sampled-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella 2460562 Oct 12 15:58 w8-r2sft-seed1-argmax-noisy.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     562 Oct 12 15:58 w8-r2sft-seed1-argmax-noisy.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   81953 Oct 12 15:52 w8-r2sft-seed1-argmax-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     546 Oct 12 15:52 w8-r2sft-seed1-argmax-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   15209 Oct 12 16:00 w8-r2sft-seed1-perm.json
+-rw-r--r--. 1 <cluster-account> umbrella 2482964 Oct 12 15:55 w8-r2sft-seed1-sampled-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     553 Oct 12 15:55 w8-r2sft-seed1-sampled-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella 2459407 Oct 12 16:11 w8-r2sft-seed2-argmax-noisy.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     561 Oct 12 16:11 w8-r2sft-seed2-argmax-noisy.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   81954 Oct 12 16:04 w8-r2sft-seed2-argmax-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     545 Oct 12 16:04 w8-r2sft-seed2-argmax-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   15412 Oct 12 16:12 w8-r2sft-seed2-perm.json
+-rw-r--r--. 1 <cluster-account> umbrella 2480830 Oct 12 16:07 w8-r2sft-seed2-sampled-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     553 Oct 12 16:07 w8-r2sft-seed2-sampled-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella 2409560 Oct 12 15:33 w8-untrained-argmax-noisy.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     521 Oct 12 15:33 w8-untrained-argmax-noisy.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   80250 Oct 12 15:28 w8-untrained-argmax-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     517 Oct 12 15:28 w8-untrained-argmax-step.summary.json
+-rw-r--r--. 1 <cluster-account> umbrella   15079 Oct 12 15:34 w8-untrained-perm.json
+-rw-r--r--. 1 <cluster-account> umbrella 2423756 Oct 12 15:31 w8-untrained-sampled-step.jsonl
+-rw-r--r--. 1 <cluster-account> umbrella     537 Oct 12 15:31 w8-untrained-sampled-step.summary.json
 === wave8-eval done at 2026-10-12T16:16:52+02:00 failed=0 ===
 
 

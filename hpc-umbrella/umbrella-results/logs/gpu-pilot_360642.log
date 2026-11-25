@@ -1,7 +1,7 @@
 === bw-pilot 360642 on tue-gpuc001.cluster | 2026-10-01T14:49:18+02:00 ===
 partition=tue.gpu3.q gres=? env_mode=module
-TORCHDYNAMO_DISABLE=1 HF_HOME=/scratch-shared/20234428/bullwhip/hf
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=17eb83b0f4cbf35d86c45eee453d89f53366c727 dirty_files=0
+TORCHDYNAMO_DISABLE=1 HF_HOME=/scratch-shared/<cluster-account>/bullwhip/hf
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=17eb83b0f4cbf35d86c45eee453d89f53366c727 dirty_files=0
 name, memory.total [MiB], driver_version
 NVIDIA L4, 23034 MiB, 610.57.04
 torch 2.1.2 | cuda True | NVIDIA L4
@@ -192,7 +192,7 @@ wrote results/grpo_bench/bench_360642.json
   "tool": "bench_rollout.py",
   "torch": "2.1.2",
   "transformers": "4.55.4",
-  "user": "20234428"
+  "user": "<cluster-account>"
 }=== C: GRPO pilot (4 steps, batched rollouts, resumable) ===
 compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
 --resume: no results/grpo_a0_pilot_360642/state.json; starting from step 0
@@ -203,17 +203,17 @@ trainable params: 2,293,760 || all params: 598,343,680 || trainable%: 0.3834
 done: results/grpo_a0_pilot_360642
 === pilot artifacts ===
 total 17
-drwxr-xr-x. 2 20234428 umbrella  4096 Oct  1 15:17 .
-drwxr-xr-x. 2 20234428 umbrella  4096 Oct  1 15:10 ..
-drwxr-xr-x. 2 20234428 umbrella  4096 Oct  1 15:17 checkpoint-3
--rw-r--r--. 1 20234428 umbrella   478 Oct  1 15:10 run_info.json
--rw-r--r--. 1 20234428 umbrella 11441 Oct  1 15:17 state.json
--rw-r--r--. 1 20234428 umbrella  4888 Oct  1 15:17 train_log.jsonl
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Oct  1 15:17 .
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Oct  1 15:10 ..
+drwxr-xr-x. 2 <cluster-account> umbrella  4096 Oct  1 15:17 checkpoint-3
+-rw-r--r--. 1 <cluster-account> umbrella   478 Oct  1 15:10 run_info.json
+-rw-r--r--. 1 <cluster-account> umbrella 11441 Oct  1 15:17 state.json
+-rw-r--r--. 1 <cluster-account> umbrella  4888 Oct  1 15:17 train_log.jsonl
 total 10
-drwxr-xr-x. 2 20234428 umbrella 4096 Oct  1 15:10 .
-drwxr-xr-x. 2 20234428 umbrella 4096 Oct  1 15:10 ..
--rw-r--r--. 1 20234428 umbrella 4825 Sep 30 20:32 bench_351229.json
--rw-r--r--. 1 20234428 umbrella 4843 Oct  1 15:10 bench_360642.json
+drwxr-xr-x. 2 <cluster-account> umbrella 4096 Oct  1 15:10 .
+drwxr-xr-x. 2 <cluster-account> umbrella 4096 Oct  1 15:10 ..
+-rw-r--r--. 1 <cluster-account> umbrella 4825 Sep 30 20:32 bench_351229.json
+-rw-r--r--. 1 <cluster-account> umbrella 4843 Oct  1 15:10 bench_360642.json
 === done: 2026-10-01T15:17:06+02:00 ===
 
 

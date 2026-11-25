@@ -102,7 +102,7 @@ existing venv and repo instead of destroying them.
 
 Weight revisions now in the cache, each with a manual `refs/main` pointing at the pin so no code
 path can resolve "main" elsewhere: 0.6B `c1899de2`, 1.7B `70d244cc`, 4B `1cfa9a72` (13 GB total
-under `/scratch-shared/20234428/bullwhip/hf`).
+under `/scratch-shared/<cluster-account>/bullwhip/hf`).
 
 ## First attempt failed: the rung never reached the job (2026-11-19T14:48Z)
 

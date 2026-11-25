@@ -1,5 +1,5 @@
 === bw-cpu 351112 on tue-computed005.cluster | 2026-09-30T19:40:01+02:00 ===
-python: /scratch-shared/20234428/bullwhip/venv/bin/python3 Python 3.11.3
+python: /scratch-shared/<cluster-account>/bullwhip/venv/bin/python3 Python 3.11.3
 numpy        1.25.1
 pandas       2.0.3
 torch        2.1.2
@@ -53,9 +53,9 @@ peft         0.21.1
     wild pass 8: wf=(2.5,0.4)   15,639  untuned   24,210  oracle   15,639
     wild pass 9: wf=(2.0,0.3)    7,341  untuned    9,088  oracle    5,286
 Traceback (most recent call last):
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/walkforward_paths.py", line 62, in <module>
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/walkforward_paths.py", line 62, in <module>
     main()
-  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/walkforward_paths.py", line 56, in main
+  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/walkforward_paths.py", line 56, in main
     with open("results/walkforward_paths.json", "w") as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 FileNotFoundError: [Errno 2] No such file or directory: 'results/walkforward_paths.json'
@@ -77,7 +77,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 351112
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: FAILED (exit code 1)
 Nodes: 1
 Cores per node: 8

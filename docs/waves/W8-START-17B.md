@@ -9,7 +9,7 @@ refuses to run without F0/F1 + rung F3).
 each stage finishes:
 
 ```bash
-cd /scratch-shared/20234428/bullwhip/agent-bullwhip-replication
+cd /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication
 git pull --ff-only          # bring HEAD to the hub commit (7d611af or later), then:
 bash hpc-umbrella/start-1.7b.sh
 ```

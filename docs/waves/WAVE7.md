@@ -20,7 +20,7 @@ lands in the C2 "strong" tier (10,464 ≤ 12.8k) on the single step-argmax game.
 
 ## 1. What ran, where, provenance
 
-TU/e Umbrella cluster, user 20234428, all artifacts transferred through git (rule of 2026-10-07,
+TU/e Umbrella cluster, user <cluster-account>, all artifacts transferred through git (rule of 2026-10-07,
 `../../CHANGES.md`; `../../hpc-umbrella/push_results.sh`), no rsync.
 
 | Slurm job | what | state | log in repo |

@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b rung=0.6b
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=4f84981528928e9e89312a9b556ccd65bb53882b rung=0.6b
 /var/spool/slurmd/job408980/slurm_script: line 55: EXPECTED_COMMIT: FATAL: EXPECTED_COMMIT not exported — set it from the hub (git rev-parse HEAD) before submitting
 
 

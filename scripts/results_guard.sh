@@ -32,7 +32,7 @@
 set -uo pipefail
 
 CLUSTER_HOST="${CLUSTER_HOST:-tue-cluster}"
-CLUSTER_ROOT="${CLUSTER_ROOT:-/scratch-shared/20234428/bullwhip}"
+CLUSTER_ROOT="${CLUSTER_ROOT:-/scratch-shared/<cluster-account>/bullwhip}"
 CLUSTER_REPO="${CLUSTER_REPO:-${CLUSTER_ROOT}/agent-bullwhip-replication}"
 ARCHIVE="${ARCHIVE:-$HOME/bullwhip-archive}"
 BACKUP_DIR="${BACKUP_DIR:-$HOME/backups/bullwhip}"
@@ -61,8 +61,8 @@ log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "${LOG}"; }
 cluster_push() {
   ssh -o BatchMode=yes -o ConnectTimeout=25 "${CLUSTER_HOST}" "bash -s" <<'EOS' 2>&1 | tail -4
 set -uo pipefail
-R=/scratch-shared/20234428/bullwhip/agent-bullwhip-replication
-B=/scratch-shared/20234428/bullwhip
+R=/scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication
+B=/scratch-shared/<cluster-account>/bullwhip
 [ -d "$R/.git" ] || { echo "[guard] no cluster checkout at $R"; exit 0; }
 cd "$R" || exit 0
 # Stay in step with origin so the mirror never reports a false drift and the

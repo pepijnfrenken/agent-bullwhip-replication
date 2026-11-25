@@ -1,5 +1,5 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=e1faf79df5308247b53e1287bd8d5b57e8526000 dirty_files=1
-=== task 6 -> a5_poisson_only | group=8 horizon=36 curricula=poisson lr=1e-5 beta_kl=0.02 steps=300 rollout_batch=16 save_every=10 seed=<default 12345> (/vast.mnt/scratch/shared/20234428/bullwhip/kit/campaign.tsv) ===
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=e1faf79df5308247b53e1287bd8d5b57e8526000 dirty_files=1
+=== task 6 -> a5_poisson_only | group=8 horizon=36 curricula=poisson lr=1e-5 beta_kl=0.02 steps=300 rollout_batch=16 save_every=10 seed=<default 12345> (/vast.mnt/scratch/shared/<cluster-account>/bullwhip/kit/campaign.tsv) ===
 name, memory.total [MiB]
 NVIDIA L4, 23034 MiB
 compile-path knobs: {"TOKENIZERS_PARALLELISM": "false", "TORCHDYNAMO_DISABLE": "1", "generation_config.compile": "absent"}
@@ -40,41 +40,41 @@ trainable params: 2,293,760 || all params: 598,343,680 || trainable%: 0.3834
 done: results/grpo_a5_poisson_only
 === a5_poisson_only exit=0 at 2026-10-03T05:35:38+02:00 ===
 total 368
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:35 .
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:26 ..
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 00:12 checkpoint-109
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 00:29 checkpoint-119
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 00:46 checkpoint-129
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 01:03 checkpoint-139
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 01:20 checkpoint-149
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 01:37 checkpoint-159
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 01:54 checkpoint-169
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 02:11 checkpoint-179
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 02:28 checkpoint-189
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 21:39 checkpoint-19
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 02:45 checkpoint-199
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 03:02 checkpoint-209
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 03:19 checkpoint-219
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 03:36 checkpoint-229
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 03:53 checkpoint-239
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:10 checkpoint-249
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:27 checkpoint-259
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 04:44 checkpoint-269
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:01 checkpoint-279
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:18 checkpoint-289
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 21:56 checkpoint-29
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  3 05:35 checkpoint-299
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 22:13 checkpoint-39
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 22:30 checkpoint-49
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 22:47 checkpoint-59
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 23:04 checkpoint-69
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 23:21 checkpoint-79
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 23:38 checkpoint-89
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 21:21 checkpoint-9
-drwxr-xr-x. 2 20234428 umbrella   4096 Oct  2 23:55 checkpoint-99
--rw-r--r--. 1 20234428 umbrella    467 Oct  2 21:04 run_info.json
--rw-r--r--. 1 20234428 umbrella  11437 Oct  3 05:35 state.json
--rw-r--r--. 1 20234428 umbrella 363821 Oct  3 05:35 train_log.jsonl
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 05:35 .
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 04:26 ..
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 00:12 checkpoint-109
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 00:29 checkpoint-119
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 00:46 checkpoint-129
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 01:03 checkpoint-139
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 01:20 checkpoint-149
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 01:37 checkpoint-159
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 01:54 checkpoint-169
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 02:11 checkpoint-179
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 02:28 checkpoint-189
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 21:39 checkpoint-19
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 02:45 checkpoint-199
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 03:02 checkpoint-209
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 03:19 checkpoint-219
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 03:36 checkpoint-229
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 03:53 checkpoint-239
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 04:10 checkpoint-249
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 04:27 checkpoint-259
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 04:44 checkpoint-269
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 05:01 checkpoint-279
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 05:18 checkpoint-289
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 21:56 checkpoint-29
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  3 05:35 checkpoint-299
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 22:13 checkpoint-39
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 22:30 checkpoint-49
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 22:47 checkpoint-59
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 23:04 checkpoint-69
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 23:21 checkpoint-79
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 23:38 checkpoint-89
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 21:21 checkpoint-9
+drwxr-xr-x. 2 <cluster-account> umbrella   4096 Oct  2 23:55 checkpoint-99
+-rw-r--r--. 1 <cluster-account> umbrella    467 Oct  2 21:04 run_info.json
+-rw-r--r--. 1 <cluster-account> umbrella  11437 Oct  3 05:35 state.json
+-rw-r--r--. 1 <cluster-account> umbrella 363821 Oct  3 05:35 train_log.jsonl
 
 
 ==============
