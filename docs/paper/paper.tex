@@ -11,8 +11,8 @@
 \usepackage[htt]{hyphenat}
 \sloppy
 
-\title{Post-Tuning Beats Its Own Baseline and Still Loses to a Tuned Rule:\\
-LLM Agents from 0.6B to 8B on a Simulated Beer Game}
+\title{Post-Tuning Beats Its Own Baseline and Still Loses to a Tuned Rule\\[4pt]
+{\large LLM Agents from 0.6B to 8B on a Simulated Beer Game}}
 \author{Pepijn Frenken\\
 Independent researcher\\
 \texttt{pepijnfrenken@mailbox.org}}
@@ -80,13 +80,15 @@ Two baselines are in play, and keeping them apart is the point of this paper.
 baseline the published claim uses, and it is a fair test of whether training did anything.
 
 \textbf{The tuned rule.} An order-up-to policy with an exponentially smoothed forecast, the
-anchor-and-adjust heuristic of the behavioural literature \cite{sterman1989}:
+order-up-to policy with exponentially smoothed demand \cite{chen2000}:
 $q_t=\max\{0,\ \theta\hat q_t-\mathrm{IP}_t\}$ and
-$\hat q_t=\lambda q_{t-1}+(1-\lambda)\hat q_{t-1}$, where $\mathrm{IP}$ is the inventory position.
-Two parameters, $\theta$ (target multiple of forecast demand) and $\lambda$ (smoothing), are chosen per
-demand path by a grid search over $\theta\in\{1.5,\dots,6.0\}$ and $\lambda\in\{0.1,\dots,0.9\}$ fitted
-on weeks 1--18 only, then played frozen to week 36. This is the reference paper's own rule form
-(its eqs.~3--5), not a strawman we built to lose. The reported
+$\hat q_t=\lambda\,d_{t-1}+(1-\lambda)\hat q_{t-1}$, where $d_{t-1}$ is the order arriving from the
+tier below in the previous week and $\mathrm{IP}$ is the inventory position. Note what is smoothed:
+incoming demand, not the tier's own order, which would be circular. Its two parameters, $\theta$
+(target multiple of forecast demand) and $\lambda$ (smoothing), are chosen per demand path on a grid of
+81 points, $\theta\in\{1.5,2.0,\dots,5.0,6.0\}$ in steps of $0.5$ with $5.5$ omitted and
+$\lambda\in\{0.1,\dots,0.9\}$ in steps of $0.1$, fitted on weeks 1--18 and played frozen to week 36.
+This is the reference paper's own rule form (its eqs.~3--5), not a strawman we built to lose. The reported
 cost is the cost of the \emph{full} 36-week game, in the same simulator and cost function as the
 models, so it is not a truncated-horizon figure. It appears in three versions on the same 30-path
 noisy band: tuned, untuned (fixed $\theta{=}3.0,\lambda{=}0.5$), and an oracle fitted on the whole
@@ -158,29 +160,32 @@ Size & Cohort & Untrained median & Trained median & Paired wins \\
 
 \begin{table}[ht]
 \centering
-\caption{Both statistics G1 requires, and a bootstrap interval over the 30 demand paths for each. The
-criterion needs $\geq 15\%$ on both and $\geq 20/30$ wins; the winning arm clears both intervals by a
-wide margin, and the 1.7B intervals sit entirely on the wrong side of 1.}
+\caption{The two statistics G1 requires, with bootstrap intervals over the 30 demand paths. The
+criterion needs at most 0.85 on both (a 15\% reduction) and at least 20/30 wins. Seed 0 and the 8B
+survivor clear both intervals easily; 4B seed 1 passes on its point estimates, but its
+ratio-of-medians interval reaches 0.891, so it is not robust at the 15\% threshold.}
 \label{tab:g1}
 \small
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
-Arm & Median ratio (95\% CI) & Median reduction (95\% CI) & Wins & Verdict \\
+Arm & Ratio of medians (95\% CI) & Median of path ratios (95\% CI) & Wins & Verdict \\
 \midrule
-4B seed 0 & 0.403 [0.317, 0.460] & 0.597 [0.540, 0.683] & 30/30 & pass \\
-4B seed 1 & 0.752 [0.592, 0.870] & 0.248 [0.140, 0.408] & 25/30 & pass \\
-8B October survivor & 0.157 [0.102, 0.231] & 0.843 [0.769, 0.898] & 29/30 & pass \\
-1.7B seed 0 & 2.275 [1.985, 2.791] & $-1.275$ [$-1.791$, $-0.985$] & 7/30 & fail \\
-1.7B seed 1 & 7.879 [7.444, 8.808] & $-6.879$ [$-7.808$, $-6.444$] & 0/30 & fail \\
-1.7B seed 2 & 8.231 [7.798, 8.866] & $-7.231$ [$-7.866$, $-6.796$] & 0/30 & fail \\
+4B seed 0 & 0.433 [0.315, 0.470] & 0.403 [0.317, 0.460] & 30/30 & pass \\
+4B seed 1 & 0.832 [0.609, 0.891] & 0.752 [0.592, 0.870] & 25/30 & pass, marginal \\
+8B October survivor & 0.163 [0.111, 0.225] & 0.157 [0.102, 0.231] & 29/30 & pass \\
+1.7B seed 0 & 2.407 [1.989, 3.242] & 2.275 [1.985, 2.791] & 7/30 & fail \\
+1.7B seed 1 & 6.873 [6.614, 9.589] & 7.879 [7.444, 8.808] & 0/30 & fail \\
+1.7B seed 2 & 8.245 [7.837, 8.948] & 8.231 [7.798, 8.866] & 0/30 & fail \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \textbf{4B, the size where training works.} The November rebuild passes G1 on both seeds: 9{,}346
 (30/30 wins, $p = 9.3\times10^{-10}$, a 57\% reduction against the untrained control) and 17{,}958
-(25/30, $p \approx 1.6\times10^{-4}$, a 17\% reduction). The reduction is real and reproducible from
-committed per-run rows. It is also seed-dependent, and by more than one statistic hides: on the paired evaluation the
+(25/30, $p \approx 1.6\times10^{-4}$, a 16.8\% reduction of medians and 24.8\% on the median path
+ratio). Both are reproducible from committed per-run rows, but seed 1 is the weak half of the pass: its
+ratio-of-medians interval reaches 0.891, above the 0.85 bar, so it passes on point estimates rather
+than robustly. The 4B verdict is a 2/2 pass of the seeds that exist, and one of those two is marginal. It is also seed-dependent, and by more than one statistic hides: on the paired evaluation the
 medians are 9{,}346 and 17{,}958 ($1.92\times$, mean 13{,}652); on the curriculum validation band of
 the same adapters the medians are 9{,}854 and 18{,}335 ($1.86\times$) and the means 9{,}355 and
 19{,}385 ($2.07\times$, pooled 14{,}370). We quote both seeds wherever a number appears, and no single
@@ -189,7 +194,8 @@ seed stands in for the arm.
 \textbf{1.7B, where training is worse than doing nothing.} All three November seeds lose to their
 untrained control: 27{,}706 (7/30 wins), 79{,}094 and 94{,}887 (0/30). The effect is not merely absent;
 it is adverse by 2.4$\times$ to 8.2$\times$. Training at this size found a policy that is confidently
-wrong, and the collapse detector watched it happen.
+wrong; the collapse detector fired on single reads but never twice in a row, so the arms finished
+(Section~\ref{sec:deviations}).
 
 \textbf{0.6B, where the procedure stops itself.} Wave-7 produced the closed-choice readout that makes
 the whole study measurable, and six trained arm--seed rows that all lose (0/30 wins each). Wave-8's R1
@@ -250,16 +256,19 @@ still far from the algorithm. Scaling from 0.6B to 8B did not close the gap; at 
 Two features of this table matter for how far it can be pushed. First, the rule's parameters are
 fitted on weeks 1--18 of the same demand path and then played over the full 36 weeks, so its early
 weeks are in-sample; nothing similar is granted to the models. That biases the comparison in the
-rule's favour, and the gap survives it. Second, the untrained 8B reads 89{,}633 partly because it does
-not commit to the label set: its mass on the 26 labels is 0.840, against 0.99986 for the trained arm.
-An 8B ``pass'' against that baseline is therefore a pass against a broken readout, which is the
-weakest evidence in the paper and is reported as such.
+rule's favour, and the gap survives it. Second, the untrained 8B reads 89{,}633 against a baseline that does not commit to the label set: its
+minimum label mass over the 30 paths is 0.789, against 0.99986 for the trained arm. An 8B ``pass''
+against that baseline is therefore a pass against a poorly conditioned opponent, which is the weakest
+evidence in the paper and is reported as such. We do not claim that a fixed share of its cost is
+readout: decoding is an argmax over the 26 labels, so off-label mass cannot change the chosen order,
+it can only make the ranking among the 26 less trustworthy.
 
 \section{What this does and does not establish}\label{sec:solid}
 
 \textbf{Established.} The published comparison type reappears at 4B under our adaptation: post-training
-cuts cost against the same model untrained on matched demand paths, by 57\% at seed 0 and 17\% at seed
-1, with sign tests that would occur by chance about once in $10^{9}$ and once in $6{,}000$. It does not
+cuts cost against the same model untrained on matched demand paths, by 60\% at seed 0 on the median
+path ratio and 16.8\% at seed 1 on the ratio of medians, with sign tests that would occur by chance
+about once in $10^{9}$ and once in $6{,}000$. Seed 1 is marginal at the 15\% threshold (Table~\ref{tab:g1}). It does not
 reappear as a general property of scale: one size improves, 0.6B is adverse on all six trained rows,
 1.7B is sharply adverse on all three seeds, and 8B passes on one unselected arm against a baseline
 whose readout is partly broken. And no arm approaches the tuned rule.
@@ -291,8 +300,9 @@ evidence that it cannot.
 \textbf{One arm is not a size.} 8B is represented by a single checkpoint, from the rate the frozen
 selection rule did not choose, read in November on a Blackwell card with a newer stack than the
 October legs. Its pass is real; it is not a rung verdict, and its baseline is the weakest in the paper: untrained
-8B holds only 0.789 of its mass on the 26 labels, against 0.99986 for the trained arm, so much of the
-89{,}633 it scores is readout failure rather than decision failure. The same caveat, smaller, applies
+8B holds only 0.789 of its mass on the 26 labels (Section~\ref{sec:env}), against 0.99986 for the
+trained arm, so its rankings among the 26 are poorly conditioned. That inflates its cost without
+proving how much, and we do not put a share on it. The same caveat, smaller, applies
 to the 1.7B control at 0.823; the 4B control at 0.998 does not have it.
 
 \textbf{Variance is training-side, not evaluation-side.} Two independent 4B evaluation jobs on different
@@ -371,6 +381,9 @@ dynamic decision making experiment,'' \emph{Management Science} 35(3), 321--339,
 bullwhip effect,'' \emph{Management Science} 43(4), 546--558, 1997.
 \bibitem{hu2021lora} E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, W.~Chen,
 ``LoRA: Low-rank adaptation of large language models,'' \texttt{arXiv:2106.09685}, 2021.
+\bibitem{chen2000} F.~Chen, Z.~Drezner, J.~K. Ryan, D.~Simchi-Levi, ``Quantifying the bullwhip effect in
+a simple supply chain: The impact of forecasting, lead times, and information,''
+\emph{Management Science} 46(3), 436--443, 2000.
 \bibitem{grpo} Z.~Shao \emph{et al.}, ``DeepSeekMath: Pushing the limits of mathematical reasoning in
 open language models,'' \texttt{arXiv:2402.03300}, 2024 (GRPO, \S4.1).
 \bibitem{audit} P.~Frenken, ``Audit 3: same-week incoming-order leak, tuned floor and paired tests,''
