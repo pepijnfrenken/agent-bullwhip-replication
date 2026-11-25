@@ -12,4 +12,5 @@ abstract: >-
   A pre-registered, commit-dated adaptation study of the claim in arXiv:2605.17036v4 that a
   GRPO-tuned 4B decision agent beats its own untrained baseline on cost in a four-tier beer-game
   environment, tested at 0.6B, 1.7B, 4B and 8B with frozen gates, a collapse stop-loss and a
-  seed-pooling rule.
+  seed-pooling rule. Licence: the manuscript and supplement are CC BY 4.0; the code in this
+  repository is MIT.

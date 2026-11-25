@@ -14,7 +14,7 @@
 # =============================================================================
 set -euo pipefail
 
-B="${BULLWHIP_ROOT:-/scratch-shared/<cluster-account>/bullwhip}"
+B="${BULLWHIP_ROOT:-/scratch-shared/${TUE_USER:?export TUE_USER}/bullwhip}"
 R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"    # the repo checkout on the cluster
 cd "${R}"
 KIT="${B}/kit"
