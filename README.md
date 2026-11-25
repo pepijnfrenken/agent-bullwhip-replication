@@ -94,7 +94,7 @@ Full protocol history: `docs/waves/protocol.md`. Read the audits before trusting
 ## Run (three commands that matter)
 
 ```bash
-uv run python -m pytest -q            # 481 passed, 20 skipped (after WAVE6-FIX + WAVE8 staging, 2026-10-07)
+uv run python -m pytest -q            # 491 passed, 6 skipped, 6 failed, 8 errors (held-out box, 2026-11-25)
 uv run python scripts/wave7_analysis.py     # wave-7 gate readout → results/wave7_report.md
 uv run python scripts/walkforward_floor.py  # walk-forward + oracle floor columns ($0, no API)
 ```
@@ -102,6 +102,15 @@ uv run python scripts/walkforward_floor.py  # walk-forward + oracle floor column
 > `uv run pytest` alone fails at collection (poetry-style pyproject, package not on path) — use
 > `python -m pytest`. LLM arms need `FREEINFERENCE_API_KEY`; training runs happen on the cluster
 > via `hpc-umbrella/`.
+>
+> The 14 non-passing tests on that run are known and none is a data defect: 13 are the `*Torch`
+> groups, which fetch a Hugging Face tokenizer and therefore fail on a box with no outbound
+> network (`OSError: We couldn't connect to 'https://huggingface.co'`); one is
+> `test_eval_mass_assert_only_for_untrained`, which fails with `DID NOT RAISE` and is a
+> pre-existing test/code drift, not a regression; and `test_commit_gate_and_exit_codes` fails
+> because the fixture's argv reaches the commit gate before the path it asserts on. The last two
+> were re-run at the pre-publication commit and fail identically there; the Torch group fails on
+> the network call alone. None is caused by the publication edits.
 
 ---
 

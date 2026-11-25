@@ -2,13 +2,20 @@
 """secret_scan.py — pre-publication secret and identity scan.
 
 Two scopes, because a working-tree scan is not enough before a repo goes public:
-  1. the working tree (tracked and untracked files), and
-  2. every blob in the full history, since a rewritten tree does not rewrite history.
+  1. every file a clone would receive (tracked, plus untracked-but-not-ignored), and
+  2. every commit in history, since rewriting a file does not rewrite the commits that held it.
 
-Exit 1 on any hit. Matches are printed redacted: first 4 and last 4 characters.
+Exit 1 on any credential hit. Identity hits exit 2: they are not keys, but they identify a person
+or an internal host, and the decision to publish them should be deliberate.
 
-Run:  python3 scripts/secret_scan.py            # tree
-      python3 scripts/secret_scan.py --history  # tree + every historical blob
+How the two scopes are implemented, and why they differ:
+  tree     — Python, one regex pass per pattern over files that contain the pattern's literal core.
+             This repo carries ~800 MB of run artifacts, so the prefilter matters.
+  history  — `git grep` over every commit. A blob-by-blob sweep in Python is minutes of work for
+             the same answer; git's C grep with tree dedup answers in under a second.
+
+Run:  python3 scripts/secret_scan.py            # publishable tree
+      python3 scripts/secret_scan.py --history  # tree + every commit
 """
 from __future__ import annotations
 
@@ -18,7 +25,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-# High-confidence credential formats first: these should never appear.
 CREDENTIALS = {
     "private-key-block": r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
     "wireguard-private": r"(?i)\bPrivateKey\s*=\s*[A-Za-z0-9+/]{40,}={0,2}",
@@ -41,54 +47,109 @@ CREDENTIALS = {
     ),
 }
 
-# Identity and infrastructure detail: not credentials, but not for publication.
 IDENTITY = {
-    "tailnet-ip": r"\b100\.(?:6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.\d{1,3}\.\d{1,3}\b",
+    # a bare CIDR range such as 100.64.0.0/10 is documentation, not a host address
+    "tailnet-ip": r"\b100\.(?:6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.\d{1,3}\.\d{1,3}\b(?!/)",
     "rfc1918-ip": r"\b(?:192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})\b",
-    "student-number": r"\b20234428\b",
+    "account-number": r"\b20234428\b",
     "cluster-account-path": r"/home/20234428|~20234428",
     "vpn-config": r"(?i)wireproxy|student-split|tue-wireproxy\.conf",
     "cluster-host": r"\btue-(?:login|cluster|gpua|gpuc|gpub)\d*\b",
 }
 
-# Files that legitimately contain such strings in this repo (documented, reviewed).
-ALLOW = {
-    "scripts/secret_scan.py",  # the patterns themselves
-    "docs/paper/paper.tex",  # may quote a filename containing "wireproxy"
-}
+# POSIX ERE equivalents for the history pass (git grep -E has no \b and no lookaround).
+ERE_CRED = "|".join([
+    r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    r"PrivateKey[[:space:]]*=[[:space:]]*[A-Za-z0-9+/]{40}",
+    r"PresharedKey[[:space:]]*=[[:space:]]*[A-Za-z0-9+/]{40}",
+    r"gh[pousr]_[A-Za-z0-9]{36}",
+    r"github_pat_[A-Za-z0-9_]{50}",
+    r"hf_[A-Za-z0-9]{30}",
+    r"sk-ant-[A-Za-z0-9_-]{20}",
+    r"sk-[A-Za-z0-9_-]{20}",
+    r"AKIA[0-9A-Z]{16}",
+    r"aws_secret_access_key[[:space:]]*[:=][[:space:]]*[^[:space:]]{20}",
+    r"AIza[0-9A-Za-z_-]{35}",
+    r"xox[baprs]-[0-9A-Za-z-]{10}",
+    r"eyJ[A-Za-z0-9_-]{10,}\.eyJ",
+    r"ak-[A-Za-z0-9]{20}",
+    r"as-[A-Za-z0-9]{20}",
+    r"WANDB_API_KEY[[:space:]]*[:=][[:space:]]*[^[:space:]]{20}",
+    r"(api[_-]?key|apikey|passwd|password|access[_-]?token|auth[_-]?token)[[:space:]]*[:=][[:space:]]*[\"'][^\"']{12}",
+])
+ERE_IDENT = "|".join([
+    r"100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}",
+    r"192\.168\.[0-9]{1,3}\.[0-9]{1,3}",
+    r"20234428",
+    r"wireproxy|student-split",
+    r"tue-(login|cluster|gpua|gpuc|gpub)",
+])
+
+# Literal cores: a file is screened with a substring test before any regex runs.
+CRED_MARKERS = [
+    b"PRIVATE KEY", b"PrivateKey", b"PresharedKey", b"ghp_", b"gho_", b"ghu_", b"ghs_",
+    b"ghr_", b"github_pat_", b"hf_", b"sk-", b"AKIA", b"aws_secret", b"AIza", b"xox",
+    b"eyJ", b"ak-", b"as-", b"WANDB_API_KEY", b"api_key", b"apikey", b"API_KEY",
+    b"secret", b"SECRET", b"passwd", b"password", b"PASSWORD", b"access_token", b"auth_token",
+]
+IDENT_MARKERS = [
+    b"100.6", b"100.7", b"100.8", b"100.9", b"100.1",  # every tailnet prefix starts with one of these
+    b"192.168", b"20234428", b"wireproxy", b"student-split", b"tue-", b"/home/2",
+]
+
+ALLOW = {"scripts/secret_scan.py"}  # holds the patterns themselves
 
 TEXT_SUFFIXES = {
     ".py", ".sh", ".md", ".json", ".jsonl", ".tex", ".txt", ".yaml", ".yml",
-    ".toml", ".cfg", ".conf", ".sbatch", ".bib", ".csv", ".tsv", ".ini", ".env",
+    ".toml", ".cfg", ".conf", ".sbatch", ".bib", ".csv", ".tsv", ".ini", ".env", ".cff",
 }
 
-BINARY_NAME = re.compile(r"(?i)\.(?:safetensors|bin|pt|pth|npz|npy|gguf|tar|tgz|gz|zip|pdf|png|jpg)$")
+MAX_LINE = 4000  # JSONL rows here reach 7 MB; the generic pattern over one such line buys nothing
 
 
 def redact(s: str) -> str:
     s = s.strip()
-    if len(s) <= 8:
-        return "*" * len(s)
-    return f"{s[:4]}…{s[-4:]}"
+    return "*" * len(s) if len(s) <= 8 else f"{s[:4]}…{s[-4:]}"
 
 
-def scan_text(label: str, text: str, findings: list[tuple[str, str, int, str, str]]) -> None:
-    for table, kind in ((CREDENTIALS, "credential"), (IDENTITY, "identity")):
+def scan_text(label: str, text: str, findings: list) -> None:
+    blob = text.encode("utf-8", "replace")
+    scans = (
+        (CREDENTIALS, "credential", any(m in blob for m in CRED_MARKERS)),
+        (IDENTITY, "identity", any(m in blob for m in IDENT_MARKERS)),
+    )
+    for table, kind, present in scans:
+        if not present:
+            continue
         for name, pattern in table.items():
-            for m in re.finditer(pattern, text):
-                line = text.count("\n", 0, m.start()) + 1
-                findings.append((kind, name, line, label, redact(m.group(0))))
+            rx = re.compile(pattern)
+            for lineno, line in enumerate(text.splitlines(), 1):
+                if name == "generic-assignment" and len(line) > MAX_LINE:
+                    continue
+                for m in rx.finditer(line):
+                    findings.append((kind, name, lineno, label, redact(m.group(0))))
+
+
+def publishable_files(root: Path) -> list[str]:
+    """Tracked files plus untracked-but-not-ignored ones: what a clone would contain.
+
+    Walking the filesystem instead pulls in .venv and node_modules, which is slow and answers the
+    wrong question: third-party code is not what this repository publishes.
+    """
+    out: list[str] = []
+    for args in (["ls-files", "-z"], ["ls-files", "-z", "--others", "--exclude-standard"]):
+        r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=True)
+        out.extend(p for p in r.stdout.split("\0") if p)
+    return list(dict.fromkeys(out))
 
 
 def scan_tree(root: Path, findings) -> int:
     checked = 0
-    for path in sorted(root.rglob("*")):
-        if not path.is_file():
+    for rel in publishable_files(root):
+        if rel in ALLOW:
             continue
-        rel = path.relative_to(root).as_posix()
-        if rel.startswith(".git/") or "/.git/" in rel or rel in ALLOW:
-            continue
-        if path.suffix.lower() not in TEXT_SUFFIXES:
+        path = root / rel
+        if path.suffix.lower() not in TEXT_SUFFIXES or not path.is_file():
             continue
         try:
             text = path.read_text(errors="replace")
@@ -99,55 +160,33 @@ def scan_tree(root: Path, findings) -> int:
     return checked
 
 
-def scan_history(root: Path, findings) -> int:
-    """Scan every blob reachable from any ref, including unreachable-but-packed ones."""
-    shas = subprocess.run(
-        ["git", "-C", str(root), "rev-list", "--objects", "--all"],
-        capture_output=True, text=True, check=True,
-    ).stdout.splitlines()
-    paths: dict[str, str] = {}
-    for line in shas:
-        sha, _, name = line.partition(" ")
-        paths[sha] = name or "<unnamed>"
+def _history_grep(root: Path, markers: list[bytes], kind: str, table: dict, findings) -> int:
+    """Fixed-string grep over every commit, then classify only the matching lines.
 
-    # add any blob reachable only from the reflog or unreachable objects
-    loose = subprocess.run(
-        ["git", "-C", str(root), "cat-file", "--batch-check", "--batch-all-objects"],
-        capture_output=True, text=True,
-    ).stdout.splitlines()
-    for line in loose:
-        parts = line.split()
-        if len(parts) >= 2 and parts[1] == "blob":
-            paths.setdefault(parts[0], "<unreachable>")
-
-    blobs = [sha for sha, name in paths.items() if not BINARY_NAME.search(name)]
-    proc = subprocess.run(
-        ["git", "-C", str(root), "cat-file", "--batch"],
-        input="\n".join(blobs) + "\n", capture_output=True, text=True,
-    )
-    out = proc.stdout
-    pos = 0
-    checked = 0
-    while pos < len(out):
-        nl = out.find("\n", pos)
-        if nl == -1:
-            break
-        header = out[pos:nl]
-        parts = header.split()
-        if len(parts) != 3:  # "<sha> missing"
-            pos = nl + 1
-            continue
-        sha, kind, size = parts[0], parts[1], int(parts[2])
-        body = out[nl + 1 : nl + 1 + size]
-        pos = nl + 1 + size + 1
-        if kind != "blob" or "\x00" in body[:4096]:
-            continue
-        name = paths.get(sha, "<unknown>")
-        if name in ALLOW:
-            continue
-        checked += 1
-        scan_text(f"{name} @{sha[:8]}", body, findings)
-    return checked
+    -F is what makes this usable: an alternation of 17 regexes with bounded repeats over 340
+    commits and 60k files does not finish in minutes, while fixed strings do the same job in
+    under a second because every marker below is the literal core of its pattern.
+    """
+    revs = subprocess.run(
+        ["git", "-C", str(root), "rev-list", "--all"], capture_output=True, text=True, check=True
+    ).stdout.split()
+    if not revs:
+        return 0
+    cmd = ["git", "-C", str(root), "grep", "-I", "-n", "-F"]
+    for m in markers:
+        cmd += ["-e", m.decode()]
+    # no `--` before the revs: that would make git treat them as pathspecs and search nothing
+    cmd += [*revs]
+    r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+    for line in r.stdout.splitlines():
+        sha, _, rest = line.partition(":")
+        path, _, rest = rest.partition(":")
+        lineno, _, content = rest.partition(":")
+        label = f"{path} @{sha[:8]}"
+        for name, pattern in table.items():
+            for m in re.finditer(pattern, content):
+                findings.append((kind, name, int(lineno or 0), label, redact(m.group(0))))
+    return len(revs)
 
 
 def main() -> int:
@@ -157,33 +196,37 @@ def main() -> int:
     args = ap.parse_args()
     root = Path(args.root).resolve()
 
-    findings: list[tuple[str, str, int, str, str]] = []
+    findings: list = []
     n_tree = scan_tree(root, findings)
-    n_hist = scan_history(root, findings) if args.history else 0
+    n_hist = 0
+    if args.history:
+        n_hist = _history_grep(root, CRED_MARKERS, "credential", CREDENTIALS, findings)
+        _history_grep(root, IDENT_MARKERS, "identity", IDENTITY, findings)
 
     creds = [f for f in findings if f[0] == "credential"]
     idents = [f for f in findings if f[0] == "identity"]
     print(f"tree files scanned: {n_tree}")
     if args.history:
-        print(f"history blobs scanned: {n_hist}")
+        print(f"commits scanned: {n_hist}")
     print(f"credential hits: {len(creds)}   identity hits: {len(idents)}")
 
     for kind, name, line, label, sample in creds:
         print(f"CRED {name:22s} {label}:{line}  {sample}")
     if idents:
-        by_name: dict[tuple[str, str], int] = {}
-        for _, name, line, label, sample in idents:
-            by_name[(name, label)] = by_name.get((name, label), 0) + 1
+        grouped: dict[tuple[str, str], list[int]] = {}
+        for _, name, line, label, _ in idents:
+            grouped.setdefault((name, label), []).append(line)
         print("\nidentity hits grouped (count, pattern, file):")
-        for (name, label), n in sorted(by_name.items(), key=lambda kv: -kv[1])[:40]:
-            print(f"  {n:4d}  {name:18s} {label}")
-        print(f"  ({len(by_name)} distinct pattern/file pairs)")
+        for (name, label), lines in sorted(grouped.items(), key=lambda kv: -len(kv[1]))[:40]:
+            head = ",".join(str(x) for x in lines[:5])
+            print(f"  {len(lines):4d}  {name:20s} {label}  lines {head}{'…' if len(lines) > 5 else ''}")
+        print(f"  ({len(grouped)} distinct pattern/file pairs)")
 
     if creds:
         print("\nFAIL: credential-shaped strings present.")
         return 1
-    print("\nclean: no credential-shaped string in scope.")
-    return 0 if not idents else 2
+    print("\nno credential-shaped string in scope.")
+    return 2 if idents else 0
 
 
 if __name__ == "__main__":

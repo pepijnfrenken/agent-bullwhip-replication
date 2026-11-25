@@ -48,7 +48,8 @@ def _trained(repo_root: Path, name: str, checkpoint_dir: str | None = "checkpoin
 
 
 def _run(root: Path, selector: str = "eval"):
-    env = dict(os.environ, BULLWHIP_ROOT=str(root))
+    # config.sh refuses to run without a cluster user; the tests supply a fake one
+    env = dict(os.environ, BULLWHIP_ROOT=str(root), TUE_USER="cluster-user")
     p = subprocess.run(["bash", str(SCRIPT), selector], env=env, capture_output=True, text=True, timeout=120)
     return p
 
@@ -106,7 +107,7 @@ def test_runs_without_a_kit_config_and_without_sacct(tmp_path):
     bare.mkdir()
     copy = bare / "diagnose-wave8.sh"
     copy.write_text(SCRIPT.read_text())
-    env = dict(os.environ, BULLWHIP_ROOT=str(root))
+    env = dict(os.environ, BULLWHIP_ROOT=str(root), TUE_USER="cluster-user")
     p = subprocess.run(["bash", str(copy), "eval"], env=env, capture_output=True, text=True, timeout=120)
     assert p.returncode == 0, p.stdout + p.stderr
     assert "wave8-eval_401234.log" in p.stdout          # found the log without config.sh

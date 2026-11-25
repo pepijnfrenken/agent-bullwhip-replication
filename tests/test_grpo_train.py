@@ -518,8 +518,15 @@ def test_run_loop_curriculum_alternates_across_steps(tmp_path):
     assert [r["curriculum"] for r in recs] == ["poisson", "truncnorm", "poisson", "truncnorm"]
 
 
-def test_torch_available_reports_false_on_hub():
-    assert _torch_available() is False  # this box has no torch; the loop still ran
+def test_torch_available_reports_the_truth():
+    """The helper must report what is installed, not what one machine had.
+
+    This test used to assert `is False`, i.e. that the author's hub had no torch. That is a fact
+    about a host, not about the code, and it fails for every reader who has torch installed.
+    """
+    import importlib.util
+
+    assert _torch_available() is (importlib.util.find_spec("torch") is not None)
 
 
 # --------------------------------------------------------------------------- #

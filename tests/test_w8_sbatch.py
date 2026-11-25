@@ -69,6 +69,9 @@ def _setup(tmp_path, *, gates=True, f3=True, env=None, sbatch="gpu-wave8-train.s
     e.update({"PATH": f"{bin_}{os.pathsep}{e['PATH']}", "SLURM_SUBMIT_DIR": str(kit),
               "SLURM_ARRAY_TASK_ID": str(task), "SLURM_CPUS_PER_TASK": "3",
               "W8_CALLS": str(calls), "W8_PY": sys.executable,
+              # config.sh refuses to run without a cluster user; the tests supply a fake one so
+              # no account identifier is needed to run the suite
+              "TUE_USER": "cluster-user",
               # the gate is part of the product now: default the pin to the fixture's own HEAD so
               # every non-gate test still exercises it; a test that wants a refusal overrides this
               "EXPECTED_COMMIT": repo_head})
