@@ -28,12 +28,12 @@ untrained baseline on cost. Verdicts and every gate read are in `docs/waves/`; t
 
 ## The paper
 
-*Post-Tuning Closed-Choice LLM Agents Across Four Model Sizes: Cost Comparisons, Training.*
+*Post-Tuning Beats Its Own Baseline and Still Loses to a Tuned Rule: LLM Agents from 0.6B to 8B on a Simulated Beer Game*
 A pre-registered, commit-dated adaptation study of the claim in arXiv:2605.17036v4 that a
 GRPO-tuned 4B agent beats its own untrained baseline on cost.
 
-- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 13 pages, source `docs/paper/paper.tex`
-- Methods supplement S1–S7: [`docs/paper/paper-supplement.pdf`](docs/paper/paper-supplement.pdf), 13 pages
+- Main text: [`docs/paper/paper.pdf`](docs/paper/paper.pdf), 5 pages, source `docs/paper/paper.tex`
+- Methods supplement S1–S7: [`docs/paper/paper-supplement.pdf`](docs/paper/paper-supplement.pdf), 13 pages of gates, ledger and provenance
 - Submission package (metadata, abstract, checklist, checksums): [`docs/arxiv/`](docs/arxiv/)
 - Build both with `tectonic paper.tex` and `tectonic paper-supplement.tex` from `docs/paper/`
 
