@@ -20,8 +20,22 @@ gets triaged as noise.
 Mechanics that matter more than the wording:
 
 - Send from one address and keep it: the one that will also be the arXiv corresponding email.
-- Plain text, no template, no attachment. One link to the tag. An 83 KB PDF attached to a cold
-  email is the shape of spam.
+- Plain text, no template, no attachment on the first send. One link instead, verified
+  2026-11-26 from an unauthenticated client (HTTP 200, 83,322 bytes):
+
+  https://raw.githubusercontent.com/pepijnfrenken/agent-bullwhip-replication/arxiv-submission-1/docs/arxiv/paper.pdf
+
+  Why not attach: the letter asks three questions answerable from memory in a sentence each, so it
+  does not need the paper; a first contact from an unknown sender carrying an 83 KB PDF of
+  unpublished work reads as homework assigned to a professor; and an attachment is the commonest
+  reason a cold email from a non-institutional domain lands in spam. A link is one click and cannot
+  be quarantined.
+  When to attach instead: in the follow-up, or as soon as anyone replies and asks. At 83 KB it costs
+  nothing to send once there is a thread.
+- The repository is already public: opened 2026-11-25, re-verified 2026-11-26 (repo 200, tag PDF 200
+  unauthenticated). Nothing needs opening before sending, and the link above works for an anonymous
+  reader. Accept the consequence: the replication has been publicly readable for a day, so a reader
+  who goes looking for the title can find it before arXiv has it.
 - Tuesday to Thursday, mid-afternoon CET: Zurich is the same hour, Boston is morning.
 - One follow-up at 10-14 days, quoting the three questions, then stop. Do not chase a third time.
 - A second, shorter email the day the preprint goes up. That one gets replies; cold ones often
