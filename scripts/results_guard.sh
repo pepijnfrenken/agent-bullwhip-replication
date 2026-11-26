@@ -73,7 +73,11 @@ log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "${LOG}"; }
 
 # --- 1. cluster -> git -------------------------------------------------------
 cluster_push() {
-  ssh -o BatchMode=yes -o ConnectTimeout=25 "${CLUSTER_HOST}" "bash -s" <<'EOS' 2>&1 | tail -4
+  # CLUSTER_ROOT lives on this host; the remote heredoc runs under `set -u`, so it must be
+  # handed over explicitly. Without this the whole leg died at line 1 with "unbound variable"
+  # and the guard reported the push as merely uninteresting.
+  ssh -o BatchMode=yes -o ConnectTimeout=25 "${CLUSTER_HOST}" \
+    "CLUSTER_ROOT=$(printf '%q' "${CLUSTER_ROOT}") REDACT_ID=$(printf '%q' "${TUE_USER}") bash -s" <<'EOS' 2>&1 | tail -4
 set -uo pipefail
 R=$CLUSTER_ROOT/agent-bullwhip-replication
 B=$CLUSTER_ROOT
@@ -89,6 +93,20 @@ git merge --ff-only --quiet origin/master 2>/dev/null \
 mkdir -p results/wave8_logs
 cp -p "$B"/logs/wave8-*.log results/wave8_logs/ 2>/dev/null || true
 cp -p "$B"/logs/cpu-wave8-label_*.log results/wave8_logs/ 2>/dev/null || true
+# Slurm stamps the account into every log header. This repository is public, so the
+# identifier is replaced on the way in; doing it here rather than after the push is the
+# difference between a clean tree and a leak that has already been mirrored.
+if [ -n "${REDACT_ID:-}" ]; then
+  hit=0
+  while IFS= read -r f; do
+    sed -i "s/${REDACT_ID}/<cluster-account>/g" "$f" && hit=$((hit + 1))
+  done < <(grep -rlF "$REDACT_ID" results 2>/dev/null)
+  [ "$hit" -gt 0 ] && echo "[guard] redacted the account id in $hit log file(s)"
+else
+  echo "[guard] REDACT_ID unset: logs are NOT redacted, do not push"
+  exit 0
+fi
+[ -z "$(grep -rlF "${REDACT_ID}" results 2>/dev/null)" ] || { echo "[guard] redaction left matches; refusing to push"; exit 0; }
 bash hpc-umbrella/push_results.sh \
   --exclude-glob 'results/**/*.safetensors' \
   --exclude-glob 'results/**/*.bin' \

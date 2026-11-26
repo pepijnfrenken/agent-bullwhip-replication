@@ -20,6 +20,7 @@ Run:  python3 scripts/secret_scan.py            # publishable tree
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -47,15 +48,40 @@ CREDENTIALS = {
     ),
 }
 
+def _cluster_account():
+    """The cluster account is not written into this file: the repository is public, and a
+    literal here would publish the very identifier the redaction removes. It is read from
+    the environment, or from the untracked local config the guard uses."""
+    value = os.environ.get("TUE_USER") or os.environ.get("CLUSTER_USER") or ""
+    if not value:
+        cfg = os.path.expanduser("~/.config/bullwhip/cluster.env")
+        try:
+            with open(cfg, "r", errors="replace") as fh:
+                for line in fh:
+                    if line.startswith("TUE_USER="):
+                        value = line.split("=", 1)[1].strip().strip("'\"")
+                        break
+        except OSError:
+            pass
+    return value.strip()
+
+
+ACCOUNT = _cluster_account()
+
 IDENTITY = {
     # a bare CIDR range such as 100.64.0.0/10 is documentation, not a host address
     "tailnet-ip": r"\b100\.(?:6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.\d{1,3}\.\d{1,3}\b(?!/)",
     "rfc1918-ip": r"\b(?:192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})\b",
-    "account-number": r"\b20234428\b",
-    "cluster-account-path": r"/home/20234428|~20234428",
+}
+if ACCOUNT:
+    IDENTITY["account-number"] = r"\b" + re.escape(ACCOUNT) + r"\b"
+    IDENTITY["cluster-account-path"] = (
+        "/home/" + re.escape(ACCOUNT) + "|~" + re.escape(ACCOUNT)
+    )
+IDENTITY.update({
     "vpn-config": r"(?i)wireproxy|student-split|tue-wireproxy\.conf",
     "cluster-host": r"\btue-(?:login|cluster|gpua|gpuc|gpub)\d*\b",
-}
+})
 
 # POSIX ERE equivalents for the history pass (git grep -E has no \b and no lookaround).
 ERE_CRED = "|".join([
@@ -80,7 +106,7 @@ ERE_CRED = "|".join([
 ERE_IDENT = "|".join([
     r"100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}",
     r"192\.168\.[0-9]{1,3}\.[0-9]{1,3}",
-    r"20234428",
+] + ([re.escape(ACCOUNT)] if ACCOUNT else []) + [
     r"wireproxy|student-split",
     r"tue-(login|cluster|gpua|gpuc|gpub)",
 ])
@@ -94,14 +120,27 @@ CRED_MARKERS = [
 ]
 IDENT_MARKERS = [
     b"100.6", b"100.7", b"100.8", b"100.9", b"100.1",  # every tailnet prefix starts with one of these
-    b"192.168", b"20234428", b"wireproxy", b"student-split", b"tue-", b"/home/2",
+    b"192.168", b"wireproxy", b"student-split", b"tue-",
 ]
+if ACCOUNT:
+    IDENT_MARKERS += [ACCOUNT.encode(), ("/home/" + ACCOUNT[0]).encode()]
 
 ALLOW = {"scripts/secret_scan.py"}  # holds the patterns themselves
+
+if not ACCOUNT:
+    print(
+        "warning: no cluster account configured (TUE_USER or ~/.config/bullwhip/cluster.env), "
+        "so the account-number patterns are NOT loaded. A clean result here does not cover them.",
+        file=sys.stderr,
+    )
 
 TEXT_SUFFIXES = {
     ".py", ".sh", ".md", ".json", ".jsonl", ".tex", ".txt", ".yaml", ".yml",
     ".toml", ".cfg", ".conf", ".sbatch", ".bib", ".csv", ".tsv", ".ini", ".env", ".cff",
+    # Logs were missing here, and logs are where an sbatch header and a traceback put
+    # everything: the account number, hostnames, sometimes an environment dump. A scan
+    # that skips them reports clean on exactly the files most likely to leak.
+    ".log", ".out", ".err", ".ipynb", ".rst", ".mk", ".in", ".patch", ".diff",
 }
 
 MAX_LINE = 4000
