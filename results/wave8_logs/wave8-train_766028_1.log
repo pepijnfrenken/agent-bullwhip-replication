@@ -1,4 +1,4 @@
-repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=40200d47efa53340926be7402d109430d2725f68 dirty_files=4
+repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=40200d47efa53340926be7402d109430d2725f68 dirty_files=4
 NOTE: HEAD 40200d47efa53340926be7402d109430d2725f68 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates_1.7b.json
 === wave8 r1 task 1: lr=1e-5 seed=1 rung=1.7b rounds=3x170 at 2026-11-19T20:07:24+01:00 ===
@@ -9,7 +9,7 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed1/round1/states
 states=4080 flat=0.0000 edge=0.5353 entropy=1.878 wall=94.6s
 states=1360 flat=0.0000 edge=0.4390 entropy=2.624 wall=66.4s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.27it/s]
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 98.71it/s]
 collapse-check results/wave8_r1-1.7b_lr1e-5_seed1_round1/checkpoint-169: collapsed=True medH=0.000 modal_share=1.000 I=0.0075 ['low-entropy: modal argmax share > m_hi']
@@ -20,7 +20,7 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed1/round2/states
 states=4080 flat=0.0000 edge=0.7877 entropy=2.120 wall=96.1s
 states=1360 flat=0.0007 edge=0.4191 entropy=2.731 wall=66.2s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 52.35it/s]
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 98.96it/s]
 collapse-check results/wave8_r1-1.7b_lr1e-5_seed1_round2/checkpoint-169: collapsed=False medH=0.243 modal_share=0.641 I=1.0932 []
@@ -31,7 +31,7 @@ collected 2160 policy states -> results/wave8_r1-1.7b_lr1e-5_seed1/round3/states
 states=4080 flat=0.0000 edge=0.7890 entropy=2.216 wall=94.6s
 states=1360 flat=0.0000 edge=0.3846 entropy=2.714 wall=66.3s
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.65it/s]
-/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 100.82it/s]
 collapse-check results/wave8_r1-1.7b_lr1e-5_seed1_round3/checkpoint-169: collapsed=False medH=0.003 modal_share=0.152 I=2.4519 []
@@ -73,7 +73,7 @@ JobID             State     AveRSS     MaxRSS
 Job ID: 767256
 Array Job ID: 766028_1
 Cluster: umbrella
-User/Group: 20234428/umbrella
+User/Group: <cluster-account>/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8
