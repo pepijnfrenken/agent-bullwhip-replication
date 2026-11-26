@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=8bdd49e7712f26dea380171da39b9de74b3d8063 dirty_files=2
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=8bdd49e7712f26dea380171da39b9de74b3d8063 dirty_files=2
 NOTE: HEAD 8bdd49e7712f26dea380171da39b9de74b3d8063 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
 pre-flight ok: {'F0': True, 'F1': True} F3 frozen in results/wave8/gates_4b.json
 === wave8 r1 task 0: lr=5e-5 seed=0 rung=4b rounds=3x170 at 2026-11-19T21:06:34+01:00 ===
@@ -9,7 +9,7 @@ collected 2160 policy states -> results/wave8_r1-4b_lr5e-5_seed0/round1/states_s
 states=4080 flat=0.0000 edge=0.6752 entropy=2.020 wall=58.9s
 states=1360 flat=0.0007 edge=0.4199 entropy=2.632 wall=41.0s
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 92.94it/s]
-/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-4B - will assume that the vocabulary was not modified.
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-4B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 94.56it/s]
 collapse-check results/wave8_r1-4b_lr5e-5_seed0_round1/checkpoint-169: collapsed=False medH=1.885 modal_share=0.293 I=0.7480 []
@@ -20,7 +20,7 @@ collected 2160 policy states -> results/wave8_r1-4b_lr5e-5_seed0/round2/states_s
 states=4080 flat=0.0000 edge=0.3777 entropy=2.729 wall=56.8s
 states=1360 flat=0.0000 edge=0.3654 entropy=2.801 wall=41.6s
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 103.66it/s]
-/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-4B - will assume that the vocabulary was not modified.
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-4B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 83.57it/s]
 collapse-check results/wave8_r1-4b_lr5e-5_seed0_round2/checkpoint-169: collapsed=False medH=1.661 modal_share=0.562 I=0.4512 []
@@ -31,7 +31,7 @@ collected 2160 policy states -> results/wave8_r1-4b_lr5e-5_seed0/round3/states_s
 states=4080 flat=0.0000 edge=0.5127 entropy=2.525 wall=58.1s
 states=1360 flat=0.0000 edge=0.3441 entropy=2.839 wall=41.2s
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 84.06it/s]
-/scratch-shared/<cluster-account>/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-4B - will assume that the vocabulary was not modified.
+/scratch-shared/20234428/bullwhip/venv/lib/python3.11/site-packages/peft/utils/save_and_load.py:313: UserWarning: Could not find a config file in Qwen/Qwen3-4B - will assume that the vocabulary was not modified.
   warnings.warn(
 Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 81.65it/s]
 collapse-check results/wave8_r1-4b_lr5e-5_seed0_round3/checkpoint-169: collapsed=False medH=1.486 modal_share=0.324 I=0.3269 []
@@ -73,7 +73,7 @@ JobID             State     AveRSS     MaxRSS
 Job ID: 767349
 Array Job ID: 766029_0
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8

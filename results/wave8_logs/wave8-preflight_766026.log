@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=c2e61219c42de18f0ebe95432447667a28fffcd4 rung=4b model=Qwen/Qwen3-4B@1cfa9a7208912126459214e8b04321603b3df60c
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=c2e61219c42de18f0ebe95432447667a28fffcd4 rung=4b model=Qwen/Qwen3-4B@1cfa9a7208912126459214e8b04321603b3df60c
 NOTE: HEAD c2e61219c42de18f0ebe95432447667a28fffcd4 is ahead of pin ff88dc7fb6bb1bf07d96842ba49f226c0ca745f8 in results/docs only — running.
 F0, F1 passing: {'F0': True, 'F1': True}
 === F2: tokenizer check (Qwen/Qwen3-4B) ===
@@ -30,7 +30,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 766026
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8

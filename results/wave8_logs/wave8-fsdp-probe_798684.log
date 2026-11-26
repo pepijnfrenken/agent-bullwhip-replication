@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=9f67227c96f57b5cd366515644422ca1c7a7f0eb ranks=2
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=9f67227c96f57b5cd366515644422ca1c7a7f0eb ranks=2
 NOTE: HEAD is ahead of pin in results/docs only — running.
 === fsdp probe at 2026-11-21T15:25:25+01:00 ranks=2 master=127.0.0.1:38684 ===
 --- variant A: wrap=auto untie=0 ---
@@ -101,7 +101,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 798684
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: FAILED (exit code 1)
 Nodes: 1
 Cores per node: 16

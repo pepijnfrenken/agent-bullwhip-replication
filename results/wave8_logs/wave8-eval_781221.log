@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=f0f8969d06bf7c79149e76419bfef7389f8101fa rung=8b
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=f0f8969d06bf7c79149e76419bfef7389f8101fa rung=8b
 --- eval w8-untrained-8b-argmax-step (step/argmax) at 2026-11-20T18:52:30+01:00
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 143.59it/s]
 w8-untrained-8b-argmax-step: runs=1 mean=93,060 min=93,060 max=93,060 parse_fail=0 min_mass=0.84032 wall=24.6s -> results/eval/w8-untrained-8b-argmax-step.jsonl
@@ -14,22 +14,22 @@ w8-untrained-8b-argmax-noisy: runs=30 mean=106,448 min=10,150 max=298,690 parse_
 --- perm probe untrained-8b at 2026-11-20T19:18:06+01:00
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 147.35it/s]
 Traceback (most recent call last):
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 300, in <module>
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 300, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 294, in main
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 294, in main
     return {"sample": cmd_sample, "oracle": cmd_oracle, "control": cmd_control,
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 234, in cmd_perm_check
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/wave8_gates.py", line 234, in cmd_perm_check
     return m.main()
            ^^^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/probe_permutation_invariance.py", line 104, in main
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_permutation_invariance.py", line 104, in main
     for rec in rm.readout_batch(prompts[i:i + args.batch],
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 433, in readout_batch
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 433, in readout_batch
     out.extend(self.readout_batch(prompts[i:i + _chunk],
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 461, in readout_batch
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_readout.py", line 461, in readout_batch
     raise AssertionError(
 AssertionError: label mass 0.7840 < 0.99 (prompt 3): candidate-letter invariant violated
 --- PERM untrained-8b: gate failed or errored (recorded in the JSON; continuing)
@@ -69,36 +69,36 @@ wrote results/eval/w8-r1-8b-seed1-perm.json
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00, 133.06it/s]
 collapse-final r1-8b-seed1: collapsed=False argmax-histogram top3=[(4, 270), (1, 187), (3, 180)] -> results/wave8/r1-8b-seed1-S_nom.json
 --- artifacts ---
--rw-r--r--. 1 <cluster-account> umbrella     516 Nov 20 11:36 w8-r1-4b-seed1-argmax-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   14683 Nov 20 12:03 w8-r1-4b-seed1-perm.json
--rw-r--r--. 1 <cluster-account> umbrella 2196741 Nov 20 11:47 w8-r1-4b-seed1-sampled-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     548 Nov 20 11:47 w8-r1-4b-seed1-sampled-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella 1946618 Nov 20 20:02 w8-r1-8b-seed1-argmax-noisy.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     544 Nov 20 20:02 w8-r1-8b-seed1-argmax-noisy.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   63918 Nov 20 19:34 w8-r1-8b-seed1-argmax-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     530 Nov 20 19:34 w8-r1-8b-seed1-argmax-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   14431 Nov 20 20:09 w8-r1-8b-seed1-perm.json
--rw-r--r--. 1 <cluster-account> umbrella 1926664 Nov 20 19:48 w8-r1-8b-seed1-sampled-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     545 Nov 20 19:48 w8-r1-8b-seed1-sampled-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella 2203740 Nov 20 09:46 w8-untrained-1.7b-argmax-noisy.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     545 Nov 20 09:46 w8-untrained-1.7b-argmax-noisy.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   74016 Nov 20 09:39 w8-untrained-1.7b-argmax-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     541 Nov 20 09:39 w8-untrained-1.7b-argmax-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella 2214908 Nov 20 09:42 w8-untrained-1.7b-sampled-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     556 Nov 20 09:42 w8-untrained-1.7b-sampled-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella 2236297 Nov 20 10:52 w8-untrained-4b-argmax-noisy.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     558 Nov 20 10:52 w8-untrained-4b-argmax-noisy.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   74895 Nov 20 10:35 w8-untrained-4b-argmax-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     536 Nov 20 10:35 w8-untrained-4b-argmax-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   14905 Nov 20 10:56 w8-untrained-4b-perm.json
--rw-r--r--. 1 <cluster-account> umbrella 2262984 Nov 20 10:43 w8-untrained-4b-sampled-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     556 Nov 20 10:43 w8-untrained-4b-sampled-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella 2128478 Nov 20 19:18 w8-untrained-8b-argmax-noisy.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     569 Nov 20 19:18 w8-untrained-8b-argmax-noisy.summary.json
--rw-r--r--. 1 <cluster-account> umbrella   69822 Nov 20 18:53 w8-untrained-8b-argmax-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     538 Nov 20 18:53 w8-untrained-8b-argmax-step.summary.json
--rw-r--r--. 1 <cluster-account> umbrella 2119063 Nov 20 19:05 w8-untrained-8b-sampled-step.jsonl
--rw-r--r--. 1 <cluster-account> umbrella     556 Nov 20 19:05 w8-untrained-8b-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella     516 Nov 20 11:36 w8-r1-4b-seed1-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   14683 Nov 20 12:03 w8-r1-4b-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella 2196741 Nov 20 11:47 w8-r1-4b-seed1-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     548 Nov 20 11:47 w8-r1-4b-seed1-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 1946618 Nov 20 20:02 w8-r1-8b-seed1-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     544 Nov 20 20:02 w8-r1-8b-seed1-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   63918 Nov 20 19:34 w8-r1-8b-seed1-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     530 Nov 20 19:34 w8-r1-8b-seed1-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   14431 Nov 20 20:09 w8-r1-8b-seed1-perm.json
+-rw-r--r--. 1 20234428 umbrella 1926664 Nov 20 19:48 w8-r1-8b-seed1-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     545 Nov 20 19:48 w8-r1-8b-seed1-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2203740 Nov 20 09:46 w8-untrained-1.7b-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     545 Nov 20 09:46 w8-untrained-1.7b-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   74016 Nov 20 09:39 w8-untrained-1.7b-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     541 Nov 20 09:39 w8-untrained-1.7b-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2214908 Nov 20 09:42 w8-untrained-1.7b-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     556 Nov 20 09:42 w8-untrained-1.7b-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2236297 Nov 20 10:52 w8-untrained-4b-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     558 Nov 20 10:52 w8-untrained-4b-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   74895 Nov 20 10:35 w8-untrained-4b-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     536 Nov 20 10:35 w8-untrained-4b-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella   14905 Nov 20 10:56 w8-untrained-4b-perm.json
+-rw-r--r--. 1 20234428 umbrella 2262984 Nov 20 10:43 w8-untrained-4b-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     556 Nov 20 10:43 w8-untrained-4b-sampled-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2128478 Nov 20 19:18 w8-untrained-8b-argmax-noisy.jsonl
+-rw-r--r--. 1 20234428 umbrella     569 Nov 20 19:18 w8-untrained-8b-argmax-noisy.summary.json
+-rw-r--r--. 1 20234428 umbrella   69822 Nov 20 18:53 w8-untrained-8b-argmax-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     538 Nov 20 18:53 w8-untrained-8b-argmax-step.summary.json
+-rw-r--r--. 1 20234428 umbrella 2119063 Nov 20 19:05 w8-untrained-8b-sampled-step.jsonl
+-rw-r--r--. 1 20234428 umbrella     556 Nov 20 19:05 w8-untrained-8b-sampled-step.summary.json
 === wave8-eval done at 2026-11-20T20:13:09+01:00 failed=0 ===
 
 
@@ -114,7 +114,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 781221
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8

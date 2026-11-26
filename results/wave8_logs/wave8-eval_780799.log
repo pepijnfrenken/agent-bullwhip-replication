@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=eeb233ccbf241d89a57f6d6b432bd7f119860624 rung=8b
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=eeb233ccbf241d89a57f6d6b432bd7f119860624 rung=8b
 NOTE: HEAD eeb233ccbf241d89a57f6d6b432bd7f119860624 is ahead of pin 0bcd9dfeb29f71a71b3701b26dbe56cfdb6e908d in results/docs only — running.
 FATAL: results/wave8/gates_8b.json missing (F3 not frozen for this rung)
 
@@ -15,7 +15,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 780799
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: FAILED (exit code 1)
 Nodes: 1
 Cores per node: 8

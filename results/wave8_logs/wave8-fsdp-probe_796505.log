@@ -1,18 +1,18 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=43e5dfe91850a96d0fccb8b6b45d02663e86c38f ranks=2
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=43e5dfe91850a96d0fccb8b6b45d02663e86c38f ranks=2
 NOTE: HEAD is ahead of pin in results/docs only — running.
 === fsdp probe at 2026-11-21T12:29:32+01:00 ranks=2 master=127.0.0.1:36505 ===
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards:  20%|██        | 1/5 [00:00<00:00,  5.47it/s]Loading checkpoint shards:  40%|████      | 2/5 [00:00<00:00,  5.07it/s]Loading checkpoint shards:  60%|██████    | 3/5 [00:00<00:00,  5.52it/s]Loading checkpoint shards:  80%|████████  | 4/5 [00:00<00:00,  5.84it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  7.01it/s]
 Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards:  20%|██        | 1/5 [00:00<00:00,  5.47it/s]Loading checkpoint shards:  40%|████      | 2/5 [00:00<00:00,  5.07it/s]Loading checkpoint shards:  60%|██████    | 3/5 [00:00<00:00,  5.52it/s]Loading checkpoint shards:  80%|████████  | 4/5 [00:00<00:00,  5.84it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  7.01it/s]
 Traceback (most recent call last):
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 116, in <module>
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 116, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 61, in main
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 61, in main
     pol = _Policy(MODEL, revision=REV, phase="sft", init="fresh",
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 729, in __init__
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 729, in __init__
     self._fsdp_wrap()
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 769, in _fsdp_wrap
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 769, in _fsdp_wrap
     self.model = FSDP(
                  ^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py", line 463, in __init__
@@ -52,15 +52,15 @@ Traceback (most recent call last):
     raise ValueError(
 ValueError: Must flatten tensors with uniform dtype but got torch.bfloat16 and torch.float32
 Traceback (most recent call last):
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 116, in <module>
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 116, in <module>
     raise SystemExit(main())
                      ^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 61, in main
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/scripts/probe_fsdp_lora.py", line 61, in main
     pol = _Policy(MODEL, revision=REV, phase="sft", init="fresh",
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 729, in __init__
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 729, in __init__
     self._fsdp_wrap()
-  File "/vast.mnt/scratch/shared/<cluster-account>/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 769, in _fsdp_wrap
+  File "/vast.mnt/scratch/shared/20234428/bullwhip/agent-bullwhip-replication/agent_bullwhip/decision_train.py", line 769, in _fsdp_wrap
     self.model = FSDP(
                  ^^^^^
   File "/sw/rl8/zen/app/PyTorch/2.1.2-foss-2023a-CUDA-12.1.1/lib/python3.11/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py", line 463, in __init__
@@ -129,7 +129,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 796505
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: FAILED (exit code 134)
 Nodes: 1
 Cores per node: 16

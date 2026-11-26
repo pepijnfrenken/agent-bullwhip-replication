@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=48cc3ff3ba64616be292d86d9890feea1b3e7f67 ranks=2
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=48cc3ff3ba64616be292d86d9890feea1b3e7f67 ranks=2
 NOTE: HEAD is ahead of pin in results/docs only — running.
 === fsdp probe at 2026-11-22T01:32:04+01:00 ranks=2 master=127.0.0.1:29479 ===
 --- variant A06-p2pon: model=Qwen/Qwen3-0.6B NCCL_P2P_DISABLE=1 ---
@@ -18,7 +18,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 809479
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: TIMEOUT (exit code 0)
 Nodes: 1
 Cores per node: 16

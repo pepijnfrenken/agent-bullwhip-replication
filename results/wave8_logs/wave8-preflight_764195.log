@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=9db73fe3dffb8769a549ec8a8fa8f81c91ebcbbe rung=0.6b model=Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=9db73fe3dffb8769a549ec8a8fa8f81c91ebcbbe rung=0.6b model=Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca
 F0, F1 passing: {'F0': True, 'F1': True}
 === F2: tokenizer check (Qwen/Qwen3-0.6B) ===
 grid w8_g26b: 26 options A..Z values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 36, 44, 54, 64, 78, 94, 114, 136, 166, 200]
@@ -36,7 +36,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 764195
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: COMPLETED (exit code 0)
 Nodes: 1
 Cores per node: 8

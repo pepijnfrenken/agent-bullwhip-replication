@@ -1,4 +1,4 @@
-repo /scratch-shared/<cluster-account>/bullwhip/agent-bullwhip-replication HEAD=73a2bbc0ed64b990c058983136efacb352bc7e60 rung=4b model=Qwen/Qwen3-4B@1cfa9a7208912126459214e8b04321603b3df60c
+repo /scratch-shared/20234428/bullwhip/agent-bullwhip-replication HEAD=73a2bbc0ed64b990c058983136efacb352bc7e60 rung=4b model=Qwen/Qwen3-4B@1cfa9a7208912126459214e8b04321603b3df60c
 FATAL: EXPECTED_COMMIT=3e1be14d85f262846d465d7be3136cbae988eaa9 but repo HEAD=73a2bbc0ed64b990c058983136efacb352bc7e60 — refusing to run stale code
 
 
@@ -14,7 +14,7 @@ JobID             State     AveRSS     MaxRSS
 
 Job ID: 766007
 Cluster: umbrella
-User/Group: <cluster-account>/umbrella
+User/Group: 20234428/umbrella
 State: FAILED (exit code 1)
 Nodes: 1
 Cores per node: 8
