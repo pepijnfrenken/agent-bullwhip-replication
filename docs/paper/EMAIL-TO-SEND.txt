@@ -1,0 +1,67 @@
+From:    Pepijn Frenken <pepijn@pepijnfrenken.nl>      [use the address you will put in arXiv]
+To:      Carol Xuan Long <carol_long@g.harvard.edu>
+Cc:      David Simchi-Levi <dslevi@mit.edu>
+Bcc:     (leave empty)
+Subject: Pre-registered four-size replication of arXiv:2605.17036 (v4)
+Attach:  Frenken-2026-agent-bullwhip-adaptation.pdf   (83,322 bytes)
+
+  File path: ~/email-out/Frenken-2026-agent-bullwhip-adaptation.pdf
+  sha256:    d21aab582c3647b8908edf326a613106f65ee41291405fc75feac2aedab798c6
+  (byte-identical to docs/arxiv/paper.pdf)
+
+Send as plain text, no signature block, no images, no other links.
+
+--------------------------------------------------------------------------------
+
+Dear Dr Long and colleagues,
+
+My name is Pepijn Frenken. I am an independent researcher in Eindhoven; the TU/e
+cluster provided compute only. For the past several months I have run a
+pre-registered adaptation study of the post-training claim in v4 of
+arXiv:2605.17036, and I am writing before I put it on arXiv, because you are the
+only people who can tell me whether I have read your protocol correctly.
+
+Two findings, the first of which is about your paper rather than your method.
+
+Your own rule is never scored. Equation 5 gives the exponentially smoothed
+forecast and equation 6 the order-up-to target, and Appendix C.1 carries that
+model analytically, but I could not find anywhere in v4 a result in which the
+tuned rule is scored as a cost baseline against the LLM arms. So I built it as my
+reference: two parameters fitted on weeks 1 to 18 of a 36-week game, then played
+frozen. It costs 5,346 in median over 30 demand paths. The closest any arm I
+trained gets is 1.75x that, and only at its best seed.
+
+The second is the ladder. At 4B, post-training beats its own untrained baseline:
+9,346 against 21,578 at seed 0 (30 of 30 paired paths) and 17,958 at seed 1 (25 of
+30, and marginal against a 15% bar). At 1.7B it is adverse on all three seeds,
+between 2.4x and 8.2x the untrained cost. At 0.6B it is negative, but that rung
+used SFT and RLCD rather than your RL objective, so I do not read it as evidence
+about your recipe. At 8B, one of four arms passes, 14,594 against 89,633 (29 of
+30), and it is the arm my frozen selection rule did not pick.
+
+Three questions, none of which is a request for approval:
+
+1. Is my reading of equations 5 and 6 right, and is it right that v4 contains no
+   tuned-rule comparison? If it does and I missed it, I would rather fix my paper
+   than publish the claim that it is absent.
+
+2. Did you see seed variance at 4B? Mine is 1.92x between two seeds of the same
+   arm, which makes me suspect that a single-seed result at this scale is more
+   fragile than v4 can show.
+
+3. Do per-run artifacts exist behind your reported numbers? Mine are committed and
+   public. I would rather compare rows than results.
+
+The paper is attached. The pre-registration, the frozen gates, every per-run file
+and a section listing where I deviated from my own protocol are public:
+https://github.com/pepijnfrenken/agent-bullwhip-replication
+(tag arxiv-submission-1)
+
+I have not asked for your endorsement and I am not asking now. I am asking whether
+I am wrong. If I am, I will correct the paper and say where the correction came
+from.
+
+Best regards,
+Pepijn Frenken
+Independent researcher, Eindhoven
+https://github.com/pepijnfrenken/agent-bullwhip-replication
