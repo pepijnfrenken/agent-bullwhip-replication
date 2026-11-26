@@ -2,13 +2,39 @@
 
 Status: draft, not sent. Sending is Pino's call. v0 is superseded and kept only for the record.
 
+## Who to email, and why that order
+
+v4 prints no email addresses and names no corresponding author (checked: `pdftotext` over the
+whole PDF, zero matches for an address pattern). Addresses below come from institutional pages,
+verified 2026-11-26, not from memory.
+
+| order | person | address | source of address | why |
+|---|---|---|---|---|
+| To | Carol Xuan Long | carol_long@g.harvard.edu | Harvard SEAS person page | first author; was a Harvard applied-math PhD student, now ETH AI Center postdoc; the person who most plausibly ran the experiment and the one most likely to answer |
+| Cc | David Simchi-Levi | dslevi@mit.edu | MIT CEE and ORC faculty pages | senior author; the name that decides whether a reply is worth writing. Note: `dslevi@`, not `dsimchi@` |
+| optional Cc | Flavio P. Calmon | flavio@seas.harvard.edu | Harvard CRCS page and his CV | senior author on the theory side |
+
+Do not send to all six. A six-recipient cold email with a technical claim reads as noise and
+gets triaged as noise.
+
+Mechanics that matter more than the wording:
+
+- Send from one address and keep it: the one that will also be the arXiv corresponding email.
+- Plain text, no template, no attachment. One link to the tag. An 83 KB PDF attached to a cold
+  email is the shape of spam.
+- Tuesday to Thursday, mid-afternoon CET: Zurich is the same hour, Boston is morning.
+- One follow-up at 10-14 days, quoting the three questions, then stop. Do not chase a third time.
+- A second, shorter email the day the preprint goes up. That one gets replies; cold ones often
+  do not, and silence is not a verdict on the work.
+
+
 | v0 said | why it is wrong now | source |
 |---|---|---|
 | subject: "negative at 8B" | one 8B arm passes G1: 14,594 vs 89,633 control, 29/30 | `docs/paper/paper.tex` §4, Table 3 |
 | 8B "3.0x the trained-4B reference, slightly worse than untrained" | the October survivor reads 0.163 of the untrained 8B control | same |
 | 1.7B "5e-5 trips the collapse gate outright" | single reads tripped, no arm was stopped; adverse on all three seeds by cost | §4, §6 |
 | 4B "~1.4-1.6x our walk-forward floor" | 1.75x at seed 0, 3.36x at seed 1, against the rule's 5,346 | §4, Table 2 |
-| addressed "Carol, Huangyuan" | author list is C. X. Long, D. Simchi-Levi, F. Zhu, H. Su, A. P. Calmon, F. P. Calmon; first names unverified | `paper.tex` bibitem |
+| addressed "Carol, Huangyuan" on its own | the names are right (Carol Xuan Long, Huangyuan Su, now verified against the arXiv listing), but v0 had no addresses and implied a two-recipient blast; v1 sends to one, copies two | arXiv listing, institutional pages |
 | omitted the tuned-rule result | it is the paper's central claim and the most useful thing to tell them | §4 |
 
 ---
@@ -24,10 +50,11 @@ you are the only people who can tell me whether I have read your protocol correc
 
 Two findings, one of which is about your paper rather than about your method.
 
-The first is that your own rule is never compared against. Equations 3-5 and the Appendix C model
-define a tuned order-up-to policy with exponentially smoothed demand, and the paper presents it as
-the baseline, but I could not find any result anywhere in v4 in which that tuned rule is scored
-against the LLM arms. I ran it as the reference: two parameters fitted on weeks 1-18 of a 36-week
+The first is that your own rule is never compared against. Equation 5 (the exponentially smoothed
+forecast, following Chen et al. 2000b) and equation 6 (the order-up-to target) define a tuned
+order-up-to policy, and the Appendix C.1 model carries it analytically, but I could not find any
+result anywhere in v4 in which that tuned rule is scored as a cost baseline against the LLM arms.
+If I have missed one, that is the first thing I want to be told. I ran it as the reference: two parameters fitted on weeks 1-18 of a 36-week
 game, then played frozen. It costs 5,346 in median across 30 demand paths. Nothing I trained at any
 size comes within 1.75x of it, and the closest arm is 1.75x only at its best seed.
 
@@ -42,7 +69,7 @@ selection rule did not pick, against a control whose readout is poorly condition
 
 Three questions, none of which is a request for approval:
 
-1. Is my reading of eqs. 3-5 right, and is it right that v4 contains no tuned-rule comparison? If
+1. Is my reading of eqs. 5-6 right, and is it right that v4 contains no tuned-rule comparison? If
    it does and I missed it, I would rather correct my paper than publish the claim that it isn't
    there.
 2. Did you see seed variance at 4B? Mine is 1.92x between two seeds of the same arm, which makes
