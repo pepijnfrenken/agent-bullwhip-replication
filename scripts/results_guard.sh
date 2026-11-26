@@ -32,7 +32,21 @@
 set -uo pipefail
 
 CLUSTER_HOST="${CLUSTER_HOST:-tue-cluster}"
-CLUSTER_ROOT="${CLUSTER_ROOT:-/scratch-shared/${TUE_USER:-${CLUSTER_USER:?export TUE_USER or CLUSTER_USER}}/bullwhip}"
+# The cluster account is not stored in the repository; it comes from the environment or from a
+# local, untracked file. Missing it is a "cluster unreachable" condition (rc 3), not a crash:
+# this script runs from cron every 15 minutes, and a shell error there fails silently forever.
+if [ -z "${TUE_USER:-}" ] && [ -z "${CLUSTER_USER:-}" ]; then
+  if [ -r "${HOME}/.config/bullwhip/cluster.env" ]; then
+    # shellcheck disable=SC1091
+    . "${HOME}/.config/bullwhip/cluster.env"
+  fi
+fi
+TUE_USER="${TUE_USER:-${CLUSTER_USER:-}}"
+if [ -z "${TUE_USER}" ]; then
+  echo "results_guard: no cluster account: set TUE_USER or write ~/.config/bullwhip/cluster.env" >&2
+  exit 3
+fi
+CLUSTER_ROOT="${CLUSTER_ROOT:-/scratch-shared/${TUE_USER}/bullwhip}"
 CLUSTER_REPO="${CLUSTER_REPO:-${CLUSTER_ROOT}/agent-bullwhip-replication}"
 ARCHIVE="${ARCHIVE:-$HOME/bullwhip-archive}"
 BACKUP_DIR="${BACKUP_DIR:-$HOME/backups/bullwhip}"
@@ -160,7 +174,9 @@ case "${MODE}" in
     echo "log tail:"; tail -5 "${LOG}" 2>/dev/null
     exit 0 ;;
   once)
-    cycle; echo "exit=$?"; exit $? ;;
+    # capture before anything else runs: a bare `exit $?` after an `echo` always exits 0,
+    # which silently disabled the cron wrapper's drift and failure branches
+    cycle; rc=$?; echo "exit=${rc}"; exit "${rc}" ;;
 esac
 
 # loop mode
